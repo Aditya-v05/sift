@@ -4,6 +4,18 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-07 — Repo renamed to `Aditya-v05/sift`: links updated
+
+- **What:** GitHub reported the repo moved to `Aditya-v05/sift`. The About settings (website, description, topics) carried over.
+- **Updated:**
+  - the local remote;
+  - every link to the old name in README (release download, CI badge, CI link), PRIVACY, the store listing and the website (`REPO` in `site/Landing.tsx`: GitHub, Install, privacy, changelog, issues, license).
+
+  The old URLs still redirect, but the links now point at the real address. Older `log.md` entries keep the name they had at the time.
+- **Verified:** compile and the site build pass; the Vercel deploy and CI for this commit were checked after the push.
+
+---
+
 ## 2026-10-07 — GitHub About section and a test line in the README
 
 > Pasted suggestions: fix the repo's About website (still the old sift-rosy-omega.vercel.app), add a description and topics, and state the test numbers once, low in the README.

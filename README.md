@@ -10,12 +10,12 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Aditya-v05/extens/releases/latest"><strong>Download</strong></a> ·
+  <a href="https://github.com/Aditya-v05/sift/releases/latest"><strong>Download</strong></a> ·
   <a href="#install">Install</a> ·
   <a href="https://sift-through.vercel.app">Website</a> ·
   <a href="PRIVACY.md">Privacy</a>
   <br><br>
-  <a href="https://github.com/Aditya-v05/extens/actions/workflows/ci.yml"><img src="https://github.com/Aditya-v05/extens/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/Aditya-v05/sift/actions/workflows/ci.yml"><img src="https://github.com/Aditya-v05/sift/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2f5d50" alt="MIT license"></a>
 </p>
 
@@ -37,7 +37,7 @@ It also works on **LinkedIn profiles**, keeps a ranked list of **My Accounts**, 
 
 Sift isn't on the Chrome Web Store yet, so you load it yourself. It takes about a minute:
 
-1. **Download** `sift-<version>-chrome.zip` from the [latest release](https://github.com/Aditya-v05/extens/releases/latest) and unzip it.
+1. **Download** `sift-<version>-chrome.zip` from the [latest release](https://github.com/Aditya-v05/sift/releases/latest) and unzip it.
 2. Open **`chrome://extensions`** and turn on **Developer mode** (top right).
 3. Click **Load unpacked** and choose the unzipped folder.
 4. Pin Sift from the puzzle-piece menu. Its settings open by themselves: paste your two keys and answer three questions about what you sell.
@@ -136,7 +136,7 @@ click icon → domain → Apollo company lookup
 
 Everything runs in the extension's background worker. See [`SPEC.md`](SPEC.md) for the full design and [`log.md`](log.md) for the change history.
 
-Tested with 123 Vitest unit tests and 31 Playwright browser checks, with [CI](https://github.com/Aditya-v05/extens/actions/workflows/ci.yml) on every push.
+Tested with 123 Vitest unit tests and 31 Playwright browser checks, with [CI](https://github.com/Aditya-v05/sift/actions/workflows/ci.yml) on every push.
 
 ## Develop
 

@@ -27,7 +27,7 @@ My Accounts keeps companies you save, ranked by fit and timing, with status, not
 
 Bring your own keys: Sift uses your Apollo account for company and people data and TypeSafe's Jev model for judgments. There is no Sift server and no tracking; everything stays in your browser. Sift shows what each action costs in Apollo credits and can stop at a monthly budget.
 
-Open source (MIT): https://github.com/Aditya-v05/extens
+Open source (MIT): https://github.com/Aditya-v05/sift
 
 ## Single purpose
 Help a salesperson decide whether the company whose website they're on is worth contacting, and whom to contact.
@@ -47,4 +47,4 @@ Help a salesperson decide whether the company whose website they're on is worth 
 - Not sold, not used for unrelated purposes, not used for creditworthiness.
 
 ## Privacy policy URL
-https://github.com/Aditya-v05/extens/blob/main/PRIVACY.md
+https://github.com/Aditya-v05/sift/blob/main/PRIVACY.md

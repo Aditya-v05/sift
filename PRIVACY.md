@@ -55,4 +55,4 @@ icon is clicked. You can remove the permission any time at chrome://extensions.
 
 ## Contact
 
-Open an issue at <https://github.com/Aditya-v05/extens/issues>.
+Open an issue at <https://github.com/Aditya-v05/sift/issues>.
