@@ -1,34 +1,82 @@
-# Sift
+<p align="center">
+  <img src="public/icon/128.png" width="72" alt="">
+</p>
 
-<img src="public/icon/128.png" width="64" alt="Sift">
+<h1 align="center">Sift</h1>
 
-[![CI](https://github.com/Aditya-v05/extens/actions/workflows/ci.yml/badge.svg)](https://github.com/Aditya-v05/extens/actions/workflows/ci.yml)
+<p align="center">
+  <strong>Open any company's website. One click tells you if it fits, why it matters now, and who to email.</strong><br>
+  A free, open-source Chrome extension for outbound. Runs on your own Apollo and Jev keys, with no server in between.
+</p>
 
-**Website:** https://sift-through.vercel.app
+<p align="center">
+  <a href="https://github.com/Aditya-v05/extens/releases/latest"><strong>Download</strong></a> ·
+  <a href="#install">Install</a> ·
+  <a href="https://sift-through.vercel.app">Website</a> ·
+  <a href="PRIVACY.md">Privacy</a>
+  <br><br>
+  <a href="https://github.com/Aditya-v05/extens/actions/workflows/ci.yml"><img src="https://github.com/Aditya-v05/extens/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2f5d50" alt="MIT license"></a>
+</p>
 
-An open-source Chrome extension for anyone doing outbound. Open a company's website, click the icon (or press **Alt+Shift+S**, ⌥⇧S on a Mac), and a side panel tells you:
+<p align="center">
+  <img src="docs/demo.gif" width="800" alt="Clicking the Sift icon on a company's homepage: the side panel shows an 82% fit, reasons to reach out now, and the best person to contact with their email">
+</p>
 
-1. **Does this company fit my ICP?** A fit score driven mostly by your own requirements (met / near miss / unsure / not met), with Jev's overall judgment as a smaller part.
-2. **Why now?** Hiring for roles your product serves, headcount growth, recent funding, plus what the company's own site says: enterprise plans, SOC 2, AI launches, acquisitions, new executives. Each signal links to its source; website signals quote the page word for word.
-3. **Who should I talk to?** People at the company, ranked by how likely they are to own the problem you solve.
-On a **LinkedIn profile**, Sift identifies the person from the page address (Apollo, 1 credit, their email included), runs the same lookup on their company, and shows where they rank among the people there. It never reads LinkedIn pages.
+## What it does
 
-4. **Their email**, revealed on click, or all at once with *Reveal all* (it shows the credit cost first). The best contacts are shown up front (two if two are nearly as good); the rest are one click away.
+Click the Sift icon on a company's website (or press **Alt+Shift+S**, ⌥⇧S on a Mac) and a side panel answers:
 
-**Discover** (a tab in My Accounts) finds companies like your best saved accounts. It uses Apollo's lookalike search, already filtered by your ICP's size and country and skipping anything you've saved, viewed or dismissed. 50 suggestions cost 1 credit and are kept for 7 days; look up the ones you like (2 credits each).
+- **Does it fit?** A score against *your* ideal customer, with every requirement shown: met, near miss, unsure or not met.
+- **Why now?** Hiring for roles your product serves, headcount growth, funding, and what their own site says (enterprise plan, SOC 2, launches), each linked to its source.
+- **Who to email?** The people most likely to own the problem you solve, ranked. Reveal an email in one click.
 
-**My Accounts** (from the panel footer or Settings) is a full-page list of saved and recently viewed companies. It's ranked by priority (60% fit + 40% timing), with a status (New / Contacted / Replied / Not a fit), notes, search, a "Hot only" filter, per-account refresh, and CSV export.
+It also works on **LinkedIn profiles**, keeps a ranked list of **My Accounts**, and **Discover** finds companies like your best ones.
 
-Company and people data come from **Apollo**. Judgments come from **Jev**, [TypeSafe](https://typesafe.ai)'s System One model. You bring both API keys.
+## Install
 
-## Privacy
+Sift isn't on the Chrome Web Store yet, so you load it yourself. It takes about a minute:
 
-Full policy: [PRIVACY.md](PRIVACY.md).
+1. **Download** `sift-<version>-chrome.zip` from the [latest release](https://github.com/Aditya-v05/extens/releases/latest) and unzip it.
+2. Open **`chrome://extensions`** and turn on **Developer mode** (top right).
+3. Click **Load unpacked** and choose the unzipped folder.
+4. Pin Sift from the puzzle-piece menu. Its settings open by themselves: paste your two keys and answer three questions about what you sell.
 
-- No server, no account, no telemetry.
-- Your keys and data stay in this browser (`chrome.storage.local`) and are only sent to `api.apollo.io` and `api.typesafe.ai`.
-- Permissions: `activeTab` and `scripting` (only when you click the icon: read the tab's URL, and read that same site's pricing, blog, changelog and security pages), `sidePanel`, `storage`. There's no "read all websites" permission and no access to your browsing unless you click. Optional `tabs`: asked for only if you use **Sift this page** in the panel (re-sift after switching tabs), to read that tab's address when you press it.
-- Website signals send short public snippets from the company's own pages to Jev for labelling. You can turn this off in Settings.
+Then open any company's website and click the Sift icon.
+
+> Updating: download the new release, replace the folder's contents, and press the reload icon on Sift's card in `chrome://extensions`. Your keys and saved accounts stay.
+
+## What you need
+
+| | What it's for | Where to get it | Cost |
+|---|---|---|---|
+| **Apollo API key** | Company data, people, emails | In Apollo: Settings → Integrations → API | Your Apollo credits: about **2 per new company** and **1 per email revealed**; finding people is free |
+| **TypeSafe API key** for **Jev** | The fit, ranking and why-now judgments | [typesafe.ai](https://typesafe.ai) | A few Jev calls per company |
+
+Every paid action shows its price on the button, results are cached for 7 days so revisits are free, and you can set a monthly budget. Details are under [Costs](#costs).
+
+## Privacy: no backend
+
+- **No Sift server, no account, no analytics.** Sift talks straight from your browser to Apollo and TypeSafe.
+- Your keys, settings and saved accounts stay in your browser's local storage.
+- Sift reads a website **only when you click its icon there**. It has no "read all websites" permission, and on LinkedIn it uses only the page address.
+- The code is all here; the full policy is in [PRIVACY.md](PRIVACY.md).
+
+---
+
+## More detail
+
+**On a LinkedIn profile**, Sift identifies the person from the page address (Apollo, 1 credit, their email included), runs the same lookup on their company, and shows where they rank among the people there. It never reads LinkedIn pages.
+
+**Reveal all** reveals every remaining email at once, showing the credit cost first. The best contacts are shown up front (two if two are nearly as good); the rest are one click away.
+
+**Discover** (a tab in My Accounts) finds companies like your best saved accounts with Apollo's lookalike search, already filtered by your ICP's size and country and skipping anything you've saved, viewed or dismissed. 50 suggestions cost 1 credit and are kept for 7 days.
+
+**My Accounts** is a full-page list of saved and recently viewed companies, ranked by priority (60% fit + 40% timing), with a status (New / Contacted / Replied / Not a fit), notes, search, a "Hot only" filter, per-account refresh and CSV export.
+
+**Sift this page**: after you switch tabs, the panel offers to sift the page you're on. The first time, Chrome asks for the optional `tabs` permission, used only to read that tab's address when you press it.
+
+Permissions: `activeTab` and `scripting` (only when you click the icon), `sidePanel`, `storage`, optional `tabs`, and host access to `api.apollo.io` and `api.typesafe.ai` only.
 
 ## Costs
 
@@ -47,11 +95,18 @@ Results are cached per domain for 7 days, so revisits are free. Revealed emails 
 
 The side panel shows a **credit bar**. With an Apollo *master* API key it shows your team's real balance. Other keys can't read the balance, so Sift counts its own spending this month instead. You can set a **monthly budget**: once it's reached, new lookups ask before spending.
 
-## Install
+## Setup in detail
 
-Chrome Web Store: submission kit in [`store/`](store/) (listing text, permission justifications, screenshots). Until it's listed, install from source:
+The settings page opens on install:
 
-### From source
+1. **Keys:** your Apollo API key (it needs people search and enrichment) and your TypeSafe key. Hit *Save & test*.
+2. **What you sell:** three plain-English answers (what you sell, your ideal customer, who buys).
+3. **Generate rules**, then edit them:
+   - *Company size* and *countries* are checked exactly against Apollo data.
+   - Each *company check* ("B2B SaaS", "large support team") is a yes/no question for Jev.
+   - *Who to look for* (all prefilled): titles, seniority levels, keywords (single words such as "operations", which find titles you didn't list) and titles to leave out. People search costs no credits.
+
+## Build from source
 
 ```bash
 npm install
@@ -62,16 +117,7 @@ Then open `chrome://extensions`, turn on **Developer mode**, click **Load unpack
 
 For development, `npm run dev` starts Chrome with the extension loaded and hot reload on.
 
-## Setup
-
-The settings page opens on install:
-
-1. **Keys:** your Apollo API key (it needs people search and enrichment) and your TypeSafe key. Hit *Save & test*.
-2. **What you sell:** three plain-English answers (what you sell, your ideal customer, who buys).
-3. **Generate rules**, then edit them:
-   - *Company size* and *countries* are checked exactly against Apollo data.
-   - Each *company check* ("B2B SaaS", "large support team") is a yes/no question for Jev.
-   - *Who to look for* (all prefilled): titles, seniority levels, keywords (single words such as "operations", which find titles you didn't list) and titles to leave out. People search costs no credits.
+The Chrome Web Store submission kit (listing text, permission justifications, screenshots) is in [`store/`](store/).
 
 ## How it works
 

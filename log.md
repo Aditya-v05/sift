@@ -4,6 +4,23 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-07 — README: install made obvious; first GitHub release
+
+> "Your GitHub README should make installation extremely obvious near the top: what Sift does, screenshot/demo, install instructions, Apollo + Jev requirements, privacy/no backend."
+
+- **README order:**
+  1. a centred header with a one-line promise and links (Download, Install, Website, Privacy) plus CI and license badges;
+  2. a demo GIF (`docs/demo.gif`, 800 px, 10 fps, 4.8 MB, made from the site's demo video, with the made-up email);
+  3. **What it does** in three bullets;
+  4. **Install** in four steps from a release zip, no npm needed, plus how to update;
+  5. **What you need**: an Apollo key and a TypeSafe (Jev) key, where to get each, and what they cost;
+  6. **Privacy: no backend**.
+
+  The previous detail follows (more features, costs, setup in detail, build from source, how it works, develop). The `#install` anchor is kept, since the website's buttons link to it.
+- **Release:** `v0.2.0` with `sift-0.2.0-chrome.zip` (208 KB, from `npm run zip`). Unzipped, it loads in Chromium: manifest Sift 0.2.0, options page renders, no errors.
+
+---
+
 ## 2026-10-06 — Social videos checked against LinkedIn and X upload specs
 
 > "i am not sure if the video is linkedin safe can u verify"
