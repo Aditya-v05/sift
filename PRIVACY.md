@@ -2,7 +2,7 @@
 
 _Last updated: 2026-09-29_
 
-Sift is an open-source Chrome extension. It has **no server, no account and no analytics**. The developers of Sift
+Sift is an open-source Chrome extension. The extension has **no server, no account and no analytics**. The developers of Sift
 never receive your data.
 
 ## What Sift stores, and where
@@ -54,6 +54,10 @@ icon is clicked. You can remove the permission any time at chrome://extensions.
 - Host access to `api.apollo.io`, `api.typesafe.ai` and, if you choose treg as the data source, `treg.to` only.
 
 **If you choose treg:** your lookups go to treg.to, which forwards them to Apollo and returns Apollo's answer. treg sees the same requests Apollo would (company domains, people searches, the people you reveal) and bills your treg account. Your treg key is kept in this browser like the other keys.
+
+## The website
+
+The Sift website (sift-through.vercel.app) uses Vercel Web Analytics to count page views and see where visitors come from. It sets no cookies and records no personal data; Vercel aggregates visits without identifying you. This applies to the website only. The extension sends nothing to Sift or Vercel.
 
 ## Contact
 

@@ -4,6 +4,25 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-07 — Usage tracking: a private daily snapshot, and website analytics
+
+> "can we track the usage somehow" / "yes set up 2 and 3"
+
+- **Daily snapshot:** a new **private** repo, `Aditya-v05/sift-stats` (private so traffic and referrers aren't published).
+  - Its `Snapshot` workflow runs daily at 06:17 UTC, and on demand.
+  - It saves the public repo's release downloads (per release, cumulative). With a `TRAFFIC_TOKEN` secret (a fine-grained token, Administration: Read-only on `Aditya-v05/sift`), it also saves views, unique visitors, clones and referrers.
+  - Data is merged by date, since GitHub keeps only 14 days, and summarised in `data/README.md`.
+  - The first run on GitHub succeeded (downloads recorded; traffic waits for the token). A local run with a token recorded 7 days of traffic.
+- **Website analytics:** `@vercel/analytics` (`<Analytics />` in `site/main.tsx`), cookieless and aggregated. It only collects once Web Analytics is enabled for the `sift` project in Vercel.
+  - PRIVACY.md gains a "The website" section saying so, and that the extension sends nothing.
+  - The site's privacy line reads "no analytics in the extension".
+- **Verified:**
+  - the built site includes the `/_vercel/insights` script;
+  - compile, tests, build and smoke pass;
+  - npm audit: 0 vulnerabilities.
+
+---
+
 ## 2026-10-07 — v0.3.1: the data-source dropdown no longer snaps back
 
 > A screen recording: picking treg in the dropdown flipped straight back to Apollo.

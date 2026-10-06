@@ -338,7 +338,7 @@ function Privacy() {
           <Eyebrow label="Privacy" dark />
           <h2>Your keys. Your browser. <em>Nothing in between.</em></h2>
           <ul>
-            <li>No Sift server, no account, no analytics.</li>
+            <li>No Sift server, no account, no analytics in the extension.</li>
             <li>Lookups go straight to Apollo, or through treg if you choose it, and to TypeSafe.</li>
             <li>Keys, profile and saved accounts stay in Chrome's local storage.</li>
             <li>Sift reads a site only when you click its icon there, or press Sift this page. On LinkedIn, only the address.</li>
