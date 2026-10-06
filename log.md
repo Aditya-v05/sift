@@ -4,6 +4,18 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-06 — Deleted the `site-redesign` branch
+
+> "delete it - and give me the video - mp4 we used"
+
+- **What:** deleted `site-redesign` on GitHub and locally. Its only unique commit history included a plain cut of the demo that showed a real person's email for about one frame. Everything on the branch had already been squash-merged into `main`; a diff showed only newer log and tsconfig changes on `main`. No pull requests used it.
+- **Note:** GitHub can keep unreachable commits reachable by their exact SHA for a while until it garbage-collects them; nothing links to them any more.
+- **Videos:** copied to the Desktop (the raw recordings stay local and out of git):
+  - `sift-demo.mp4` and `sift-demo-vertical.mp4`: the web versions on the site;
+  - `sift-demo-hq.mp4` and `sift-demo-vertical-hq.mp4`: the full-quality Remotion renders.
+
+---
+
 ## 2026-09-30 — CI fix: keep the video project out of the extension's type check
 
 > "somehting failed?" (GitHub's "CI: All jobs have failed" email after the release)
