@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { StateIcon } from '@/components/Icon';
 import { useCredits } from '@/components/useCredits';
-import { lookupCost, totalSpent } from '@/lib/credits';
+import { isTregBalance, lookupCost, priceLabel, totalSpent } from '@/lib/credits';
 import { openAccounts, send, type KeyTest } from '@/lib/messages';
 import { SENIORITY_OPTIONS, peopleFilters } from '@/lib/people';
 import { generateRules } from '@/lib/rules';
@@ -15,7 +15,7 @@ export default function Options() {
       <header>
         <h1>Sift</h1>
         <p className="muted">
-          Everything stays in this browser. Your keys are sent only to Apollo and TypeSafe. There's no server and no tracking.
+          Everything stays in this browser. Your keys are sent only to Apollo (or treg, if you choose it) and TypeSafe. There's no Sift server and no tracking.
         </p>
       </header>
       <KeysSection />
@@ -29,33 +29,57 @@ export default function Options() {
 // ---------- keys ----------
 
 function KeysSection() {
-  const [keys, setKeys] = useState<Keys>({ apollo: '', typesafe: '' });
+  const [keys, setKeys] = useState<Keys>({ apollo: '', typesafe: '', provider: 'apollo', treg: '' });
   const [tests, setTests] = useState<{ apollo: KeyTest; typesafe: KeyTest } | null>(null);
   const [busy, setBusy] = useState(false);
+  const viaTreg = keys.provider === 'treg';
 
   useEffect(() => {
-    store.getKeys().then((k) => k && setKeys(k));
+    store.getKeys().then((k) => k && setKeys({ provider: 'apollo', treg: '', ...k }));
   }, []);
 
   const saveAndTest = async () => {
     setBusy(true);
-    const trimmed = { apollo: keys.apollo.trim(), typesafe: keys.typesafe.trim() };
+    const trimmed: Keys = { apollo: keys.apollo.trim(), typesafe: keys.typesafe.trim(), provider: keys.provider ?? 'apollo', treg: (keys.treg ?? '').trim() };
     await store.setKeys(trimmed);
     setKeys(trimmed);
     setTests(await send({ type: 'testKeys', keys: trimmed }));
     setBusy(false);
   };
 
+  const pick = (provider: 'apollo' | 'treg') => {
+    setKeys({ ...keys, provider });
+    setTests(null);
+  };
+  const dataKey = viaTreg ? keys.treg : keys.apollo;
+
   return (
     <section className="card stack">
       <h2>API keys</h2>
-      <KeyField
-        label="Apollo API key"
-        hint={<>In Apollo: Settings, Integrations, API. It needs access to people search and enrichment.</>}
-        value={keys.apollo}
-        onChange={(apollo) => setKeys({ ...keys, apollo })}
-        test={tests?.apollo}
-      />
+      <div>
+        <label>Company and people data</label>
+        <div className="choice" role="radiogroup" aria-label="Where company and people data comes from">
+          <label className="row"><input type="radio" name="provider" checked={!viaTreg} onChange={() => pick('apollo')} /> Your Apollo key</label>
+          <label className="row"><input type="radio" name="provider" checked={viaTreg} onChange={() => pick('treg')} /> treg (pay per call, no Apollo plan needed)</label>
+        </div>
+      </div>
+      {viaTreg ? (
+        <KeyField
+          label="treg API key"
+          hint={<>From <a href="https://treg.to" target="_blank" rel="noreferrer">treg.to</a>. Sift uses Apollo's data through treg: finding people is free, every other call costs $0.026 from your treg balance.</>}
+          value={keys.treg ?? ''}
+          onChange={(treg) => setKeys({ ...keys, treg })}
+          test={tests?.apollo}
+        />
+      ) : (
+        <KeyField
+          label="Apollo API key"
+          hint={<>In Apollo: Settings, Integrations, API. It needs access to people search and enrichment.</>}
+          value={keys.apollo}
+          onChange={(apollo) => setKeys({ ...keys, apollo })}
+          test={tests?.apollo}
+        />
+      )}
       <KeyField
         label="TypeSafe API key (Jev)"
         hint={<>From <a href="https://typesafe.ai" target="_blank" rel="noreferrer">typesafe.ai</a>. Jev makes the fit and ranking judgments.</>}
@@ -64,7 +88,7 @@ function KeysSection() {
         test={tests?.typesafe}
       />
       <div>
-        <button className="primary" disabled={busy || !keys.apollo || !keys.typesafe} onClick={saveAndTest}>
+        <button className="primary" disabled={busy || !dataKey || !keys.typesafe} onClick={saveAndTest}>
           {busy ? 'Testing…' : 'Save & test keys'}
         </button>
       </div>
@@ -300,7 +324,7 @@ function ListEditor({ label, hint, items, onChange }: { label: string; hint: str
 // ---------- credits ----------
 
 function CreditsSection() {
-  const { settings, ledger, balance } = useCredits();
+  const { settings, ledger, balance, viaTreg } = useCredits();
   const [budgetText, setBudgetText] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
   const budgetValue = budgetText ?? (settings.monthlyBudget === null ? '' : String(settings.monthlyBudget));
@@ -318,18 +342,27 @@ function CreditsSection() {
 
   return (
     <section className="card stack">
-      <h2>Apollo credits</h2>
-      <p className="small muted" style={{ margin: 0 }}>
-        A new company lookup costs {lookupCost(settings)} Apollo credit{lookupCost(settings) === 1 ? '' : 's'}: 1 for the company
-        {settings.fetchJobs ? ', 1 for job postings' : ''}. People search is free. Revealing an email costs 1. On a LinkedIn
-        profile, identifying the person costs 1 (their email comes with it).
-        Repeat visits use the 7-day cache and cost nothing.
-      </p>
+      <h2>{viaTreg ? 'Costs (treg)' : 'Apollo credits'}</h2>
+      {viaTreg ? (
+        <p className="small muted" style={{ margin: 0 }}>
+          Through treg, each paid Apollo call costs $0.026 from your treg balance. A new company lookup is {lookupCost(settings)} call
+          {lookupCost(settings) === 1 ? '' : 's'} ({priceLabel(lookupCost(settings), true)}): the company{settings.fetchJobs ? ' and its job postings' : ''}.
+          People search is free. Revealing an email is $0.026, charged only when Apollo finds the person. Repeat visits use the
+          7-day cache and cost nothing.
+        </p>
+      ) : (
+        <p className="small muted" style={{ margin: 0 }}>
+          A new company lookup costs {lookupCost(settings)} Apollo credit{lookupCost(settings) === 1 ? '' : 's'}: 1 for the company
+          {settings.fetchJobs ? ', 1 for job postings' : ''}. People search is free. Revealing an email costs 1. On a LinkedIn
+          profile, identifying the person costs 1 (their email comes with it).
+          Repeat visits use the 7-day cache and cost nothing.
+        </p>
+      )}
 
       <div>
         <label>Spent by Sift this month</label>
         <div>
-          <strong>{totalSpent(ledger)}</strong>
+          <strong>{totalSpent(ledger)}</strong>{viaTreg && <> paid calls, <strong>${((ledger.usdMicro ?? 0) / 1e6).toFixed(2)}</strong></>}
           <span className="muted small">
             {' '}({ledger.company} company lookups, {ledger.jobs} job-posting fetches, {ledger.reveal} email reveals
             {ledger.search ? `, ${ledger.search} Discover searches` : ''})
@@ -338,8 +371,14 @@ function CreditsSection() {
       </div>
 
       <div>
-        <label>Apollo balance</label>
-        {balance?.available ? (
+        <label>{viaTreg ? 'treg balance' : 'Apollo balance'}</label>
+        {viaTreg ? (
+          isTregBalance(balance) ? (
+            <div><strong>${balance.usd.toFixed(2)}</strong> left on treg <span className="muted small">(top up at treg.to)</span></div>
+          ) : (
+            <div className="small muted">Save and test your treg key to see its balance.</div>
+          )
+        ) : balance?.available && !isTregBalance(balance) ? (
           <div>
             <strong>{balance.leftOver.toLocaleString('en-US')}</strong> of {balance.limit.toLocaleString('en-US')} lead credits left
             {balance.cycleEnd && <span className="muted small">, resets {new Date(balance.cycleEnd).toLocaleDateString()}</span>}
@@ -365,7 +404,7 @@ function CreditsSection() {
             onKeyDown={(e) => e.key === 'Enter' && saveBudget()}
             style={{ maxWidth: 160 }}
           />
-          <span className="small muted">credits. When reached, new lookups ask before spending.</span>
+          <span className="small muted">{viaTreg ? 'paid calls ($0.026 each).' : 'credits.'} When reached, new lookups ask before spending.</span>
         </div>
       </div>
 

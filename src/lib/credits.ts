@@ -14,6 +14,8 @@ export interface Ledger {
   reveal: number;
   /** Discover searches; missing on ledgers written before Discover existed. */
   search?: number;
+  /** Dollars spent through treg this month, in micro-USD (exact, from treg's cost header). */
+  usdMicro?: number;
 }
 
 export interface Settings {
@@ -25,10 +27,14 @@ export interface Settings {
   scanSite: boolean;
 }
 
-/** Apollo's own balance, readable only with a master API key. */
+/** Apollo's own balance (readable only with a master API key), or the treg prepaid balance in dollars. */
 export type Balance =
   | { available: true; limit: number; consumed: number; leftOver: number; cycleEnd: string | null; checkedAt: number }
+  | { available: true; usd: number; checkedAt: number }
   | { available: false; checkedAt: number };
+
+export const isTregBalance = (b: Balance | undefined): b is { available: true; usd: number; checkedAt: number } =>
+  !!b && b.available && 'usd' in b;
 
 export const DEFAULT_SETTINGS: Settings = { monthlyBudget: null, fetchJobs: true, scanSite: true };
 
@@ -45,6 +51,11 @@ export function current(ledger: Ledger | undefined, month = monthKey()): Ledger 
   return ledger && ledger.month === month ? ledger : emptyLedger(month);
 }
 
+export function addUsd(ledger: Ledger | undefined, micro: number, month = monthKey()): Ledger {
+  const l = current(ledger, month);
+  return { ...l, usdMicro: (l.usdMicro ?? 0) + micro };
+}
+
 export function addSpend(ledger: Ledger | undefined, kind: SpendKind, n = 1, month = monthKey()): Ledger {
   const l = current(ledger, month);
   return { ...l, [kind]: (l[kind] ?? 0) + n };
@@ -59,8 +70,16 @@ export function overBudget(ledger: Ledger, settings: Settings, upcoming: number)
   return settings.monthlyBudget !== null && totalSpent(ledger) + upcoming > settings.monthlyBudget;
 }
 
-/** Parse Apollo's credit_usage_stats response. Lead credits are what enrichment draws on. */
+/** How a number of Apollo credits reads on a button: '2 cr' directly, '$0.05' through treg ($0.026 a credit). */
+export function priceLabel(credits: number, viaTreg: boolean, long = false): string {
+  if (viaTreg) return `$${(credits * 0.026).toFixed(credits * 0.026 < 0.1 ? 3 : 2)}`;
+  return long ? `${credits} credit${credits === 1 ? '' : 's'}` : `${credits} cr`;
+}
+
+/** Parse Apollo's credit_usage_stats response (lead credits are what enrichment draws on), or treg's balance. */
 export function parseBalance(body: any, now = Date.now()): Balance {
+  const treg = body?.treg;
+  if (treg) return typeof treg.balance_usd === 'number' ? { available: true, usd: treg.balance_usd, checkedAt: now } : { available: false, checkedAt: now };
   const lead = body?.credit_usage_stats?.lead_credit;
   if (!lead || typeof lead.limit !== 'number') return { available: false, checkedAt: now };
   return {

@@ -1,3 +1,5 @@
+> **dev-sift** is the private development copy of [Sift](https://github.com/Aditya-v05/extens). It adds **treg** as an alternative data source: instead of an Apollo key, use a [treg.to](https://treg.to) key and Sift reaches the same Apollo data through treg, paying per call from a treg balance. See the treg section below.
+
 # Sift
 
 <img src="public/icon/128.png" width="64" alt="Sift">
@@ -137,3 +139,20 @@ src/lib/mapping.ts              Jev answers → fit, persona, ranking, why now
 ## License
 
 MIT
+
+## treg as the data source (dev-sift)
+
+In Settings, under API keys, choose **treg (pay per call, no Apollo plan needed)** and paste a treg API key. Sift then sends its Apollo calls through treg's `apollo.*` endpoints. treg passes Apollo's request through unchanged and returns Apollo's response verbatim, so fit, why now, people, reveals, LinkedIn and Discover all work the same.
+
+| Sift call | treg endpoint | Price |
+|---|---|---|
+| Find people | `apollo.people.search` | free |
+| Company | `apollo.companies.enrich` | $0.026 |
+| Job postings | `apollo.companies.jobs` | $0.026 per page |
+| Discover lookalikes | `apollo.companies.search` | $0.026 per page |
+| Reveal email, LinkedIn profile | `apollo.people.enrich` | $0.026, only when found |
+
+- **Spending:** every call carries a cost cap (`X-Treg-Route-Max-Cost: 0.06`). The exact charge (`X-Treg-Cost-Micro`) is added to the month's ledger.
+- **Display:** the credit bar shows the treg balance, and buttons show prices in dollars.
+- **Budget:** the monthly budget counts paid calls.
+- **Live test:** `TREG_TOKEN=trg_live_... npx vitest run src/lib/treg.live.test.ts` (about $0.08).

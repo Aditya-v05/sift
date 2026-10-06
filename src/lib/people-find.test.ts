@@ -29,7 +29,7 @@ describe('findPeople', () => {
     byQuery['kw:customer'] = ['Customer Experience Leader', 'Customer Experience Manager'];
     byQuery['kw:operations'] = ['Product Operations Lead'];
     const { findPeople } = await import('./pipeline');
-    const out = await findPeople('k', 'org1', filters);
+    const out = await findPeople({ via: 'apollo', key: 'k' }, 'org1', filters);
 
     expect(calls.map((q) => [q.titles ? 'titles' : q.keywords, !!q.seniorities])).toEqual([
       ['titles', true], ['customer', true], ['operations', true],
@@ -45,7 +45,7 @@ describe('findPeople', () => {
 
   it('with no seniority chosen, searches any level once per query', async () => {
     const { findPeople } = await import('./pipeline');
-    await findPeople('k', 'org1', { ...filters, seniorities: [], keywords: [] });
+    await findPeople({ via: 'apollo', key: 'k' }, 'org1', { ...filters, seniorities: [], keywords: [] });
     expect(calls).toHaveLength(2); // titles (any level) + fallback, no duplicate title search
     expect(calls[0]).toMatchObject({ titles: ['VP Customer Experience'] });
     expect(calls[0].seniorities).toBeUndefined();
@@ -54,7 +54,7 @@ describe('findPeople', () => {
   it('falls back to senior people when nothing matches', async () => {
     byQuery['fallback'] = ['CEO'];
     const { findPeople } = await import('./pipeline');
-    const out = await findPeople('k', 'org1', filters);
+    const out = await findPeople({ via: 'apollo', key: 'k' }, 'org1', filters);
     expect(out).toMatchObject({ fallback: true });
     expect(out.contacts.map((c) => c.title)).toEqual(['CEO']);
   });

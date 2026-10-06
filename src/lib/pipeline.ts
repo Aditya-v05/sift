@@ -1,5 +1,6 @@
 import { browser } from 'wxt/browser';
 import * as apollo from './apollo';
+import { accessFor, hasDataKey, type Access } from './access';
 import { lookupCost, overBudget, parseBalance, totalSpent, type Settings } from './credits';
 import {
   buildLookalikeQuery, filtersLabel, mapCandidate, mergeCandidates, pickSeeds, searchKey,
@@ -56,7 +57,7 @@ export async function runLookup(windowId: number | null, domain: string, opts: L
 
   const [keys, profile] = await Promise.all([store.getKeys(), store.getProfile()]);
   const missing: ('keys' | 'profile')[] = [];
-  if (!keys?.apollo || !keys?.typesafe) missing.push('keys');
+  if (!hasDataKey(keys) || !keys?.typesafe) missing.push('keys');
   if (!profile) missing.push('profile');
   if (missing.length) return show({ status: 'needs_setup', missing });
 
@@ -112,7 +113,7 @@ async function lookup(
   keys: Keys, profile: Profile, settings: Settings, domain: string, site: Promise<SiteScan | null>,
   focusPerson: Contact | undefined, progress: Progress,
 ): Promise<LookupResult | null> {
-  const org = await apollo.enrichOrganization(keys.apollo, domain);
+  const org = await apollo.enrichOrganization(accessFor(keys), domain);
   if (!org) return null;
   await store.recordSpend('company');
   const company = apollo.mapOrganization(org, domain);
@@ -125,8 +126,8 @@ async function lookup(
   // Jev #1 (fit, checks, persona) runs alongside the free people search and the job postings fetch.
   const [answers, found, postings] = await Promise.all([
     jev.ask(keys.typesafe, state, accountQuestions(profile)),
-    findPeople(keys.apollo, company.apolloId, peopleFilters(profile.rules)),
-    settings.fetchJobs ? getJobsOrNull(keys.apollo, company.apolloId) : Promise.resolve('off' as const),
+    findPeople(accessFor(keys), company.apolloId, peopleFilters(profile.rules)),
+    settings.fetchJobs ? getJobsOrNull(accessFor(keys), company.apolloId) : Promise.resolve('off' as const),
   ]);
   const jobsStatus: WhyNow['jobsStatus'] = postings === 'off' ? 'off' : postings === null ? 'unavailable' : 'ok';
   const persona = mapPersona(answers, profile);
@@ -225,7 +226,7 @@ async function scanTab(tabId: number, domain: string): Promise<SiteScan | null> 
 }
 
 /** Job postings are a bonus: a key without access to them shouldn't break the lookup. */
-async function getJobsOrNull(key: string, organizationId: string) {
+async function getJobsOrNull(key: Access, organizationId: string) {
   try {
     const jobs = await apollo.getJobPostings(key, organizationId);
     await store.recordSpend('jobs');
@@ -248,7 +249,7 @@ async function getJobsOrNull(key: string, organizationId: string) {
  * Merged in that order, so senior people still come first; Jev ranks everyone by title.
  * Then excluded titles are dropped here (Apollo's API ignores its own exclusion filter).
  */
-export async function findPeople(key: string, organizationId: string, f: PeopleFilters) {
+export async function findPeople(key: Access, organizationId: string, f: PeopleFilters) {
   const seniorities = f.seniorities.length ? f.seniorities : undefined;
   const keywords = f.keywords.slice(0, MAX_KEYWORD_SEARCHES);
   const senior: Promise<Contact[]>[] = [];
@@ -306,7 +307,7 @@ export async function runProfileLookup(windowId: number | null, url: string, opt
 
   const [keys, profile] = await Promise.all([store.getKeys(), store.getProfile()]);
   const missing: ('keys' | 'profile')[] = [];
-  if (!keys?.apollo || !keys?.typesafe) missing.push('keys');
+  if (!hasDataKey(keys) || !keys?.typesafe) missing.push('keys');
   if (!profile) missing.push('profile');
   if (missing.length) return show({ status: 'needs_setup', missing });
 
@@ -320,7 +321,7 @@ export async function runProfileLookup(windowId: number | null, url: string, opt
     }
     await show({ status: 'loading', domain: label, stage: 'company', partial: null });
     try {
-      match = await apollo.matchLinkedin(keys!.apollo, url);
+      match = await apollo.matchLinkedin(accessFor(keys!), url);
     } catch (err) {
       return show({ status: 'error', domain: label, error: toLookupError(err), partial: null });
     }
@@ -357,7 +358,7 @@ export interface RevealOutcome {
  */
 export async function revealContacts(windowId: number | null, domain: string, personIds: string[]): Promise<RevealOutcome> {
   const keys = await store.getKeys();
-  if (!keys?.apollo) throw new Error('Missing Apollo key');
+  if (!hasDataKey(keys)) throw new Error('Missing Apollo or treg key');
   const reveals: Record<string, RevealPatch> = {};
   let found = 0;
   let failed = 0;
@@ -367,7 +368,7 @@ export async function revealContacts(windowId: number | null, domain: string, pe
   const worker = async () => {
     for (let id = queue.shift(); id; id = queue.shift()) {
       try {
-        const r = await apollo.revealPerson(keys.apollo, id);
+        const r = await apollo.revealPerson(accessFor(keys), id);
         if (r.found) found++; // Apollo charges enrichment only when it finds the person.
         reveals[id] = {
           lastName: r.lastName, email: r.email, emailStatus: r.emailStatus, linkedin: r.linkedin, revealedAt: Date.now(),
@@ -423,7 +424,7 @@ export async function runDiscover(opts: { more?: boolean; fresh?: boolean; allow
     store.getKeys(), store.getProfile(), store.getSaved(), store.getAccountMeta(), store.getAllCached(),
     store.getDismissed(), store.getDiscover(),
   ]);
-  if (!keys?.apollo || !profile) return { status: 'needs_setup' };
+  if (!hasDataKey(keys) || !profile) return { status: 'needs_setup' };
   const seeds = pickSeeds(saved, meta);
   if (!seeds.length) return { status: 'no_seeds' };
 
@@ -443,7 +444,7 @@ export async function runDiscover(opts: { more?: boolean; fresh?: boolean; allow
   const page = same && opts.more ? previous.page + 1 : 1;
   try {
     const { organizations, totalEntries } = await apollo.searchOrganizations(
-      keys.apollo, buildLookalikeQuery(profile.rules, seeds, exclude, page),
+      accessFor(keys), buildLookalikeQuery(profile.rules, seeds, exclude, page),
     );
     await store.recordSpend('search');
     refreshBalance();
@@ -469,9 +470,9 @@ export async function runDiscover(opts: { more?: boolean; fresh?: boolean; allow
 export async function refreshBalance(force = false): Promise<void> {
   try {
     const [keys, prev] = await Promise.all([store.getKeys(), store.getBalance()]);
-    if (!keys?.apollo) return;
+    if (!hasDataKey(keys)) return;
     if (!force && prev && !prev.available && Date.now() - prev.checkedAt < DAY) return;
-    await store.setBalance(parseBalance(await apollo.getCreditUsage(keys.apollo)));
+    await store.setBalance(parseBalance(await apollo.getCreditUsage(accessFor(keys))));
   } catch (err) {
     if (err instanceof ApiError && err.invalidKey) await store.setBalance({ available: false, checkedAt: Date.now() });
   }

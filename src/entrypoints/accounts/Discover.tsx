@@ -8,6 +8,8 @@ import { send } from '@/lib/messages';
 import type { DiscoverOutcome } from '@/lib/pipeline';
 import * as store from '@/lib/storage';
 import type { LookupResult, Profile } from '@/lib/types';
+import { useCredits } from '@/components/useCredits';
+import { priceLabel } from '@/lib/credits';
 
 const TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -45,6 +47,8 @@ async function withBudget(run: (allow: boolean) => Promise<DiscoverOutcome | { s
 }
 
 export function DiscoverTab({ lookupCost }: { lookupCost: number }) {
+  const { viaTreg } = useCredits();
+  const one = priceLabel(1, viaTreg, true);
   const state = useDiscoverState();
   const [busy, setBusy] = useState<'search' | 'more' | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +84,7 @@ export function DiscoverTab({ lookupCost }: { lookupCost: number }) {
         <div className="stack">
           {discover && <p className="small muted">Your saved accounts or ICP changed since the last search.</p>}
           <button className="primary" disabled={!!busy} onClick={() => search('search')}>
-            {busy ? 'Searching…' : `Find ${DISCOVER_PAGE_SIZE} similar companies (1 credit)`}
+            {busy ? 'Searching…' : `Find ${DISCOVER_PAGE_SIZE} similar companies (${one})`}
           </button>
         </div>
       ) : (
@@ -91,11 +95,11 @@ export function DiscoverTab({ lookupCost }: { lookupCost: number }) {
           <span className="row" style={{ gap: 20 }}>
             {loaded < current.totalEntries && (
               <button className="small" disabled={!!busy} onClick={() => search('more')}>
-                {busy === 'more' ? 'Loading…' : `Load ${DISCOVER_PAGE_SIZE} more (1 credit)`}
+                {busy === 'more' ? 'Loading…' : `Load ${DISCOVER_PAGE_SIZE} more (${one})`}
               </button>
             )}
             <button className="ghost small" disabled={!!busy} onClick={() => search('search')}>
-              {busy === 'search' ? 'Searching…' : 'Search again (1 credit)'}
+              {busy === 'search' ? 'Searching…' : `Search again (${one})`}
             </button>
           </span>
         </div>
@@ -125,6 +129,7 @@ function Note({ title, body }: { title: string; body: string }) {
 }
 
 function CandidateRow({ candidate: c, result, saved, lookupCost }: { candidate: Candidate; result?: LookupResult; saved: boolean; lookupCost: number }) {
+  const { viaTreg } = useCredits();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const facts = [
@@ -165,7 +170,7 @@ function CandidateRow({ candidate: c, result, saved, lookupCost }: { candidate: 
         {r ? (
           saved ? <span className="small muted">Saved</span> : <button className="small" onClick={() => store.saveAccount(result!)}>Save</button>
         ) : (
-          <button className="small" disabled={busy} onClick={lookUp}>{busy ? 'Looking up…' : `Look up (${lookupCost} cr)`}</button>
+          <button className="small" disabled={busy} onClick={lookUp}>{busy ? 'Looking up…' : `Look up (${priceLabel(lookupCost, viaTreg)})`}</button>
         )}
         <button className="ghost small" onClick={() => store.dismissCandidate(c.domain)}>Dismiss</button>
       </div>

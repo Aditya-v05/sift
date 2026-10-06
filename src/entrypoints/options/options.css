@@ -29,3 +29,7 @@
 .people-editor p { margin: 0; }
 .seniorities { gap: 6px 18px; }
 .wrap { flex-wrap: wrap; }
+
+/* Data source choice: two radio lines, no boxes. */
+.choice { display: grid; gap: 6px; margin-top: 4px; }
+.choice label { font-weight: 400; gap: 8px; margin: 0; }

@@ -1,5 +1,5 @@
 import { browser } from 'wxt/browser';
-import { DEFAULT_SETTINGS, addSpend, current, type Balance, type Ledger, type Settings, type SpendKind } from './credits';
+import { DEFAULT_SETTINGS, addSpend, addUsd, current, type Balance, type Ledger, type Settings, type SpendKind } from './credits';
 import { EMPTY_META, type AccountMeta } from './accounts';
 import type { ProfileMatch } from './apollo';
 import type { DiscoverResult } from './discover';
@@ -45,6 +45,13 @@ export const getLedger = async () => current(await getLocal('credits'));
 let spendQueue: Promise<unknown> = Promise.resolve();
 export function recordSpend(kind: SpendKind, n = 1): Promise<void> {
   const next = spendQueue.then(async () => setLocal('credits', addSpend(await getLocal('credits'), kind, n)));
+  spendQueue = next.catch(() => {});
+  return next;
+}
+
+/** treg's exact charge for a call, queued with the credit spends so none are lost. */
+export function recordUsd(micro: number): Promise<void> {
+  const next = spendQueue.then(async () => setLocal('credits', addUsd(await getLocal('credits'), micro)));
   spendQueue = next.catch(() => {});
   return next;
 }

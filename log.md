@@ -4,6 +4,41 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-06 — dev-sift: treg as an alternative to Apollo (private repo)
+
+> "lets build treg as an option instead of apollo - let us maintain separate repo for dev-sift or something thats private"
+
+- **Repo:** `Aditya-v05/dev-sift` is private, cloned from `extens` with its history. The public `extens` is untouched.
+- **How:** treg's `apollo.*` endpoints pass Apollo's method, query and body through unchanged and return Apollo's response verbatim. So the only change is the transport:
+  - `Access` (`src/lib/access.ts`) is either `{via: 'apollo', key}` or `{via: 'treg', key}`;
+  - `route()` in `apollo.ts` sends each call to `api.apollo.io` or `treg.to/call/<endpoint>`;
+  - mapping, ranking, caching and the UI flow are shared.
+  - The one difference: treg takes the job-postings org id as `?organization_id=`.
+- **Endpoint mapping (verified live 2026-10-06):**
+  - people search → `apollo.people.search` (free);
+  - enrich → `apollo.companies.enrich`;
+  - jobs → `apollo.companies.jobs`;
+  - lookalikes → `apollo.companies.search` (passes `lookalike_organization_ids` through);
+  - people/match by id or LinkedIn → `apollo.people.enrich`.
+
+  Each paid call is $0.026. Key check: `GET /auth/me` (401 on a bad key). Balance: `GET /orgs/{id}/balance`.
+- **Money:**
+  - every call carries `X-Treg-Route-Max-Cost: 0.06` (treg has no default cap on direct calls);
+  - `X-Treg-Cost-Micro` is recorded into `ledger.usdMicro`;
+  - the credit bar shows the treg balance and dollars spent;
+  - buttons show `$0.026` / `$0.052`;
+  - the budget counts paid calls;
+  - HTTP 402 explains a low balance.
+- **Settings:** under API keys, a choice of "Your Apollo key" or "treg (pay per call, no Apollo plan needed)", with the matching key field. The `treg.to` host permission is added. README and PRIVACY are updated (treg sees the same requests Apollo would).
+- **Verified:**
+  - 8 new unit tests (routing, identical bodies, the org id query, cost recording, 402 message, prices, balance), 131 passing;
+  - a live test of Sift's own functions through treg: key check, balance, enrich, people search, jobs and lookalikes, with charges recorded at exactly 26000/26000/26000 micro and search free;
+  - smoke: 34 checks, including the treg settings swap, the treg credit bar and dollar prices;
+  - compile and build pass.
+  - Testing spent about $0.18 of the treg balance: the endpoint checks plus one live run.
+
+---
+
 ## 2026-10-06 — Social videos checked against LinkedIn and X upload specs
 
 > "i am not sure if the video is linkedin safe can u verify"

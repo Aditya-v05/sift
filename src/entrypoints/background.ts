@@ -1,14 +1,18 @@
 import { browser } from 'wxt/browser';
 import { defineBackground } from 'wxt/utils/define-background';
 import * as apollo from '@/lib/apollo';
+import { accessFor } from '@/lib/access';
 import { toLookupError, describeError } from '@/lib/errors';
 import * as jev from '@/lib/jev';
 import type { KeyTest, Message } from '@/lib/messages';
 import { refreshBalance, revealContacts, runDiscover, runLookup, runProfileLookup } from '@/lib/pipeline';
 import { domainFromUrl, linkedinProfile } from '@/lib/resolver';
-import { setView, setViewTab } from '@/lib/storage';
+import { recordUsd, setView, setViewTab } from '@/lib/storage';
 
 export default defineBackground(() => {
+  // Through treg, every paid Apollo call reports its exact price; keep the month's dollars next to the credits.
+  apollo.onTregCost((micro) => recordUsd(micro));
+
   browser.runtime.onInstalled.addListener(({ reason }) => {
     if (reason === 'install') browser.runtime.openOptionsPage();
   });
@@ -57,7 +61,7 @@ export default defineBackground(() => {
         return true;
       case 'testKeys':
         Promise.all([
-          test(() => apollo.checkKey(msg.keys.apollo), 'Apollo key not recognized'),
+          test(() => apollo.checkKey(accessFor(msg.keys)), msg.keys.provider === 'treg' ? 'treg key not recognized' : 'Apollo key not recognized'),
           test(() => jev.checkKey(msg.keys.typesafe), 'TypeSafe key not recognized'),
         ]).then(([a, t]) => {
           sendResponse({ apollo: a, typesafe: t });

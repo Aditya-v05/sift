@@ -1,7 +1,8 @@
-import { totalSpent } from '@/lib/credits';
+import { isTregBalance, totalSpent } from '@/lib/credits';
 import type { CreditState } from './useCredits';
 
 const fmt = (n: number) => n.toLocaleString('en-US');
+const usd = (n: number) => `$${n.toFixed(2)}`;
 
 function Bar({ used, of }: { used: number; of: number }) {
   const ratio = of > 0 ? Math.min(used / of, 1) : 1;
@@ -18,11 +19,32 @@ function Bar({ used, of }: { used: number; of: number }) {
  * has spent this month, against the user's budget if they set one.
  */
 export function CreditBar({ credits, onSettings }: { credits: CreditState; onSettings: () => void }) {
-  const { settings, ledger, balance } = credits;
+  const { settings, ledger, balance, viaTreg } = credits;
   const spent = totalSpent(ledger);
   const budget = settings.monthlyBudget;
 
-  if (balance?.available) {
+  // Through treg: the prepaid dollar balance, and what Sift spent this month in dollars and paid calls.
+  if (viaTreg) {
+    const spentUsd = (ledger.usdMicro ?? 0) / 1e6;
+    return (
+      <div className="credits">
+        <div className="row spread small">
+          {isTregBalance(balance) ? (
+            <span><strong>{usd(balance.usd)}</strong> left on treg</span>
+          ) : (
+            <span><strong>{usd(spentUsd)}</strong> spent through treg this month</span>
+          )}
+          <button className="link small" onClick={onSettings}>{budget === null ? 'Set budget' : 'Budget'}</button>
+        </div>
+        {budget !== null && <Bar used={spent} of={budget} />}
+        <div className="small muted">
+          Sift spent {usd(spentUsd)} this month, {fmt(spent)} paid call{spent === 1 ? '' : 's'}{budget !== null && ` of ${fmt(budget)}`}
+        </div>
+      </div>
+    );
+  }
+
+  if (balance?.available && !isTregBalance(balance)) {
     const resets = balance.cycleEnd ? new Date(balance.cycleEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null;
     return (
       <div className="credits">
