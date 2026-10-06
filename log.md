@@ -4,6 +4,13 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-07 — Links follow the public repo's rename to `Aditya-v05/sift`
+
+- **What:** the public Sift repo was renamed from `extens` to `sift`. README (including the intro that names it as the public version), PRIVACY, the store listing and the site's `REPO` constant now link to `Aditya-v05/sift`. Older log entries keep the old name.
+- **Verified:** compile passes.
+
+---
+
 ## 2026-10-07 — dev-sift: switch in place, data source as a dropdown, balance loads itself
 
 > "wouldn't it be nice if when i click the switch to so and so button it automatically switches instead of punting me back to the top ... if i keep adding stuff i think a drop down would be cool"

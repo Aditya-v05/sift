@@ -1,10 +1,10 @@
-> **dev-sift** is the private development copy of [Sift](https://github.com/Aditya-v05/extens). It adds **treg** as an alternative data source: instead of an Apollo key, use a [treg.to](https://treg.to) key and Sift reaches the same Apollo data through treg, paying per call from a treg balance. See the treg section below.
+> **dev-sift** is the private development copy of [Sift](https://github.com/Aditya-v05/sift). It adds **treg** as an alternative data source: instead of an Apollo key, use a [treg.to](https://treg.to) key and Sift reaches the same Apollo data through treg, paying per call from a treg balance. See the treg section below.
 
 # Sift
 
 <img src="public/icon/128.png" width="64" alt="Sift">
 
-[![CI](https://github.com/Aditya-v05/extens/actions/workflows/ci.yml/badge.svg)](https://github.com/Aditya-v05/extens/actions/workflows/ci.yml)
+[![CI](https://github.com/Aditya-v05/sift/actions/workflows/ci.yml/badge.svg)](https://github.com/Aditya-v05/sift/actions/workflows/ci.yml)
 
 **Website:** https://sift-through.vercel.app
 

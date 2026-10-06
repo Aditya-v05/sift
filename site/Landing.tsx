@@ -6,7 +6,7 @@ import icon48 from '../public/icon/48.png';
 import { SlatWord } from './SlatWord';
 import { acme, acmeRevealed } from './demo-data';
 
-const REPO = 'https://github.com/Aditya-v05/extens';
+const REPO = 'https://github.com/Aditya-v05/sift';
 const INSTALL = `${REPO}#install`;
 const PRIVACY = `${REPO}/blob/main/PRIVACY.md`;
 const LOG = `${REPO}/blob/main/log.md`;
