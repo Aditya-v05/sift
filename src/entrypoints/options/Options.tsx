@@ -45,8 +45,10 @@ const PICK_EVENT = 'sift:pick-source';
  * Switch the data source. With a saved key that still connects it switches at once (the background checks
  * and saves); otherwise it says why. Shared by the dropdown and the link in the costs section.
  */
-function switchSource(src: Source): Promise<SourceSwitch> {
-  return send({ type: 'useSource', provider: src });
+async function switchSource(src: Source): Promise<SourceSwitch | null> {
+  // An older background (the extension updated on disk but not reloaded) doesn't know this message and
+  // answers with nothing: return null so callers fall back to switching from this page.
+  return (await send({ type: 'useSource', provider: src }).catch(() => undefined)) ?? null;
 }
 
 /**
@@ -75,8 +77,9 @@ function KeysSection() {
     load(true);
     const off = store.onLocalChange(['keys'], () => load(false));
     const onPick = (e: Event) => {
-      setDraft((d) => ({ ...d, provider: (e as CustomEvent<Source>).detail }));
-      document.getElementById('keys')?.scrollIntoView({ behavior: 'smooth' });
+      const { source: src, scroll } = (e as CustomEvent<{ source: Source; scroll: boolean }>).detail;
+      setDraft((d) => ({ ...d, provider: src }));
+      if (scroll) document.getElementById('keys')?.scrollIntoView({ behavior: 'smooth' });
     };
     window.addEventListener(PICK_EVENT, onPick);
     return () => {
@@ -116,18 +119,11 @@ function KeysSection() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft, ready]);
 
-  const [switching, setSwitching] = useState(false);
-  const pick = async (src: Source) => {
+  // Picking a source shows it at once. When its key is saved, the key check below switches as soon as the
+  // key connects (no button); when it isn't, the key field waits for one. The dropdown never snaps back.
+  const pick = (src: Source) => {
     setStatus((st) => ({ ...st, data: undefined }));
-    if (src === using) return setDraft({ ...draft, provider: src });
-    setSwitching(true);
-    const res = await switchSource(src);
-    setSwitching(false);
-    // Switched: the storage listener moves everything over. Otherwise show that source's key field.
-    if (!res.ok) {
-      setDraft({ ...draft, provider: src });
-      if (res.reason === 'failed') setStatus((st) => ({ ...st, data: { ok: false, message: res.message } }));
-    }
+    setDraft({ ...draft, provider: src });
   };
 
   const pending = source !== using;
@@ -136,15 +132,17 @@ function KeysSection() {
       <h2>API keys</h2>
       <div>
         <label htmlFor="source">Company and people data</label>
-        <select id="source" className="source" value={source} disabled={switching} onChange={(e) => pick(e.target.value as Source)}>
+        <select id="source" className="source" value={source} onChange={(e) => pick(e.target.value as Source)}>
           {SOURCES.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
         </select>
         <div className={`small hint ${pending ? 'state-unsure' : 'muted'}`}>
-          {switching
-            ? 'Switching…'
-            : pending
-              ? `Paste your ${source === 'treg' ? 'treg' : 'Apollo'} key below. Sift switches as soon as it connects.`
-              : `Sift is using ${sourceName(using)}.`}
+          {!pending
+            ? `Sift is using ${sourceName(using)}.`
+            : status.data && !('state' in status.data) && !status.data.ok
+              ? `Still using ${sourceName(using)}: the ${source === 'treg' ? 'treg' : 'Apollo'} key below didn't connect.`
+              : dataKey(draft, source).trim()
+                ? `Switching to ${sourceName(source)}…`
+                : `Paste your ${source === 'treg' ? 'treg' : 'Apollo'} key below. Sift switches as soon as it connects.`}
         </div>
       </div>
       {source === 'treg' ? (
@@ -418,16 +416,28 @@ function CreditsSection() {
     const target: Source = viaTreg ? 'apollo' : 'treg';
     setSwitchMsg('Switching…');
     const res = await switchSource(target);
-    if (res.ok) {
+    if (!res) {
+      // Older background: let the keys section test the saved key and switch, without scrolling there.
+      window.dispatchEvent(new CustomEvent(PICK_EVENT, { detail: { source: target, scroll: false } }));
+    } else if (res.ok) {
       setSwitchMsg(`Switched to ${sourceName(target)}.`);
       setTimeout(() => setSwitchMsg(null), 2500);
     } else if (res.reason === 'no_key') {
       setSwitchMsg(null);
-      window.dispatchEvent(new CustomEvent(PICK_EVENT, { detail: target }));
+      window.dispatchEvent(new CustomEvent(PICK_EVENT, { detail: { source: target, scroll: true } }));
     } else {
       setSwitchMsg(res.message);
     }
   };
+
+  // Confirm a switch that the keys section finished.
+  useEffect(() => {
+    if (switchMsg === 'Switching…') {
+      setSwitchMsg(`Switched to ${sourceName(viaTreg ? 'treg' : 'apollo')}.`);
+      setTimeout(() => setSwitchMsg(null), 2500);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viaTreg]);
 
   // The balance shown must match the source in use; fetch it when it doesn't (e.g. right after a switch).
   const balanceMatches = viaTreg === isTregBalance(balance);

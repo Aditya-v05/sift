@@ -4,6 +4,19 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-07 — v0.3.1: the data-source dropdown no longer snaps back
+
+> A screen recording: picking treg in the dropdown flipped straight back to Apollo.
+
+- **Cause:** Chrome loads an unpacked extension's pages fresh from disk, but its background worker keeps running the old code until the extension is reloaded. The new Settings page asked the old background to `useSource`; it didn't know that message and answered with nothing. The page assumed an answer, threw, and the controlled `<select>` fell back to Apollo.
+- **Fix:**
+  - the dropdown no longer depends on the background: picking a source shows it at once, and the keys section tests that source's saved key and saves the switch when it connects ("Switching to treg…" meanwhile; "Still using … : the key below didn't connect" if it fails);
+  - the costs-section link uses the background when it answers and otherwise hands the switch to the keys section without scrolling;
+  - no answer at all is handled (`switchSource` returns null).
+- **Verified with real keys:** with the background answering and with it answering nothing (simulating an old worker), the dropdown went Apollo → treg and the costs link went treg → Apollo, both saved, no page jump, no errors. Compile, 131 tests, smoke 37 and the 0.3.1 zip pass.
+
+---
+
 ## 2026-10-07 — v0.3.0: treg comes to public Sift
 
 > "lets bring treg to public sift"
