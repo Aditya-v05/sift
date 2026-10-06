@@ -44,3 +44,15 @@ ffmpeg -i out/demo-m.mp4 -an -c:v libx264 -preset slow -crf 27 -pix_fmt yuv420p 
 ```
 
 Remotion is free for individuals and companies of up to three people; see its license.
+
+### Before posting to LinkedIn or X
+
+Remotion writes full-range colour (`yuvj420p`) with no audio track. Re-encode to standard range with a silent audio track, which is what the platforms expect:
+
+```sh
+ffmpeg -i out/sift-social-4x5.mp4 -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=48000 -shortest \
+  -map 0:v -map 1:a -vf "scale=in_range=full:out_range=tv,format=yuv420p" \
+  -c:v libx264 -profile:v high -level 4.1 -preset slow -crf 18 \
+  -colorspace bt709 -color_primaries bt709 -color_trc bt709 -color_range tv \
+  -c:a aac -b:a 128k -movflags +faststart sift-social-4x5.mp4
+```

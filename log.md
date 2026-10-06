@@ -4,6 +4,26 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-06 — Social videos checked against LinkedIn and X upload specs
+
+> "i am not sure if the video is linkedin safe can u verify"
+
+- **Already within spec:**
+  - MP4 with H.264 High profile, 30 fps, 20.9 s, 5–7 MB;
+  - aspect ratios 16:9, 1:1 and 4:5, all within LinkedIn's 1:2.4–2.4:1 range and X's 1:2.39–2.39:1;
+  - resolution at most 1920×1080;
+  - square pixels;
+  - fast start (moov before mdat).
+- **Fixed:** full-range colour (`yuvj420p`), which platforms can wash out or crush on re-encode, is now standard-range `yuv420p` tagged BT.709. The files had no audio track, a known cause of upload-processing hiccups, so a silent stereo AAC track (48 kHz) was added. Level 4.1. The Desktop files are replaced.
+- **Verified:**
+  - ffprobe on all three;
+  - a frame compared before and after (identical colour, made-up email intact);
+  - all three decode cleanly.
+
+  The exact command is in `video/README.md`.
+
+---
+
 ## 2026-10-06 — Social thumbnails and a landscape cut
 
 > "can we generate a thumbnail as well" / "i think the text thing is not necessary" / "having a landscape orientation is fine because many people post using that"
