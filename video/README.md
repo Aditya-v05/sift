@@ -56,3 +56,20 @@ ffmpeg -i out/sift-social-4x5.mp4 -f lavfi -i anullsrc=channel_layout=stereo:sam
   -colorspace bt709 -color_primaries bt709 -color_trc bt709 -color_range tv \
   -c:a aac -b:a 128k -movflags +faststart sift-social-4x5.mp4
 ```
+
+## The treg demo (story `TREG`)
+
+A second recording (2026-10-07, v0.3.1): switching the data source to treg in Settings, then browserbase.com scored against treg's own ICP, and the founder's email revealed for $0.026. Source prep for `public/treg.mp4` (kept local, like `clean.mp4`):
+
+- Chrome's "Paused", "Action required" and "Ask Gemini" buttons are covered with strips of the frame's own empty toolbar and tab bar, stretched sideways. This stays in the video's native colour, since drawing colours shifted them.
+- The revealed email is blurred from 22.95 s, the exact frame it appears.
+- The macOS menu bar is cropped off.
+
+In the edit, `TextPatch`es draw the made-up `paul@browserbase.example` over the address, and the label "engineering team shipping AI features" over "n engineering…" (a rule-maker bug since fixed). Both use the panel's white as Remotion decodes it, `#fcfcfc`.
+
+```sh
+npm run render:treg     # out/treg-16x9.mp4, treg-4x5.mp4, treg-1x1.mp4
+npx remotion still src/index.ts TregPortraitThumb out/treg-thumb-Portrait.png   # also Landscape, Square
+```
+
+Then apply the export step above before posting.

@@ -5,6 +5,7 @@
   "scripts": {
     "studio": "remotion studio src/index.ts",
     "render": "remotion render src/index.ts SiftDemo out/demo.mp4 --crf=24 && remotion render src/index.ts SiftDemoVertical out/demo-m.mp4 --crf=24",
+    "render:treg": "remotion render src/index.ts TregLandscape out/treg-16x9.mp4 --crf=18 && remotion render src/index.ts TregPortrait out/treg-4x5.mp4 --crf=18 && remotion render src/index.ts TregSquare out/treg-1x1.mp4 --crf=18",
     "render:social": "remotion render src/index.ts SiftSocialPortrait out/sift-social-4x5.mp4 --crf=18 && remotion render src/index.ts SiftSocialSquare out/sift-social-1x1.mp4 --crf=18 && remotion render src/index.ts SiftSocialLandscape out/sift-social-16x9.mp4 --crf=18"
   },
   "dependencies": {

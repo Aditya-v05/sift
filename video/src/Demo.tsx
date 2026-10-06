@@ -7,7 +7,9 @@ import {
 } from 'remotion';
 
 /*
- * The landing page demo: a real screen recording of Sift on usepylon.com (public/clean.mp4, made from the raw
+ * Demo videos edited from real screen recordings. Each recording is a Story (below): which stretches to use,
+ * where the camera looks, the captions, the cards, and any text drawn over the recording. The first story is the
+ * landing page demo: a real screen recording of Sift on usepylon.com (public/clean.mp4, made from the raw
  * recording with the revealed email blurred and Chrome's own buttons painted over; see README.md), cut into
  * three moments, with a camera that follows the panel and one caption per moment.
  *
@@ -85,22 +87,44 @@ export const FORMATS: Format[] = [
   },
 ];
 
-// ---------- the cut: [start, end] in seconds of the recording ----------
+// ---------- a story: one recording, cut and narrated ----------
 
-const CLIPS = [
-  { from: 1.0, to: 3.85 },   // clicking the Sift icon, the panel loading
-  { from: 4.3, to: 14.0 },   // Pylon: fit, why now, the best contact, email revealed
-  { from: 22.0, to: 25.6 },  // back at the top: Save, Saved
-] as const;
+type Seconds = { from: number; to: number };
+
+/** Text drawn over the recording, in its pixels, so it moves with the camera (made-up emails, corrected labels). */
+interface Patch extends Seconds {
+  text: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  bg: string;
+  size?: number;
+  /** Left padding before the text, so it lines up with the recording's own text. */
+  pad?: number;
+}
+
+export interface Story {
+  src: string;
+  /** Stretches of the recording, in its own seconds. */
+  clips: Seconds[];
+  camera: (f: Format, a: number) => Key[];
+  captions: (Seconds & { label: string; text: ReactNode })[];
+  patches: Patch[];
+  intro: (f: Format) => ReactNode;
+  introKicker?: (f: Format) => string | undefined;
+  outroSub: (f: Format) => ReactNode;
+  outro?: ReactNode;
+}
 
 const FADE = 10;
-const len = (c: { from: number; to: number }) => Math.round((c.to - c.from) * FPS);
+const len = (c: Seconds) => Math.round((c.to - c.from) * FPS);
 
 /** Where each clip (and then the outro) starts, and the total length, for a format. */
-export function timeline(f: Format) {
+export function timeline(f: Format, story: Story = PYLON) {
   const starts: number[] = [];
   let at = f.intro - FADE;
-  for (const c of CLIPS) {
+  for (const c of story.clips) {
     starts.push(at);
     at += len(c) - FADE;
   }
@@ -121,32 +145,6 @@ export function box(cx: number, cy: number, w: number, aspect: number): Rect {
   };
 }
 
-function cameraKeys(f: Format): Key[] {
-  const a = f.width / (f.height - f.band);
-  const shot = ([cx, cy, w]: Shot) => box(cx, cy, w, a);
-  // Panel column: x 2180..2930. Where things sit in the panel changes as it scrolls (see README.md).
-  const panel = (cy: number) => box(f.panel[0], cy, f.panel[1], a);
-  // Before Chrome went fullscreen the toolbar (with the Sift icon) is at the top: keep it in frame.
-  const top = shot(f.top);
-  const start = shot(f.start);
-  return [
-    [1.0, top],
-    [1.5, shot(f.icon)], // towards the icon
-    [2.4, shot(f.icon)],
-    [3.85, top],
-    [4.3, start],
-    [5.0, start],
-    [5.9, panel(700)], // the score and the checks
-    [6.6, panel(700)],
-    [8.2, panel(1000)], // why now
-    [9.2, panel(1000)],
-    [10.2, panel(1180)], // best contact and the reveal
-    [14.0, panel(1180)],
-    [22.0, panel(640)],
-    [25.6, panel(600)],
-  ];
-}
-
 function cameraAt(keys: Key[], t: number): Rect {
   let i = 0;
   while (i < keys.length - 2 && keys[i + 1]![0] <= t) i++;
@@ -159,55 +157,148 @@ function cameraAt(keys: Key[], t: number): Rect {
   return { x: mix(r0.x, r1.x), y: mix(r0.y, r1.y), w: mix(r0.w, r1.w), h: mix(r0.h, r1.h) };
 }
 
-// ---------- the revealed email: a real person's, so it's replaced by a made-up one ----------
+// ---------- story 1: Sift on usepylon.com (the landing page demo) ----------
+
+export const PYLON: Story = {
+  src: 'clean.mp4',
+  clips: [
+    { from: 1.0, to: 3.85 }, // clicking the Sift icon, the panel loading
+    { from: 4.3, to: 14.0 }, // Pylon: fit, why now, the best contact, email revealed
+    { from: 22.0, to: 25.6 }, // back at the top: Save, Saved
+  ],
+  camera: (f, a) => {
+    const shot = ([cx, cy, w]: Shot) => box(cx, cy, w, a);
+    // Panel column: x 2180..2930. Where things sit in the panel changes as it scrolls (see README.md).
+    const panel = (cy: number) => box(f.panel[0], cy, f.panel[1], a);
+    // Before Chrome went fullscreen the toolbar (with the Sift icon) is at the top: keep it in frame.
+    const top = shot(f.top);
+    const start = shot(f.start);
+    return [
+      [1.0, top],
+      [1.5, shot(f.icon)], // towards the icon
+      [2.4, shot(f.icon)],
+      [3.85, top],
+      [4.3, start],
+      [5.0, start],
+      [5.9, panel(700)], // the score and the checks
+      [6.6, panel(700)],
+      [8.2, panel(1000)], // why now
+      [9.2, panel(1000)],
+      [10.2, panel(1180)], // best contact and the reveal
+      [14.0, panel(1180)],
+      [22.0, panel(640)],
+      [25.6, panel(600)],
+    ];
+  },
+  captions: [
+    { from: 1.0, to: 3.85, label: 'usepylon.com', text: <>One click on <em>their</em> homepage.</> },
+    { from: 4.6, to: 7.4, label: '82% · strong fit', text: <>Scored against <em>your</em> customer.</> },
+    { from: 7.9, to: 10.2, label: 'why now · timing 75', text: <>Why they matter <em>this week.</em></> },
+    { from: 10.6, to: 14.0, label: 'best contact · email verified', text: <>Who to talk to, <em>and how.</em></> },
+    { from: 22.2, to: 25.6, label: 'my accounts', text: <>Save it. <em>Rank it later.</em></> },
+  ],
+  // The revealed email is a real person's, so it's replaced by a made-up one. `.example` is reserved (RFC 2606)
+  // and can never belong to anyone. clean.mp4 also blurs the real address underneath (see README.md).
+  patches: [{ text: 'dan@usepylon.example', from: 11.7, to: 14.4, x: 2226, y: 1388, w: 334, h: 64, bg: '#fcfcfc' }],
+  intro: (f) => (f.social ? <>Know who to email <em style={{ color: MINT }}>before you leave their homepage.</em></> : <>Sift, on a real site.</>),
+  introKicker: (f) => (f.social ? 'a free Chrome extension' : undefined),
+  outroSub: (f) => (f.social ? <>Free and open source, on your own Apollo + Jev keys<br />sift-through.vercel.app</> : 'Free and open source · sift-through.vercel.app'),
+};
+
+// ---------- story 2: Sift running on treg (browserbase.com), for the co-marketing post ----------
 
 /**
- * Drawn over the panel in recording pixels, so it moves with the camera. `.example` is reserved (RFC 2606) and
- * can never belong to anyone. clean.mp4 also blurs the real address underneath from the same moment, as a
- * safety net (see README.md).
+ * Recorded 2026-10-07 on v0.3.1: switching the data source to treg in Settings, then browserbase.com scored
+ * against treg's own ICP, and the founder's email revealed for $0.026. treg.mp4 is the recording with Chrome's
+ * account buttons covered, the revealed email blurred, and the menu bar cropped (see README.md).
  */
-const FAKE_EMAIL = { text: 'dan@usepylon.example', from: 11.7, to: 14.4, x: 2226, y: 1388, w: 334, h: 64 };
+export const TREG: Story = {
+  src: 'treg.mp4',
+  clips: [
+    { from: 1.2, to: 9.6 }, // Settings: the dropdown, treg, the key pasted, "Sift is using treg"
+    { from: 10.0, to: 16.3 }, // browserbase.com, the icon, the panel scoring it
+    { from: 20.6, to: 25.0 }, // best contacts; the founder's email revealed
+    { from: 26.5, to: 30.3 }, // back at the top: the spend, Save
+  ],
+  camera: (f, a) => {
+    const panel = (cy: number) => box(f.panel[0], cy, f.panel[1], a);
+    // The Settings column is x 780..2160; keep the API keys block in frame.
+    // Left edge just before the column (x 780), so its text is never cut.
+    const left = (w: number) => Math.min(SRC.w, Math.max(w, 1150));
+    const settings = box(740 + left(1250 * a) / 2, 640, left(1250 * a), a);
+    const keys = box(740 + left(1000 * a) / 2, 560, left(1000 * a), a);
+    const site = box(f.start[0], f.start[1], f.start[2], a);
+    const icon = box(2250, 300, Math.min(SRC.w, 900 * a), a);
+    return [
+      [1.2, settings],
+      [2.0, keys], // the dropdown, the key, "Sift is using treg"
+      [9.6, keys],
+      [10.0, site],
+      [11.4, site],
+      [12.2, icon], // the Sift icon
+      [12.9, icon],
+      [13.8, panel(620)], // the score
+      [14.6, panel(860)], // and the checks it met
+      [16.3, panel(880)],
+      [20.6, panel(1260)], // best contacts and the reveal
+      [25.0, panel(1260)],
+      [26.5, panel(560)],
+      [30.3, panel(560)],
+    ];
+  },
+  captions: [
+    { from: 1.2, to: 5.2, label: 'settings · data source', text: <>Pick treg. <em>No Apollo plan needed.</em></> },
+    { from: 5.2, to: 9.6, label: 'treg key · connected and saved', text: <>One key. <em>That's the setup.</em></> },
+    { from: 10.1, to: 13.6, label: 'browserbase.com', text: <>One click on <em>their</em> homepage.</> },
+    { from: 13.7, to: 16.3, label: '81% · strong fit', text: <>The same Apollo data, <em>through treg.</em></> },
+    { from: 20.6, to: 22.9, label: 'best contacts · 8 found', text: <>Who to email, <em>ranked.</em></> },
+    { from: 22.9, to: 25.0, label: 'email verified · $0.026', text: <>Every click <em>priced in dollars.</em></> },
+    { from: 26.5, to: 30.3, label: '$0.08 for the whole lookup', text: <>Pay per call. <em>People search is free.</em></> },
+  ],
+  patches: [
+    // The ICP rule maker (fixed since) cut the "a" off "an engineering team": show the label as it now reads.
+    { text: 'engineering team shipping AI features', from: 14.3, to: 16.4, x: 2275, y: 1199, w: 548, h: 46, bg: '#fcfcfc', pad: 10 },
+    { text: 'engineering team shipping AI features', from: 26.4, to: 30.4, x: 2275, y: 1199, w: 548, h: 46, bg: '#fcfcfc', pad: 10 },
+    // The founder's real address, replaced by a made-up one (blurred underneath in treg.mp4 too).
+    { text: 'paul@browserbase.example', from: 22.95, to: 25.1, x: 2232, y: 1333, w: 380, h: 50, bg: '#fcfcfc' },
+  ],
+  intro: () => <>No Apollo plan? <em style={{ color: MINT }}>Sift runs on treg now.</em></>,
+  introKicker: () => 'Sift × treg',
+  outroSub: () => <>Now on treg · free and open source<br />sift-through.vercel.app</>,
+};
 
-function FakeEmail({ t }: { t: number }) {
-  if (t < FAKE_EMAIL.from || t > FAKE_EMAIL.to) return null;
-  const { x, y, w, h, text } = FAKE_EMAIL;
+export const STORIES = { pylon: PYLON, treg: TREG } as const;
+export type StoryId = keyof typeof STORIES;
+
+// ---------- pieces ----------
+
+export function TextPatch({ p, t }: { p: Patch; t: number }) {
+  if (t < p.from || t > p.to) return null;
   return (
     <div
       style={{
-        position: 'absolute', left: x, top: y, width: w, height: h, background: '#fcfcfc', boxShadow: '0 0 6px 4px #fcfcfc',
-        display: 'flex', alignItems: 'center', paddingLeft: 12, fontFamily: sans, fontSize: 28, color: '#26282b',
+        position: 'absolute', left: p.x, top: p.y, width: p.w, height: p.h, background: p.bg, boxShadow: `0 0 6px 4px ${p.bg}`,
+        display: 'flex', alignItems: 'center', paddingLeft: p.pad ?? 12, fontFamily: sans, fontSize: p.size ?? 28, color: '#26282b',
         letterSpacing: '0.005em', whiteSpace: 'nowrap',
       }}
     >
-      {text}
+      {p.text}
     </div>
   );
 }
 
-// ---------- captions: one per moment, in recording time ----------
-
-const CAPTIONS: { from: number; to: number; label: string; text: ReactNode }[] = [
-  { from: 1.0, to: 3.85, label: 'usepylon.com', text: <>One click on <em>their</em> homepage.</> },
-  { from: 4.6, to: 7.4, label: '82% · strong fit', text: <>Scored against <em>your</em> customer.</> },
-  { from: 7.9, to: 10.2, label: 'why now · timing 75', text: <>Why they matter <em>this week.</em></> },
-  { from: 10.6, to: 14.0, label: 'best contact · email verified', text: <>Who to talk to, <em>and how.</em></> },
-  { from: 22.2, to: 25.6, label: 'my accounts', text: <>Save it. <em>Rank it later.</em></> },
-];
-
-// ---------- pieces ----------
-
-function Clip({ clip, f }: { clip: (typeof CLIPS)[number]; f: Format }) {
+function Clip({ clip, f, story }: { clip: Seconds; f: Format; story: Story }) {
   const frame = useCurrentFrame();
   const { width, height, durationInFrames } = useVideoConfig();
   const band = f.band;
   const t = clip.from + frame / FPS;
-  const cam = cameraAt(cameraKeys(f), t);
+  const cam = cameraAt(story.camera(f, f.width / (f.height - f.band)), t);
   const scale = width / cam.w;
   const fade = Math.min(
     interpolate(frame, [0, FADE], [0, 1], { extrapolateRight: 'clamp' }),
     interpolate(frame, [durationInFrames - FADE, durationInFrames], [1, 0], { extrapolateLeft: 'clamp' }),
   );
-  const caption = CAPTIONS.find((c) => t >= c.from && t < c.to);
+  const caption = story.captions.find((c) => t >= c.from && t < c.to);
   return (
     <AbsoluteFill style={{ backgroundColor: NIGHT, opacity: fade }}>
       <div style={{ position: 'absolute', left: 0, top: 0, width, height: height - band, overflow: 'hidden' }}>
@@ -218,12 +309,12 @@ function Clip({ clip, f }: { clip: (typeof CLIPS)[number]; f: Format }) {
         }}
       >
         <OffthreadVideo
-          src={staticFile('clean.mp4')}
+          src={staticFile(story.src)}
           startFrom={Math.round(clip.from * FPS)}
           muted
           style={{ position: 'absolute', left: 0, top: 0, width: SRC.w, height: SRC.h, maxWidth: 'none' }}
         />
-        <FakeEmail t={t} />
+        {story.patches.map((p, i) => <TextPatch key={i} p={p} t={t} />)}
       </div>
       </div>
       {caption && <Caption key={caption.label} {...caption} t={t} f={f} />}
@@ -279,30 +370,22 @@ function Progress() {
 
 // ---------- the whole thing ----------
 
-export function Demo({ format }: { format: Format['id'] }) {
+export function Demo({ format, story: id = 'pylon' }: { format: Format['id']; story?: StoryId }) {
   const f = FORMATS.find((x) => x.id === format)!;
-  const { starts } = timeline(f);
+  const story = STORIES[id];
+  const { starts } = timeline(f, story);
   return (
     <AbsoluteFill style={{ backgroundColor: NIGHT }}>
       <Sequence durationInFrames={f.intro}>
-        {f.social ? (
-          <Card f={f} kicker="a free Chrome extension">
-            Know who to email <em style={{ color: MINT }}>before you leave their homepage.</em>
-          </Card>
-        ) : (
-          <Card f={f}>Sift, on a real site.</Card>
-        )}
+        <Card f={f} kicker={story.introKicker?.(f)}>{story.intro(f)}</Card>
       </Sequence>
-      {CLIPS.map((c, i) => (
+      {story.clips.map((c, i) => (
         <Sequence key={c.from} from={starts[i]} durationInFrames={len(c)}>
-          <Clip clip={c} f={f} />
+          <Clip clip={c} f={f} story={story} />
         </Sequence>
       ))}
-      <Sequence from={starts[3]} durationInFrames={f.outro}>
-        <Card
-          f={f}
-          sub={f.social ? <>Free and open source, on your own Apollo + Jev keys<br />sift-through.vercel.app</> : 'Free and open source · sift-through.vercel.app'}
-        >
+      <Sequence from={starts[story.clips.length]} durationInFrames={f.outro}>
+        <Card f={f} sub={story.outroSub(f)}>
           Sift through companies.<br /><em style={{ color: MINT }}>Talk to the right ones.</em>
         </Card>
       </Sequence>

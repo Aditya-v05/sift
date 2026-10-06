@@ -4,6 +4,26 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-07 — treg demo video for the co-marketing post
+
+> Jason Zhou (treg): "feel free to make a demo post showing Treg in your app and I will repost!"
+
+- **Recording:** the user recorded Sift on v0.3.1 against a new ICP (treg's own customer: seed–Series B AI agent startups, 10–200 people, US):
+  - Settings: Apollo → treg, "Sift is using treg";
+  - browserbase.com: 81% strong fit, 4 of 4 met, why now (hiring, headcount +25%, the Okta partnership from their blog);
+  - Paul Klein (Founder), email revealed for $0.026; $0.08 for the whole lookup.
+- **Edit:** the Remotion edit is now story-based (`Story` in `video/src/Demo.tsx`). The Pylon demo is one story and the new `TREG` another, each with its own clips, camera, captions, text patches and cards.
+  - Captions: "Pick treg. No Apollo plan needed." / "One key. That's the setup." / "One click on their homepage." / "The same Apollo data, through treg." / "Who to email, ranked." / "Every click priced in dollars." / "Pay per call. People search is free."
+  - Hook card: "Sift × treg / No Apollo plan? Sift runs on treg now."
+- **Clean-up:**
+  - Chrome's account buttons are covered with stretched strips of the empty toolbar (native colour);
+  - the email is blurred from the exact frame and overdrawn with `paul@browserbase.example`;
+  - the "n engineering team…" label (a bug, fixed in the previous entry) is overdrawn with the correct text.
+- **Output:** 16:9, 4:5 and 1:1, 27.3 s, exported for X and LinkedIn (H.264 High, yuv420p tv, BT.709, silent AAC, fast start), with text-free thumbnails. All are on the Desktop as `sift-treg-*`.
+- **Verified:** every frame of the reveal in all three cuts shows "Revealing…" then only the made-up address. The patches match the panel's white.
+
+---
+
 ## 2026-10-07 — Fix: company checks lost the "a" of "an"
 
 > Found in the treg demo recording: the check read "n engineering team shipping AI features".

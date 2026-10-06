@@ -1,6 +1,6 @@
 import React from 'react';
 import { Composition, Still } from 'remotion';
-import { Demo, FORMATS, timeline } from './Demo';
+import { Demo, FORMATS, TREG, timeline } from './Demo';
 import { Thumb } from './Thumb';
 
 export const Root = () => (
@@ -17,8 +17,24 @@ export const Root = () => (
         defaultProps={{ format: f.id }}
       />
     ))}
+    {/* The treg co-marketing post: the three feed formats. */}
     {FORMATS.filter((f) => f.social).map((f) => (
-      <Still key={`${f.id}Thumb`} id={`${f.id}Thumb`} component={Thumb} width={f.width} height={f.height} defaultProps={{ format: f.id }} />
+      <Composition
+        key={`Treg${f.id}`}
+        id={`Treg${f.id.replace('SiftSocial', '')}`}
+        component={Demo}
+        durationInFrames={timeline(f, TREG).total}
+        fps={30}
+        width={f.width}
+        height={f.height}
+        defaultProps={{ format: f.id, story: 'treg' as const }}
+      />
+    ))}
+    {FORMATS.filter((f) => f.social).map((f) => (
+      <React.Fragment key={`${f.id}Thumb`}>
+        <Still id={`${f.id}Thumb`} component={Thumb} width={f.width} height={f.height} defaultProps={{ format: f.id }} />
+        <Still id={`Treg${f.id.replace('SiftSocial', '')}Thumb`} component={Thumb} width={f.width} height={f.height} defaultProps={{ format: f.id, story: 'treg' as const }} />
+      </React.Fragment>
     ))}
   </>
 );
