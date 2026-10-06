@@ -61,7 +61,7 @@ function KeysSection() {
   const dataKey = viaTreg ? keys.treg : keys.apollo;
 
   return (
-    <section className="card stack">
+    <section className="card stack" id="keys">
       <h2>API keys</h2>
       <div>
         <label>Company and people data</label>
@@ -355,6 +355,10 @@ function CreditsSection() {
   return (
     <section className="card stack">
       <h2>{viaTreg ? 'Costs (treg)' : 'Apollo credits'}</h2>
+      <div className="small">
+        <span className="muted">Data comes from {viaTreg ? 'treg' : 'your Apollo key'}. </span>
+        <a href="#keys">Switch to {viaTreg ? 'your Apollo key' : 'treg'}</a>
+      </div>
       {viaTreg ? (
         <p className="small muted" style={{ margin: 0 }}>
           Through treg, each paid Apollo call costs $0.026 from your treg balance. A new company lookup is {lookupCost(settings)} call
