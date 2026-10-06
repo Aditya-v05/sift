@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { StateIcon } from '@/components/Icon';
 import { useCredits } from '@/components/useCredits';
-import { isTregBalance, lookupCost, priceLabel, totalSpent } from '@/lib/credits';
+import { isTregBalance, lookupCost, priceLabel, totalSpent, usdFor } from '@/lib/credits';
 import { openAccounts, send, type KeyTest } from '@/lib/messages';
 import { SENIORITY_OPTIONS, peopleFilters } from '@/lib/people';
 import { generateRules } from '@/lib/rules';
@@ -28,88 +28,116 @@ export default function Options() {
 
 // ---------- keys ----------
 
+type Source = 'apollo' | 'treg';
+type FieldStatus = { state: 'checking' } | KeyTest;
+
+/**
+ * Keys save themselves: a key is tested a moment after you paste or type it, and kept once it connects.
+ * Picking a data source switches at once when its key is already saved; otherwise its key field opens and
+ * Sift switches as soon as that key connects. No Save button.
+ */
 function KeysSection() {
-  const [keys, setKeys] = useState<Keys>({ apollo: '', typesafe: '', provider: 'apollo', treg: '' });
-  const [tests, setTests] = useState<{ apollo: KeyTest; typesafe: KeyTest } | null>(null);
-  const [busy, setBusy] = useState(false);
-  /** The source Sift is using right now (what's saved), as opposed to the one picked on screen. */
-  const [savedProvider, setSavedProvider] = useState<'apollo' | 'treg'>('apollo');
-  const viaTreg = keys.provider === 'treg';
+  const [saved, setSaved] = useState<Keys>({ apollo: '', typesafe: '', provider: 'apollo', treg: '' });
+  const [draft, setDraft] = useState<Keys>(saved);
+  const [status, setStatus] = useState<{ data?: FieldStatus; jev?: FieldStatus }>({});
+  const [ready, setReady] = useState(false);
+  const source: Source = draft.provider ?? 'apollo';
+  const using: Source = saved.provider ?? 'apollo';
+  const dataKey = (k: Keys, src: Source) => (src === 'treg' ? k.treg ?? '' : k.apollo);
 
   useEffect(() => {
     store.getKeys().then((k) => {
-      if (!k) return;
-      setKeys({ provider: 'apollo', treg: '', ...k });
-      setSavedProvider(k.provider ?? 'apollo');
+      const full: Keys = { apollo: '', typesafe: '', provider: 'apollo', treg: '', ...k };
+      setSaved(full);
+      setDraft(full);
+      setReady(true);
     });
   }, []);
 
-  const saveAndTest = async () => {
-    setBusy(true);
-    const trimmed: Keys = { apollo: keys.apollo.trim(), typesafe: keys.typesafe.trim(), provider: keys.provider ?? 'apollo', treg: (keys.treg ?? '').trim() };
-    await store.setKeys(trimmed);
-    setKeys(trimmed);
-    setSavedProvider(trimmed.provider ?? 'apollo');
-    setTests(await send({ type: 'testKeys', keys: trimmed }));
-    setBusy(false);
+  // Test whatever changed, a moment after the last keystroke, and keep what connects.
+  useEffect(() => {
+    if (!ready) return;
+    const src = draft.provider ?? 'apollo';
+    const dataChanged = dataKey(draft, src).trim() && (dataKey(draft, src).trim() !== dataKey(saved, src) || src !== using);
+    const jevChanged = draft.typesafe.trim() && draft.typesafe.trim() !== saved.typesafe;
+    if (!dataChanged && !jevChanged) return;
+    const t = setTimeout(async () => {
+      const candidate: Keys = {
+        apollo: draft.apollo.trim(), typesafe: (jevChanged ? draft.typesafe : saved.typesafe).trim(), provider: src, treg: (draft.treg ?? '').trim(),
+      };
+      setStatus((st) => ({ data: dataChanged ? { state: 'checking' } : st.data, jev: jevChanged ? { state: 'checking' } : st.jev }));
+      const res = await send({ type: 'testKeys', keys: candidate });
+      const next: Keys = { ...saved };
+      if (dataChanged && res.apollo.ok) {
+        next.provider = src;
+        if (src === 'treg') next.treg = candidate.treg;
+        else next.apollo = candidate.apollo;
+      }
+      if (jevChanged && res.typesafe.ok) next.typesafe = candidate.typesafe;
+      setStatus((st) => ({ data: dataChanged ? res.apollo : st.data, jev: jevChanged ? res.typesafe : st.jev }));
+      if (JSON.stringify(next) !== JSON.stringify(saved)) {
+        await store.setKeys(next);
+        setSaved(next);
+        await send({ type: 'refreshBalance' });
+      }
+    }, 700);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft, ready]);
+
+  const pick = (src: Source) => {
+    setStatus((st) => ({ ...st, data: undefined }));
+    setDraft({ ...draft, provider: src });
   };
 
-  const pick = (provider: 'apollo' | 'treg') => {
-    setKeys({ ...keys, provider });
-    setTests(null);
-  };
-  const dataKey = viaTreg ? keys.treg : keys.apollo;
-
+  const pending = source !== using;
   return (
     <section className="card stack" id="keys">
       <h2>API keys</h2>
       <div>
         <label>Company and people data</label>
         <div className="choice" role="radiogroup" aria-label="Where company and people data comes from">
-          <label className="row"><input type="radio" name="provider" checked={!viaTreg} onChange={() => pick('apollo')} /> Your Apollo key</label>
-          <label className="row"><input type="radio" name="provider" checked={viaTreg} onChange={() => pick('treg')} /> treg (pay per call, no Apollo plan needed)</label>
+          <label className="row"><input type="radio" name="provider" checked={source === 'apollo'} onChange={() => pick('apollo')} /> Your Apollo key</label>
+          <label className="row"><input type="radio" name="provider" checked={source === 'treg'} onChange={() => pick('treg')} /> treg (pay per call, no Apollo plan needed)</label>
         </div>
-        {(keys.provider ?? 'apollo') !== savedProvider && (
-          <div className="small state-unsure hint">
-            Sift still uses {savedProvider === 'treg' ? 'treg' : 'your Apollo key'}. Press Save &amp; test keys to switch.
-          </div>
-        )}
+        <div className={`small hint ${pending ? 'state-unsure' : 'muted'}`}>
+          {pending
+            ? `Paste your ${source === 'treg' ? 'treg' : 'Apollo'} key below. Sift switches as soon as it connects.`
+            : `Sift is using ${using === 'treg' ? 'treg' : 'your Apollo key'}.`}
+        </div>
       </div>
-      {viaTreg ? (
+      {source === 'treg' ? (
         <KeyField
           label="treg API key"
           hint={<>From <a href="https://treg.to" target="_blank" rel="noreferrer">treg.to</a>. Sift uses Apollo's data through treg: finding people is free, every other call costs $0.026 from your treg balance.</>}
-          value={keys.treg ?? ''}
-          onChange={(treg) => setKeys({ ...keys, treg })}
-          test={tests?.apollo}
+          value={draft.treg ?? ''}
+          onChange={(treg) => setDraft({ ...draft, treg })}
+          status={status.data}
         />
       ) : (
         <KeyField
           label="Apollo API key"
           hint={<>In Apollo: Settings, Integrations, API. It needs access to people search and enrichment.</>}
-          value={keys.apollo}
-          onChange={(apollo) => setKeys({ ...keys, apollo })}
-          test={tests?.apollo}
+          value={draft.apollo}
+          onChange={(apollo) => setDraft({ ...draft, apollo })}
+          status={status.data}
         />
       )}
       <KeyField
         label="TypeSafe API key (Jev)"
         hint={<>From <a href="https://typesafe.ai" target="_blank" rel="noreferrer">typesafe.ai</a>. Jev makes the fit and ranking judgments.</>}
-        value={keys.typesafe}
-        onChange={(typesafe) => setKeys({ ...keys, typesafe })}
-        test={tests?.typesafe}
+        value={draft.typesafe}
+        onChange={(typesafe) => setDraft({ ...draft, typesafe })}
+        status={status.jev}
       />
-      <div>
-        <button className="primary" disabled={busy || !dataKey || !keys.typesafe} onClick={saveAndTest}>
-          {busy ? 'Testing…' : 'Save & test keys'}
-        </button>
-      </div>
+      <p className="small muted" style={{ margin: 0 }}>Keys are checked and saved as you paste them.</p>
     </section>
   );
 }
 
-function KeyField(props: { label: string; hint: React.ReactNode; value: string; onChange: (v: string) => void; test?: KeyTest }) {
+function KeyField(props: { label: string; hint: React.ReactNode; value: string; onChange: (v: string) => void; status?: FieldStatus }) {
   const [shown, setShown] = useState(false);
+  const st = props.status;
   return (
     <div>
       <label>{props.label}</label>
@@ -118,11 +146,13 @@ function KeyField(props: { label: string; hint: React.ReactNode; value: string; 
         <button className="ghost" onClick={() => setShown(!shown)}>{shown ? 'Hide' : 'Show'}</button>
       </div>
       <div className="small muted hint">{props.hint}</div>
-      {props.test && (
-        <div className={`small row ${props.test.ok ? 'ok' : 'err'}`}>
-          <StateIcon state={props.test.ok ? 'met' : 'not_met'} /> {props.test.message}
+      {st && ('state' in st ? (
+        <div className="small muted row">Checking…</div>
+      ) : (
+        <div className={`small row ${st.ok ? 'ok' : 'err'}`}>
+          <StateIcon state={st.ok ? 'met' : 'not_met'} /> {st.ok ? 'Connected and saved' : st.message}
         </div>
-      )}
+      ))}
     </div>
   );
 }
@@ -338,14 +368,33 @@ function ListEditor({ label, hint, items, onChange }: { label: string; hint: str
 function CreditsSection() {
   const { settings, ledger, balance, viaTreg } = useCredits();
   const [budgetText, setBudgetText] = useState<string | null>(null);
+  const [budgetSaved, setBudgetSaved] = useState(false);
   const [checking, setChecking] = useState(false);
-  const budgetValue = budgetText ?? (settings.monthlyBudget === null ? '' : String(settings.monthlyBudget));
+  const shownBudget = settings.monthlyBudget === null
+    ? ''
+    : viaTreg ? String(+(settings.budgetUsd ?? usdFor(settings.monthlyBudget)).toFixed(2)) : String(settings.monthlyBudget);
+  const budgetValue = budgetText ?? shownBudget;
 
-  const saveBudget = () => {
-    const n = budgetValue.trim() === '' ? null : Math.max(0, Math.round(Number(budgetValue)));
-    store.setSettings({ ...settings, monthlyBudget: Number.isFinite(n) ? n : null });
-    setBudgetText(null);
-  };
+  // The budget saves itself a moment after you stop typing. Through treg it's typed in dollars.
+  useEffect(() => {
+    if (budgetText === null) return;
+    const t = setTimeout(async () => {
+      const raw = budgetText.trim() === '' ? null : Number(budgetText);
+      const valid = raw === null || (Number.isFinite(raw) && raw >= 0);
+      if (!valid) return;
+      const next = raw === null
+        ? { ...settings, monthlyBudget: null, budgetUsd: null }
+        : viaTreg
+          ? { ...settings, monthlyBudget: Math.floor(raw / 0.026), budgetUsd: raw }
+          : { ...settings, monthlyBudget: Math.round(raw), budgetUsd: null };
+      await store.setSettings(next);
+      setBudgetText(null);
+      setBudgetSaved(true);
+      setTimeout(() => setBudgetSaved(false), 1500);
+    }, 600);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [budgetText]);
   const check = async () => {
     setChecking(true);
     await send({ type: 'refreshBalance' });
@@ -410,17 +459,21 @@ function CreditsSection() {
       <div>
         <label>Monthly budget for Sift</label>
         <div className="row">
+          {viaTreg && <span>$</span>}
           <input
             type="number"
             min={0}
+            step={viaTreg ? 0.5 : 10}
             placeholder="No limit"
             value={budgetValue}
             onChange={(e) => setBudgetText(e.target.value)}
-            onBlur={saveBudget}
-            onKeyDown={(e) => e.key === 'Enter' && saveBudget()}
-            style={{ maxWidth: 160 }}
+            style={{ maxWidth: 140 }}
+            aria-label={viaTreg ? 'Monthly budget in dollars' : 'Monthly budget in credits'}
           />
-          <span className="small muted">{viaTreg ? 'paid calls ($0.026 each).' : 'credits.'} When reached, new lookups ask before spending.</span>
+          <span className="small muted">
+            {viaTreg ? 'a month' : 'credits a month'}. Leave empty for no limit. Past it, lookups ask first.
+          </span>
+          {budgetSaved && <span className="small ok">Saved</span>}
         </div>
       </div>
 

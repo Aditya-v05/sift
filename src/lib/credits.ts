@@ -19,8 +19,10 @@ export interface Ledger {
 }
 
 export interface Settings {
-  /** Monthly cap on credits Sift may spend; null = no cap. */
+  /** Monthly cap on credits (paid calls) Sift may spend; null = no cap. */
   monthlyBudget: number | null;
+  /** The cap as the user typed it in dollars (treg mode); monthlyBudget holds it in paid calls at $0.026. */
+  budgetUsd?: number | null;
   /** Fetch job postings for "why now" (1 extra credit per lookup). */
   fetchJobs: boolean;
   /** Read the company's own pricing/blog/changelog/security pages (free). */
@@ -69,6 +71,18 @@ export const lookupCost = (s: Settings) => 1 + (s.fetchJobs ? 1 : 0);
 export function overBudget(ledger: Ledger, settings: Settings, upcoming: number): boolean {
   return settings.monthlyBudget !== null && totalSpent(ledger) + upcoming > settings.monthlyBudget;
 }
+
+/** Dollars for a number of paid calls through treg. */
+export const usdFor = (credits: number) => credits * 0.026;
+
+/** The monthly budget as it should read: '$5.00' through treg (as typed), '200 credits' directly. */
+export function budgetLabel(settings: Settings, viaTreg: boolean): string {
+  if (settings.monthlyBudget === null) return 'no limit';
+  return viaTreg ? `$${(settings.budgetUsd ?? usdFor(settings.monthlyBudget)).toFixed(2)}` : `${settings.monthlyBudget} credits`;
+}
+
+/** What's been spent this month against the budget, in the budget's own unit. */
+export const spentLabel = (spent: number, viaTreg: boolean) => (viaTreg ? `$${usdFor(spent).toFixed(2)}` : `${spent}`);
 
 /** How a number of Apollo credits reads on a button: '2 cr' directly, '$0.05' through treg ($0.026 a credit). */
 export function priceLabel(credits: number, viaTreg: boolean, long = false): string {

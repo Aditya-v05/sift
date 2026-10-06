@@ -4,6 +4,28 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-07 — dev-sift: settings without a Save button; budget in dollars on treg
+
+> "this flow is annoying - save and test and change budget limits and its not intuitive"
+
+- **Keys save themselves:**
+  - a key is tested 0.7 s after you stop typing or paste;
+  - it is kept once it connects ("Connected and saved");
+  - a key that fails shows why and isn't saved;
+  - the Save & test button is gone.
+- **Switching is one click.** Picking a source whose key is already saved switches at once. Otherwise its key field opens with "Paste your treg key below. Sift switches as soon as it connects." The line under the choice always says which source Sift is using.
+- **Budget:**
+  - saves itself (0.6 s after typing) and confirms with "Saved";
+  - through treg it is typed in dollars (`settings.budgetUsd`, converted to paid calls at $0.026 for the over-budget check);
+  - the credit bar, the over-budget screen, the reveal-all warning and Discover's prompt show it in dollars on treg.
+- **Verified:**
+  - with the real keys: picking treg and pasting its key switched in 1.9 s, then Apollo and treg again switched instantly, and a $10 budget saved as 384 calls;
+  - smoke: 37 checks (no Save button, a $5 budget saved as 192 calls, the dollar budget in the bar);
+  - 131 tests pass.
+- **treg ledger note:** each charge appears twice in treg's history (reserve, then settle for the same call), which is not a double charge.
+
+---
+
 ## 2026-10-07 — dev-sift: treg compared with Apollo live, and a clearer switch
 
 > "lets choose a website and check if apollo and treg both work" / "now try revealing an email in both" / "how can i switch keys is the ui good enough"

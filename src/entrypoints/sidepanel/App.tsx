@@ -7,7 +7,7 @@ import { RequirementStrip, StateIcon } from '@/components/Icon';
 import { checkState, checksSummary, upgradeFit } from '@/lib/mapping';
 import { SiftThisPage, useTabSwitched } from '@/components/SiftThisPage';
 import { useCredits } from '@/components/useCredits';
-import { lookupCost, priceLabel } from '@/lib/credits';
+import { budgetLabel, lookupCost, priceLabel, spentLabel } from '@/lib/credits';
 import { describeError } from '@/lib/errors';
 import { openAccounts, send } from '@/lib/messages';
 import { isLinkedin, normalizeDomainInput } from '@/lib/resolver';
@@ -84,6 +84,8 @@ function viewSubject(view: ViewState): string | null {
 type Lookup = (domain: string, force?: boolean, allowOverBudget?: boolean, profileUrl?: string) => void;
 
 function Body({ view, windowId, lookup, cost }: { view: ViewState; windowId: number | null; lookup: Lookup; cost: number }) {
+  const credits = useCredits();
+  const { viaTreg } = credits;
   switch (view.status) {
     case 'idle':
       return (
@@ -133,7 +135,9 @@ function Body({ view, windowId, lookup, cost }: { view: ViewState; windowId: num
       return (
         <Empty
           title="Monthly credit budget reached"
-          body={`Sift has used ${view.spent} of your ${view.budget}-credit budget this month. Looking up ${view.domain} costs ${view.cost} more.`}
+          body={viaTreg
+            ? `Sift has spent ${spentLabel(view.spent, true)} of your ${budgetLabel(credits.settings, true)} budget this month. Looking up ${view.domain} costs ${priceLabel(view.cost, true)} more.`
+            : `Sift has used ${view.spent} of your ${view.budget}-credit budget this month. Looking up ${view.domain} costs ${view.cost} more.`}
         >
           <div className="row">
             <button className="primary" onClick={() => lookup(view.domain, false, true, view.profileUrl)}>Look up anyway</button>

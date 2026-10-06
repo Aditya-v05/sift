@@ -1,4 +1,4 @@
-import { isTregBalance, totalSpent } from '@/lib/credits';
+import { budgetLabel, isTregBalance, totalSpent } from '@/lib/credits';
 import type { CreditState } from './useCredits';
 
 const fmt = (n: number) => n.toLocaleString('en-US');
@@ -38,7 +38,7 @@ export function CreditBar({ credits, onSettings }: { credits: CreditState; onSet
         </div>
         {budget !== null && <Bar used={spent} of={budget} />}
         <div className="small muted">
-          Sift spent {usd(spentUsd)} this month, {fmt(spent)} paid call{spent === 1 ? '' : 's'}{budget !== null && ` of ${fmt(budget)}`}
+          Sift spent {usd(spentUsd)} this month{budget !== null ? ` of your ${budgetLabel(settings, true)} budget` : `, ${fmt(spent)} paid call${spent === 1 ? '' : 's'}`}
         </div>
       </div>
     );

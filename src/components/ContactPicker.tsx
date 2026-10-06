@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { revealable, splitContacts } from '@/lib/contacts';
-import { overBudget, priceLabel, totalSpent } from '@/lib/credits';
+import { budgetLabel, overBudget, priceLabel, spentLabel, totalSpent } from '@/lib/credits';
 import { describeError } from '@/lib/errors';
 import type { RevealOutcome } from '@/lib/pipeline';
 import type { Contact } from '@/lib/types';
@@ -99,7 +99,7 @@ function RevealAll({ contacts, reveal }: { contacts: Contact[]; reveal: Reveal }
         Reveal {n} emails for up to {viaTreg ? `${priceLabel(n, true)} through treg` : `${n} Apollo credits`}? You're only charged for people Apollo finds.
         {over && (
           <span className="state-not_met">
-            {' '}This goes past your monthly budget ({totalSpent(ledger)} of {settings.monthlyBudget} used).
+            {' '}This goes past your monthly budget ({spentLabel(totalSpent(ledger), viaTreg)} of {budgetLabel(settings, viaTreg)} used).
           </span>
         )}
       </p>

@@ -9,7 +9,7 @@ import type { DiscoverOutcome } from '@/lib/pipeline';
 import * as store from '@/lib/storage';
 import type { LookupResult, Profile } from '@/lib/types';
 import { useCredits } from '@/components/useCredits';
-import { priceLabel } from '@/lib/credits';
+import { budgetLabel, priceLabel, spentLabel } from '@/lib/credits';
 
 const TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -40,7 +40,11 @@ function useDiscoverState(): State | null {
 async function withBudget(run: (allow: boolean) => Promise<DiscoverOutcome | { status: string; spent?: number; budget?: number; cost?: number }>) {
   let res = await run(false);
   if (res.status === 'over_budget' && 'spent' in res) {
-    if (!confirm(`Monthly credit budget reached (${res.spent} of ${res.budget}). This costs ${res.cost} more. Continue?`)) return null;
+    const [keys, settingsRef] = await Promise.all([store.getKeys(), store.getSettings()]);
+    const viaTreg = keys?.provider === 'treg';
+    if (!confirm(viaTreg
+      ? `Monthly budget reached (${spentLabel(res.spent ?? 0, true)} of ${budgetLabel(settingsRef, true)}). This costs ${priceLabel(res.cost ?? 1, true)} more. Continue?`
+      : `Monthly credit budget reached (${res.spent} of ${res.budget}). This costs ${res.cost} more. Continue?`)) return null;
     res = await run(true);
   }
   return res;
