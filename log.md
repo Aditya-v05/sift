@@ -4,6 +4,20 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-07 — Fix: company checks lost the "a" of "an"
+
+> Found in the treg demo recording: the check read "n engineering team shipping AI features".
+
+- **Cause:** the rule maker strips leading filler words ("with", "a", "an", "the"…) from each ICP phrase, but without word boundaries, so "with an engineering team" lost "with", then the "a" of "an".
+- **Fix:** filler words match whole words only (`\b`, with "an" tried before "a").
+- **Tests:**
+  - the demo ICP now yields "engineering team shipping AI features";
+  - a phrase list with "with a large support team, and annual contracts, in the healthcare space" keeps every word that starts like a filler;
+  - 133 tests pass.
+- **Note:** profiles saved before the fix keep the old wording until rules are regenerated in Settings.
+
+---
+
 ## 2026-10-07 — Usage tracking: a private daily snapshot, and website analytics
 
 > "can we track the usage somehow" / "yes set up 2 and 3"

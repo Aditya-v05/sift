@@ -74,7 +74,8 @@ export function parseCountries(text: string): { countries: string[]; matched: st
   return { countries: [...countries], matched };
 }
 
-const FILLER = /^(?:and|with|that|who|which|are|is|have|has|in|based in|located in|headquartered in|the|a|an|of|or|,|\s)+|(?:\s|,|and|or|in|the)+$/gi;
+// Whole words only: without \b, the leading "a" of "an engineering team" was stripped, leaving "n engineering team".
+const FILLER = /^(?:(?:and|with|that|who|which|are|is|have|has|in|based in|located in|headquartered in|the|an|a|of|or)\b|,|\s)+|(?:\s|,|\b(?:and|or|in|the))+$/gi;
 const ONLY_STOPWORDS = /^(?:and|with|that|who|in|based|located|the|a|an|of|or|companies|company|businesses)?$/i;
 
 function cleanClause(clause: string): string {

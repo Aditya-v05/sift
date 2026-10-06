@@ -66,3 +66,21 @@ describe('evaluateRules', () => {
     expect(evaluateRules({ headcount: null, countries: [], checks: [], personas: [] }, company)).toEqual([]);
   });
 });
+
+describe('company checks keep whole words', () => {
+  it('does not cut the "a" off "an" (the treg demo ICP)', () => {
+    const r = generateRules({
+      sells: 'A data API for AI agents.',
+      icp: 'Seed to Series B AI startups building agents or agent infrastructure, 10–200 employees, based in the US, with an engineering team shipping AI features.',
+      buyers: 'Founder, CTO, Head of Engineering',
+    });
+    expect(r.checks).toEqual(['Seed to Series B AI startups building agents or agent infrastructure', 'engineering team shipping AI features']);
+    expect(r.headcount).toEqual({ min: 10, max: 200 });
+    expect(r.countries).toEqual(['United States']);
+  });
+
+  it('still drops leading filler words and keeps words that start like them', () => {
+    const r = generateRules({ sells: 'x', icp: 'B2B SaaS, with a large support team, and annual contracts, in the healthcare space', buyers: 'COO' });
+    expect(r.checks).toEqual(['B2B SaaS', 'large support team', 'annual contracts', 'healthcare space']);
+  });
+});
