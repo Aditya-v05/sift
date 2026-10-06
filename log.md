@@ -4,6 +4,30 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-07 — v0.3.0: treg comes to public Sift
+
+> "lets bring treg to public sift"
+
+- **What:** merged the private `dev-sift` work into the public repo, so the public extension can use treg instead of an Apollo key. The pieces:
+  - the transport (`src/lib/access.ts`, `route()` in `apollo.ts`);
+  - dollar prices, balance and budget;
+  - Settings with keys that save themselves, a data-source dropdown and an in-place switch.
+
+  The `dev-sift` entries below describe each step. Before merging, every private commit was scanned for keys and tokens (none).
+- **Conflicts:** README kept the public redesign, with treg added into it. log.md keeps both sides' entries.
+- **Public text:**
+  - README: the header line; a treg row in "What you need" ($0.026 per paid action, finding people free); treg in privacy and permissions; a "Through treg" costs table; setup without "Save & test"; the live treg test command; test counts updated to 131 unit tests and 37 browser checks.
+  - Website FAQ: "What do I need?" now names either key, plus a new "What is treg?".
+  - Website: costs text, privacy list and footer.
+  - Store listing: the `treg.to` host-permission justification.
+  - PRIVACY (from the merge): what treg sees.
+- **Version:** 0.3.0. The manifest adds the `https://treg.to/*` host permission.
+- **Verified:**
+  - compile, 131 tests, `wxt build`, smoke 37 checks, site build;
+  - a real treg lookup of linear.app in the public build: 71% fit, why now and contacts, "Reveal email ($0.026)", $0.052 recorded.
+
+---
+
 ## 2026-10-07 — Repo renamed to `Aditya-v05/sift`: links updated
 
 - **What:** GitHub reported the repo moved to `Aditya-v05/sift`. The About settings (website, description, topics) carried over.
@@ -43,6 +67,102 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
   The previous detail follows (more features, costs, setup in detail, build from source, how it works, develop). The `#install` anchor is kept, since the website's buttons link to it.
 - **Release:** `v0.2.0` with `sift-0.2.0-chrome.zip` (208 KB, from `npm run zip`). Unzipped, it loads in Chromium: manifest Sift 0.2.0, options page renders, no errors.
+## 2026-10-07 — Links follow the public repo's rename to `Aditya-v05/sift`
+
+- **What:** the public Sift repo was renamed from `extens` to `sift`. README (including the intro that names it as the public version), PRIVACY, the store listing and the site's `REPO` constant now link to `Aditya-v05/sift`. Older log entries keep the old name.
+- **Verified:** compile passes.
+
+---
+
+## 2026-10-07 — dev-sift: switch in place, data source as a dropdown, balance loads itself
+
+> "wouldn't it be nice if when i click the switch to so and so button it automatically switches instead of punting me back to the top ... if i keep adding stuff i think a drop down would be cool"
+
+- **Switch in place:** "Switch to your Apollo key" / "Switch to treg" in the costs section now switches right there when that key is saved and still connects, and confirms with "Switched to …". The page stays where it is (it moved 19 px as the text changed). Only when the key is missing does it scroll to API keys with that source picked; a key that fails shows why.
+  - How: a new background message, `useSource`, tests the saved key for the source and saves the switch only if it connects.
+- **Dropdown:** the data source is a dropdown, drawn as a line like the other inputs. The list is a `SOURCES` array, so new sources are one entry. Choosing a source with a saved key switches at once; otherwise its key field opens.
+- **Balance:** it loads by itself whenever the shown balance doesn't match the source in use (e.g. right after a switch), instead of saying "Save and test your treg key to see its balance".
+- **Verified with real keys:**
+  - the treg balance loaded on its own ($0.28);
+  - the costs-section switch moved to Apollo with no page jump, and the dropdown followed;
+  - the dropdown back to treg switched at once;
+  - no page errors;
+  - smoke 37 and 131 tests pass.
+
+---
+
+## 2026-10-07 — dev-sift: settings without a Save button; budget in dollars on treg
+
+> "this flow is annoying - save and test and change budget limits and its not intuitive"
+
+- **Keys save themselves:**
+  - a key is tested 0.7 s after you stop typing or paste;
+  - it is kept once it connects ("Connected and saved");
+  - a key that fails shows why and isn't saved;
+  - the Save & test button is gone.
+- **Switching is one click.** Picking a source whose key is already saved switches at once. Otherwise its key field opens with "Paste your treg key below. Sift switches as soon as it connects." The line under the choice always says which source Sift is using.
+- **Budget:**
+  - saves itself (0.6 s after typing) and confirms with "Saved";
+  - through treg it is typed in dollars (`settings.budgetUsd`, converted to paid calls at $0.026 for the over-budget check);
+  - the credit bar, the over-budget screen, the reveal-all warning and Discover's prompt show it in dollars on treg.
+- **Verified:**
+  - with the real keys: picking treg and pasting its key switched in 1.9 s, then Apollo and treg again switched instantly, and a $10 budget saved as 384 calls;
+  - smoke: 37 checks (no Save button, a $5 budget saved as 192 calls, the dollar budget in the bar);
+  - 131 tests pass.
+- **treg ledger note:** each charge appears twice in treg's history (reserve, then settle for the same call), which is not a double charge.
+
+---
+
+## 2026-10-07 — dev-sift: treg compared with Apollo live, and a clearer switch
+
+> "lets choose a website and check if apollo and treg both work" / "now try revealing an email in both" / "how can i switch keys is the ui good enough"
+
+- **Side-by-side on gorgias.com** (built extension, fresh browser per mode):
+  - the key test, company record (same Apollo id, 520 employees), requirement checks, hiring signals and all 30 people (same ids) are identical;
+  - fit 80 vs 78 and timing 48 vs 51 differ only through Jev, which scores with probabilities, since every Apollo input matched;
+  - revealing the top contact returned the same verified address in both (compared by hash, shown masked);
+  - Apollo charged 1 credit and treg exactly $0.026, which Sift recorded.
+  - Cost: 5 Apollo credits. treg's own ledger showed $0.026 charges, free people searches, and a balance drop exactly equal to Sift's record.
+- **Switching UI:**
+  - picking the other data source now says "Sift still uses your Apollo key. Press Save & test keys to switch." until you save;
+  - the hiring-signals setting reads "+$0.026 per lookup" in treg mode.
+
+  Smoke is now 35 checks, and 131 tests pass.
+
+---
+
+## 2026-10-06 — dev-sift: treg as an alternative to Apollo (private repo)
+
+> "lets build treg as an option instead of apollo - let us maintain separate repo for dev-sift or something thats private"
+
+- **Repo:** `Aditya-v05/dev-sift` is private, cloned from `extens` with its history. The public `extens` is untouched.
+- **How:** treg's `apollo.*` endpoints pass Apollo's method, query and body through unchanged and return Apollo's response verbatim. So the only change is the transport:
+  - `Access` (`src/lib/access.ts`) is either `{via: 'apollo', key}` or `{via: 'treg', key}`;
+  - `route()` in `apollo.ts` sends each call to `api.apollo.io` or `treg.to/call/<endpoint>`;
+  - mapping, ranking, caching and the UI flow are shared.
+  - The one difference: treg takes the job-postings org id as `?organization_id=`.
+- **Endpoint mapping (verified live 2026-10-06):**
+  - people search → `apollo.people.search` (free);
+  - enrich → `apollo.companies.enrich`;
+  - jobs → `apollo.companies.jobs`;
+  - lookalikes → `apollo.companies.search` (passes `lookalike_organization_ids` through);
+  - people/match by id or LinkedIn → `apollo.people.enrich`.
+
+  Each paid call is $0.026. Key check: `GET /auth/me` (401 on a bad key). Balance: `GET /orgs/{id}/balance`.
+- **Money:**
+  - every call carries `X-Treg-Route-Max-Cost: 0.06` (treg has no default cap on direct calls);
+  - `X-Treg-Cost-Micro` is recorded into `ledger.usdMicro`;
+  - the credit bar shows the treg balance and dollars spent;
+  - buttons show `$0.026` / `$0.052`;
+  - the budget counts paid calls;
+  - HTTP 402 explains a low balance.
+- **Settings:** under API keys, a choice of "Your Apollo key" or "treg (pay per call, no Apollo plan needed)", with the matching key field. The `treg.to` host permission is added. README and PRIVACY are updated (treg sees the same requests Apollo would).
+- **Verified:**
+  - 8 new unit tests (routing, identical bodies, the org id query, cost recording, 402 message, prices, balance), 131 passing;
+  - a live test of Sift's own functions through treg: key check, balance, enrich, people search, jobs and lookalikes, with charges recorded at exactly 26000/26000/26000 micro and search free;
+  - smoke: 34 checks, including the treg settings swap, the treg credit bar and dollar prices;
+  - compile and build pass.
+  - Testing spent about $0.18 of the treg balance: the endpoint checks plus one live run.
 
 ---
 

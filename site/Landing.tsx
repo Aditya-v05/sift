@@ -139,7 +139,7 @@ function Hero() {
         </h1>
         <p className="l-lede">
           Open any company's site and Sift tells you if it fits, why now, and who to reach. One click, on your own Apollo
-          and Jev keys.
+          (or treg) and Jev keys.
         </p>
         <div className="l-ctas">
           <a className="l-btn cream" href={INSTALL}>Install Sift</a>
@@ -308,7 +308,7 @@ function Costs() {
       <div className="l-costs-head" data-reveal>
         <Eyebrow label="Costs" />
         <h2>It costs <em>what it says.</em></h2>
-        <p>Sift spends your Apollo credits and puts the price on every button. Set a monthly budget and it asks before going over.</p>
+        <p>Sift spends your Apollo credits (or treg dollars, at $0.026 a credit) and puts the price on every button. Set a monthly budget and it asks before going over.</p>
       </div>
       <div className="l-receipt" data-reveal>
         <div className="l-receipt-top"><span>Apollo credits</span><span>per action</span></div>
@@ -339,6 +339,7 @@ function Privacy() {
           <h2>Your keys. Your browser. <em>Nothing in between.</em></h2>
           <ul>
             <li>No Sift server, no account, no analytics.</li>
+            <li>Lookups go straight to Apollo, or through treg if you choose it, and to TypeSafe.</li>
             <li>Keys, profile and saved accounts stay in Chrome's local storage.</li>
             <li>Sift reads a site only when you click its icon there, or press Sift this page. On LinkedIn, only the address.</li>
           </ul>
@@ -361,7 +362,8 @@ function Privacy() {
 
 function Faq() {
   const qs: [string, string][] = [
-    ['What do I need?', 'Chrome, an Apollo account with an API key, and a TypeSafe API key for Jev.'],
+    ['What do I need?', 'Chrome, a TypeSafe API key for Jev, and either an Apollo API key or a treg key. treg gives you the same Apollo data without an Apollo plan, at $0.026 per paid action.'],
+    ['What is treg?', 'A pay-per-call gateway to data APIs. Choose it in Settings instead of an Apollo key: Sift sends the same requests to Apollo through treg and gets the same answers, billed from your treg balance. treg then sees your lookups, the way Apollo does.'],
     ['What is Jev?', "TypeSafe's decision model. It answers typed questions (yes or no, pick one, a score) with probabilities instead of writing text. That is why Sift's reasons are checks and quotes, never made-up prose."],
     ['How is the fit score worked out?', "75% your requirements, each one counted (a near miss counts half), and 25% Jev's overall judgment of the company."],
     ['Does it work on LinkedIn?', "Yes, on people's profiles. Sift sends only the profile's address to Apollo to find out who they are. It never reads LinkedIn's pages."],
@@ -441,7 +443,7 @@ function End() {
         <Suspense fallback={null}><LazySlats /></Suspense>
       </div>
       <div className="l-wrap l-footer-base">
-        <span>Built on Apollo and TypeSafe Jev. Not affiliated with either.</span>
+        <span>Built on Apollo, treg and TypeSafe Jev. Not affiliated with any of them.</span>
         <span>2026</span>
       </div>
     </footer>

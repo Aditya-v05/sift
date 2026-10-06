@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { StateIcon } from '@/components/Icon';
 import { useCredits } from '@/components/useCredits';
-import { lookupCost, totalSpent } from '@/lib/credits';
-import { openAccounts, send, type KeyTest } from '@/lib/messages';
+import { isTregBalance, lookupCost, priceLabel, totalSpent, usdFor } from '@/lib/credits';
+import { openAccounts, send, type KeyTest, type SourceSwitch } from '@/lib/messages';
 import { SENIORITY_OPTIONS, peopleFilters } from '@/lib/people';
 import { generateRules } from '@/lib/rules';
 import * as store from '@/lib/storage';
@@ -15,7 +15,7 @@ export default function Options() {
       <header>
         <h1>Sift</h1>
         <p className="muted">
-          Everything stays in this browser. Your keys are sent only to Apollo and TypeSafe. There's no server and no tracking.
+          Everything stays in this browser. Your keys are sent only to Apollo (or treg, if you choose it) and TypeSafe. There's no Sift server and no tracking.
         </p>
       </header>
       <KeysSection />
@@ -28,52 +28,157 @@ export default function Options() {
 
 // ---------- keys ----------
 
+type Source = 'apollo' | 'treg';
+type FieldStatus = { state: 'checking' } | KeyTest;
+
+/** The data sources, in the order the dropdown lists them. Add new ones here. */
+const SOURCES: { id: Source; label: string }[] = [
+  { id: 'apollo', label: 'Apollo, with your API key' },
+  { id: 'treg', label: 'treg, pay per call (no Apollo plan needed)' },
+];
+const sourceName = (s: Source) => (s === 'treg' ? 'treg' : 'your Apollo key');
+
+/** Asked from elsewhere on the page (the costs section) to show a source whose key still has to be added. */
+const PICK_EVENT = 'sift:pick-source';
+
+/**
+ * Switch the data source. With a saved key that still connects it switches at once (the background checks
+ * and saves); otherwise it says why. Shared by the dropdown and the link in the costs section.
+ */
+function switchSource(src: Source): Promise<SourceSwitch> {
+  return send({ type: 'useSource', provider: src });
+}
+
+/**
+ * Keys save themselves: a key is tested a moment after you paste or type it, and kept once it connects.
+ * Picking a data source switches at once when its key is already saved; otherwise its key field opens and
+ * Sift switches as soon as that key connects. No Save button.
+ */
 function KeysSection() {
-  const [keys, setKeys] = useState<Keys>({ apollo: '', typesafe: '' });
-  const [tests, setTests] = useState<{ apollo: KeyTest; typesafe: KeyTest } | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState<Keys>({ apollo: '', typesafe: '', provider: 'apollo', treg: '' });
+  const [draft, setDraft] = useState<Keys>(saved);
+  const [status, setStatus] = useState<{ data?: FieldStatus; jev?: FieldStatus }>({});
+  const [ready, setReady] = useState(false);
+  const source: Source = draft.provider ?? 'apollo';
+  const using: Source = saved.provider ?? 'apollo';
+  const dataKey = (k: Keys, src: Source) => (src === 'treg' ? k.treg ?? '' : k.apollo);
 
   useEffect(() => {
-    store.getKeys().then((k) => k && setKeys(k));
+    const load = (first: boolean) =>
+      store.getKeys().then((k) => {
+        const full: Keys = { apollo: '', typesafe: '', provider: 'apollo', treg: '', ...k };
+        setSaved(full);
+        // A switch made elsewhere (the costs section) moves the dropdown too; typed keys are kept.
+        setDraft((d) => (first ? full : { ...d, provider: full.provider }));
+        setReady(true);
+      });
+    load(true);
+    const off = store.onLocalChange(['keys'], () => load(false));
+    const onPick = (e: Event) => {
+      setDraft((d) => ({ ...d, provider: (e as CustomEvent<Source>).detail }));
+      document.getElementById('keys')?.scrollIntoView({ behavior: 'smooth' });
+    };
+    window.addEventListener(PICK_EVENT, onPick);
+    return () => {
+      off();
+      window.removeEventListener(PICK_EVENT, onPick);
+    };
   }, []);
 
-  const saveAndTest = async () => {
-    setBusy(true);
-    const trimmed = { apollo: keys.apollo.trim(), typesafe: keys.typesafe.trim() };
-    await store.setKeys(trimmed);
-    setKeys(trimmed);
-    setTests(await send({ type: 'testKeys', keys: trimmed }));
-    setBusy(false);
+  // Test whatever changed, a moment after the last keystroke, and keep what connects.
+  useEffect(() => {
+    if (!ready) return;
+    const src = draft.provider ?? 'apollo';
+    const dataChanged = dataKey(draft, src).trim() && (dataKey(draft, src).trim() !== dataKey(saved, src) || src !== using);
+    const jevChanged = draft.typesafe.trim() && draft.typesafe.trim() !== saved.typesafe;
+    if (!dataChanged && !jevChanged) return;
+    const t = setTimeout(async () => {
+      const candidate: Keys = {
+        apollo: draft.apollo.trim(), typesafe: (jevChanged ? draft.typesafe : saved.typesafe).trim(), provider: src, treg: (draft.treg ?? '').trim(),
+      };
+      setStatus((st) => ({ data: dataChanged ? { state: 'checking' } : st.data, jev: jevChanged ? { state: 'checking' } : st.jev }));
+      const res = await send({ type: 'testKeys', keys: candidate });
+      const next: Keys = { ...saved };
+      if (dataChanged && res.apollo.ok) {
+        next.provider = src;
+        if (src === 'treg') next.treg = candidate.treg;
+        else next.apollo = candidate.apollo;
+      }
+      if (jevChanged && res.typesafe.ok) next.typesafe = candidate.typesafe;
+      setStatus((st) => ({ data: dataChanged ? res.apollo : st.data, jev: jevChanged ? res.typesafe : st.jev }));
+      if (JSON.stringify(next) !== JSON.stringify(saved)) {
+        await store.setKeys(next);
+        setSaved(next);
+        await send({ type: 'refreshBalance' });
+      }
+    }, 700);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft, ready]);
+
+  const [switching, setSwitching] = useState(false);
+  const pick = async (src: Source) => {
+    setStatus((st) => ({ ...st, data: undefined }));
+    if (src === using) return setDraft({ ...draft, provider: src });
+    setSwitching(true);
+    const res = await switchSource(src);
+    setSwitching(false);
+    // Switched: the storage listener moves everything over. Otherwise show that source's key field.
+    if (!res.ok) {
+      setDraft({ ...draft, provider: src });
+      if (res.reason === 'failed') setStatus((st) => ({ ...st, data: { ok: false, message: res.message } }));
+    }
   };
 
+  const pending = source !== using;
   return (
-    <section className="card stack">
+    <section className="card stack" id="keys">
       <h2>API keys</h2>
-      <KeyField
-        label="Apollo API key"
-        hint={<>In Apollo: Settings, Integrations, API. It needs access to people search and enrichment.</>}
-        value={keys.apollo}
-        onChange={(apollo) => setKeys({ ...keys, apollo })}
-        test={tests?.apollo}
-      />
+      <div>
+        <label htmlFor="source">Company and people data</label>
+        <select id="source" className="source" value={source} disabled={switching} onChange={(e) => pick(e.target.value as Source)}>
+          {SOURCES.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+        </select>
+        <div className={`small hint ${pending ? 'state-unsure' : 'muted'}`}>
+          {switching
+            ? 'Switching…'
+            : pending
+              ? `Paste your ${source === 'treg' ? 'treg' : 'Apollo'} key below. Sift switches as soon as it connects.`
+              : `Sift is using ${sourceName(using)}.`}
+        </div>
+      </div>
+      {source === 'treg' ? (
+        <KeyField
+          label="treg API key"
+          hint={<>From <a href="https://treg.to" target="_blank" rel="noreferrer">treg.to</a>. Sift uses Apollo's data through treg: finding people is free, every other call costs $0.026 from your treg balance.</>}
+          value={draft.treg ?? ''}
+          onChange={(treg) => setDraft({ ...draft, treg })}
+          status={status.data}
+        />
+      ) : (
+        <KeyField
+          label="Apollo API key"
+          hint={<>In Apollo: Settings, Integrations, API. It needs access to people search and enrichment.</>}
+          value={draft.apollo}
+          onChange={(apollo) => setDraft({ ...draft, apollo })}
+          status={status.data}
+        />
+      )}
       <KeyField
         label="TypeSafe API key (Jev)"
         hint={<>From <a href="https://typesafe.ai" target="_blank" rel="noreferrer">typesafe.ai</a>. Jev makes the fit and ranking judgments.</>}
-        value={keys.typesafe}
-        onChange={(typesafe) => setKeys({ ...keys, typesafe })}
-        test={tests?.typesafe}
+        value={draft.typesafe}
+        onChange={(typesafe) => setDraft({ ...draft, typesafe })}
+        status={status.jev}
       />
-      <div>
-        <button className="primary" disabled={busy || !keys.apollo || !keys.typesafe} onClick={saveAndTest}>
-          {busy ? 'Testing…' : 'Save & test keys'}
-        </button>
-      </div>
+      <p className="small muted" style={{ margin: 0 }}>Keys are checked and saved as you paste them.</p>
     </section>
   );
 }
 
-function KeyField(props: { label: string; hint: React.ReactNode; value: string; onChange: (v: string) => void; test?: KeyTest }) {
+function KeyField(props: { label: string; hint: React.ReactNode; value: string; onChange: (v: string) => void; status?: FieldStatus }) {
   const [shown, setShown] = useState(false);
+  const st = props.status;
   return (
     <div>
       <label>{props.label}</label>
@@ -82,11 +187,13 @@ function KeyField(props: { label: string; hint: React.ReactNode; value: string; 
         <button className="ghost" onClick={() => setShown(!shown)}>{shown ? 'Hide' : 'Show'}</button>
       </div>
       <div className="small muted hint">{props.hint}</div>
-      {props.test && (
-        <div className={`small row ${props.test.ok ? 'ok' : 'err'}`}>
-          <StateIcon state={props.test.ok ? 'met' : 'not_met'} /> {props.test.message}
+      {st && ('state' in st ? (
+        <div className="small muted row">Checking…</div>
+      ) : (
+        <div className={`small row ${st.ok ? 'ok' : 'err'}`}>
+          <StateIcon state={st.ok ? 'met' : 'not_met'} /> {st.ok ? 'Connected and saved' : st.message}
         </div>
-      )}
+      ))}
     </div>
   );
 }
@@ -300,16 +407,60 @@ function ListEditor({ label, hint, items, onChange }: { label: string; hint: str
 // ---------- credits ----------
 
 function CreditsSection() {
-  const { settings, ledger, balance } = useCredits();
+  const { settings, ledger, balance, viaTreg } = useCredits();
   const [budgetText, setBudgetText] = useState<string | null>(null);
+  const [budgetSaved, setBudgetSaved] = useState(false);
   const [checking, setChecking] = useState(false);
-  const budgetValue = budgetText ?? (settings.monthlyBudget === null ? '' : String(settings.monthlyBudget));
+  const [switchMsg, setSwitchMsg] = useState<string | null>(null);
 
-  const saveBudget = () => {
-    const n = budgetValue.trim() === '' ? null : Math.max(0, Math.round(Number(budgetValue)));
-    store.setSettings({ ...settings, monthlyBudget: Number.isFinite(n) ? n : null });
-    setBudgetText(null);
+  // Switch right here when the other source's key is saved; otherwise open its key field above.
+  const switchHere = async () => {
+    const target: Source = viaTreg ? 'apollo' : 'treg';
+    setSwitchMsg('Switching…');
+    const res = await switchSource(target);
+    if (res.ok) {
+      setSwitchMsg(`Switched to ${sourceName(target)}.`);
+      setTimeout(() => setSwitchMsg(null), 2500);
+    } else if (res.reason === 'no_key') {
+      setSwitchMsg(null);
+      window.dispatchEvent(new CustomEvent(PICK_EVENT, { detail: target }));
+    } else {
+      setSwitchMsg(res.message);
+    }
   };
+
+  // The balance shown must match the source in use; fetch it when it doesn't (e.g. right after a switch).
+  const balanceMatches = viaTreg === isTregBalance(balance);
+  useEffect(() => {
+    if (balanceMatches) return;
+    setChecking(true);
+    send({ type: 'refreshBalance' }).finally(() => setChecking(false));
+  }, [balanceMatches]);
+  const shownBudget = settings.monthlyBudget === null
+    ? ''
+    : viaTreg ? String(+(settings.budgetUsd ?? usdFor(settings.monthlyBudget)).toFixed(2)) : String(settings.monthlyBudget);
+  const budgetValue = budgetText ?? shownBudget;
+
+  // The budget saves itself a moment after you stop typing. Through treg it's typed in dollars.
+  useEffect(() => {
+    if (budgetText === null) return;
+    const t = setTimeout(async () => {
+      const raw = budgetText.trim() === '' ? null : Number(budgetText);
+      const valid = raw === null || (Number.isFinite(raw) && raw >= 0);
+      if (!valid) return;
+      const next = raw === null
+        ? { ...settings, monthlyBudget: null, budgetUsd: null }
+        : viaTreg
+          ? { ...settings, monthlyBudget: Math.floor(raw / 0.026), budgetUsd: raw }
+          : { ...settings, monthlyBudget: Math.round(raw), budgetUsd: null };
+      await store.setSettings(next);
+      setBudgetText(null);
+      setBudgetSaved(true);
+      setTimeout(() => setBudgetSaved(false), 1500);
+    }, 600);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [budgetText]);
   const check = async () => {
     setChecking(true);
     await send({ type: 'refreshBalance' });
@@ -318,18 +469,34 @@ function CreditsSection() {
 
   return (
     <section className="card stack">
-      <h2>Apollo credits</h2>
-      <p className="small muted" style={{ margin: 0 }}>
-        A new company lookup costs {lookupCost(settings)} Apollo credit{lookupCost(settings) === 1 ? '' : 's'}: 1 for the company
-        {settings.fetchJobs ? ', 1 for job postings' : ''}. People search is free. Revealing an email costs 1. On a LinkedIn
-        profile, identifying the person costs 1 (their email comes with it).
-        Repeat visits use the 7-day cache and cost nothing.
-      </p>
+      <h2>{viaTreg ? 'Costs (treg)' : 'Apollo credits'}</h2>
+      <div className="small row">
+        <span className="muted">Data comes from {viaTreg ? 'treg' : 'your Apollo key'}.</span>
+        <button className="link small" disabled={switchMsg === 'Switching…'} onClick={switchHere}>
+          Switch to {viaTreg ? 'your Apollo key' : 'treg'}
+        </button>
+        {switchMsg && <span className={switchMsg.startsWith('Switched') ? 'ok' : switchMsg === 'Switching…' ? 'muted' : 'err'}>{switchMsg}</span>}
+      </div>
+      {viaTreg ? (
+        <p className="small muted" style={{ margin: 0 }}>
+          Through treg, each paid Apollo call costs $0.026 from your treg balance. A new company lookup is {lookupCost(settings)} call
+          {lookupCost(settings) === 1 ? '' : 's'} ({priceLabel(lookupCost(settings), true)}): the company{settings.fetchJobs ? ' and its job postings' : ''}.
+          People search is free. Revealing an email is $0.026, charged only when Apollo finds the person. Repeat visits use the
+          7-day cache and cost nothing.
+        </p>
+      ) : (
+        <p className="small muted" style={{ margin: 0 }}>
+          A new company lookup costs {lookupCost(settings)} Apollo credit{lookupCost(settings) === 1 ? '' : 's'}: 1 for the company
+          {settings.fetchJobs ? ', 1 for job postings' : ''}. People search is free. Revealing an email costs 1. On a LinkedIn
+          profile, identifying the person costs 1 (their email comes with it).
+          Repeat visits use the 7-day cache and cost nothing.
+        </p>
+      )}
 
       <div>
         <label>Spent by Sift this month</label>
         <div>
-          <strong>{totalSpent(ledger)}</strong>
+          <strong>{totalSpent(ledger)}</strong>{viaTreg && <> paid calls, <strong>${((ledger.usdMicro ?? 0) / 1e6).toFixed(2)}</strong></>}
           <span className="muted small">
             {' '}({ledger.company} company lookups, {ledger.jobs} job-posting fetches, {ledger.reveal} email reveals
             {ledger.search ? `, ${ledger.search} Discover searches` : ''})
@@ -338,8 +505,14 @@ function CreditsSection() {
       </div>
 
       <div>
-        <label>Apollo balance</label>
-        {balance?.available ? (
+        <label>{viaTreg ? 'treg balance' : 'Apollo balance'}</label>
+        {viaTreg ? (
+          isTregBalance(balance) ? (
+            <div><strong>${balance.usd.toFixed(2)}</strong> left on treg <span className="muted small">(top up at treg.to)</span></div>
+          ) : (
+            <div className="small muted">{checking ? 'Checking balance…' : 'The balance shows here once your treg key connects.'}</div>
+          )
+        ) : balance?.available && !isTregBalance(balance) ? (
           <div>
             <strong>{balance.leftOver.toLocaleString('en-US')}</strong> of {balance.limit.toLocaleString('en-US')} lead credits left
             {balance.cycleEnd && <span className="muted small">, resets {new Date(balance.cycleEnd).toLocaleDateString()}</span>}
@@ -355,17 +528,21 @@ function CreditsSection() {
       <div>
         <label>Monthly budget for Sift</label>
         <div className="row">
+          {viaTreg && <span>$</span>}
           <input
             type="number"
             min={0}
+            step={viaTreg ? 0.5 : 10}
             placeholder="No limit"
             value={budgetValue}
             onChange={(e) => setBudgetText(e.target.value)}
-            onBlur={saveBudget}
-            onKeyDown={(e) => e.key === 'Enter' && saveBudget()}
-            style={{ maxWidth: 160 }}
+            style={{ maxWidth: 140 }}
+            aria-label={viaTreg ? 'Monthly budget in dollars' : 'Monthly budget in credits'}
           />
-          <span className="small muted">credits. When reached, new lookups ask before spending.</span>
+          <span className="small muted">
+            {viaTreg ? 'a month' : 'credits a month'}. Leave empty for no limit. Past it, lookups ask first.
+          </span>
+          {budgetSaved && <span className="small ok">Saved</span>}
         </div>
       </div>
 
@@ -375,7 +552,7 @@ function CreditsSection() {
           checked={settings.fetchJobs}
           onChange={(e) => store.setSettings({ ...settings, fetchJobs: e.target.checked })}
         />
-        <span>Hiring signals: fetch job postings for "why now" (+1 credit per lookup)</span>
+        <span>Hiring signals: fetch job postings for "why now" (+{viaTreg ? "$0.026" : "1 credit"} per lookup)</span>
       </label>
 
       <label className="row checkbox">

@@ -6,6 +6,7 @@ export type Message =
   | { type: 'lookup'; windowId: number; domain: string; force?: boolean; allowOverBudget?: boolean; profileUrl?: string }
   | { type: 'siftTab'; windowId: number }
   | { type: 'refreshBalance' }
+  | { type: 'useSource'; provider: 'apollo' | 'treg' }
   | { type: 'discover'; more?: boolean; fresh?: boolean; allowOverBudget?: boolean }
   | { type: 'reveal'; windowId: number | null; domain: string; personIds: string[] }
   | { type: 'refreshAccount'; domain: string; allowOverBudget?: boolean }
@@ -13,10 +14,15 @@ export type Message =
 
 export type KeyTest = { ok: boolean; message: string };
 
+/** Result of switching the data source: switched, no saved key for it, or the saved key didn't connect. */
+export type SourceSwitch = { ok: true } | { ok: false; reason: 'no_key' | 'failed'; message: string };
+
 export type Reply<M extends Message> = M extends { type: 'lookup' | 'siftTab' }
   ? { ok: true }
   : M extends { type: 'refreshBalance' }
     ? { ok: true }
+  : M extends { type: 'useSource' }
+    ? SourceSwitch
   : M extends { type: 'discover' }
     ? DiscoverOutcome
   : M extends { type: 'refreshAccount' }

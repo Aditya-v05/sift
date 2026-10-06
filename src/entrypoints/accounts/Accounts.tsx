@@ -10,7 +10,7 @@ import {
   HOT_TIMING, SORT_LABELS, STATUS_LABELS, bestContact, buildRows, filterRows, sortRows, topSignal,
   type AccountRow, type AccountStatus, type Filters, type SortKey,
 } from '@/lib/accounts';
-import { lookupCost } from '@/lib/credits';
+import { lookupCost, priceLabel } from '@/lib/credits';
 import { toCsv } from '@/lib/csv';
 import { describeError } from '@/lib/errors';
 import { send } from '@/lib/messages';
@@ -148,6 +148,7 @@ function tone(n: number | null | undefined, hot = 67, warm = 34) {
 }
 
 function AccountRowView({ row, cost }: { row: AccountRow; cost: number }) {
+  const { viaTreg } = useCredits();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -237,7 +238,7 @@ function AccountRowView({ row, cost }: { row: AccountRow; cost: number }) {
 
         <span className="actions row">
           <button className="small" disabled={busy} onClick={() => refresh()} title={`Refresh costs ${cost} Apollo credits`}>
-            {busy ? 'Refreshing…' : `Refresh (${cost} cr)`}
+            {busy ? 'Refreshing…' : `Refresh (${priceLabel(cost, viaTreg)})`}
           </button>
           <button className="ghost small" onClick={toggleSaved}>{row.saved ? 'Remove' : 'Save'}</button>
         </span>

@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Open any company's website. One click tells you if it fits, why it matters now, and who to email.</strong><br>
-  A free, open-source Chrome extension for outbound. Runs on your own Apollo and Jev keys, with no server in between.
+  A free, open-source Chrome extension for outbound. Runs on your own keys (Apollo, or treg with no Apollo plan, plus Jev), with no server in between.
 </p>
 
 <p align="center">
@@ -51,15 +51,17 @@ Then open any company's website and click the Sift icon.
 | | What it's for | Where to get it | Cost |
 |---|---|---|---|
 | **Apollo API key** | Company data, people, emails | In Apollo: Settings → Integrations → API | Your Apollo credits: about **2 per new company** and **1 per email revealed**; finding people is free |
+| *or* a **treg API key** | The same Apollo data, without an Apollo plan | [treg.to](https://treg.to) | Pay per call from a treg balance: **$0.026** per paid action (about $0.05 per new company), finding people is free |
 | **TypeSafe API key** for **Jev** | The fit, ranking and why-now judgments | [typesafe.ai](https://typesafe.ai) | A few Jev calls per company |
 
-Every paid action shows its price on the button, results are cached for 7 days so revisits are free, and you can set a monthly budget. Details are under [Costs](#costs).
+Pick Apollo or treg in Settings and switch any time; both keys stay saved. Every paid action shows its price on the button (in credits, or dollars through treg), results are cached for 7 days so revisits are free, and you can set a monthly budget. Details are under [Costs](#costs).
 
 ## Privacy: no backend
 
-- **No Sift server, no account, no analytics.** Sift talks straight from your browser to Apollo and TypeSafe.
+- **No Sift server, no account, no analytics.** Sift talks straight from your browser to Apollo (or treg, if you choose it) and TypeSafe.
 - Your keys, settings and saved accounts stay in your browser's local storage.
 - Sift reads a website **only when you click its icon there**. It has no "read all websites" permission, and on LinkedIn it uses only the page address.
+- If you choose treg, it forwards your lookups to Apollo and bills your treg account, so it sees the same requests Apollo would.
 - The code is all here; the full policy is in [PRIVACY.md](PRIVACY.md).
 
 ---
@@ -76,7 +78,7 @@ Every paid action shows its price on the button, results are cached for 7 days s
 
 **Sift this page**: after you switch tabs, the panel offers to sift the page you're on. The first time, Chrome asks for the optional `tabs` permission, used only to read that tab's address when you press it.
 
-Permissions: `activeTab` and `scripting` (only when you click the icon), `sidePanel`, `storage`, optional `tabs`, and host access to `api.apollo.io` and `api.typesafe.ai` only.
+Permissions: `activeTab` and `scripting` (only when you click the icon), `sidePanel`, `storage`, optional `tabs`, and host access to `api.apollo.io`, `api.typesafe.ai` and `treg.to` only.
 
 ## Costs
 
@@ -95,11 +97,25 @@ Results are cached per domain for 7 days, so revisits are free. Revealed emails 
 
 The side panel shows a **credit bar**. With an Apollo *master* API key it shows your team's real balance. Other keys can't read the balance, so Sift counts its own spending this month instead. You can set a **monthly budget**: once it's reached, new lookups ask before spending.
 
+### Through treg
+
+treg's `apollo.*` endpoints pass Sift's requests to Apollo unchanged and return Apollo's answer, so every feature works the same. Each call carries a cost cap, and the exact charge is added to the month's spend.
+
+| Sift call | treg endpoint | Price |
+|---|---|---|
+| Find people | `apollo.people.search` | free |
+| Company | `apollo.companies.enrich` | $0.026 |
+| Job postings | `apollo.companies.jobs` | $0.026 per page |
+| Discover lookalikes | `apollo.companies.search` | $0.026 per page |
+| Reveal email, LinkedIn profile | `apollo.people.enrich` | $0.026, only when found |
+
+The credit bar shows your treg balance, and the monthly budget is set in dollars.
+
 ## Setup in detail
 
 The settings page opens on install:
 
-1. **Keys:** your Apollo API key (it needs people search and enrichment) and your TypeSafe key. Hit *Save & test*.
+1. **Keys:** choose where company and people data comes from (your Apollo key, or treg), then paste that key and your TypeSafe key. Keys are checked and saved as you paste them; switch sources from the dropdown any time.
 2. **What you sell:** three plain-English answers (what you sell, your ideal customer, who buys).
 3. **Generate rules**, then edit them:
    - *Company size* and *countries* are checked exactly against Apollo data.
@@ -136,7 +152,7 @@ click icon → domain → Apollo company lookup
 
 Everything runs in the extension's background worker. See [`SPEC.md`](SPEC.md) for the full design and [`log.md`](log.md) for the change history.
 
-Tested with 123 Vitest unit tests and 31 Playwright browser checks, with [CI](https://github.com/Aditya-v05/sift/actions/workflows/ci.yml) on every push.
+Tested with 131 Vitest unit tests and 37 Playwright browser checks, with [CI](https://github.com/Aditya-v05/sift/actions/workflows/ci.yml) on every push.
 
 ## Develop
 
@@ -144,6 +160,7 @@ Tested with 123 Vitest unit tests and 31 Playwright browser checks, with [CI](ht
 npm test             # unit tests
 npm run compile      # type-check
 APOLLO_KEY=... TYPESAFE_KEY=... npm test   # also runs the live end-to-end test (spends 2 Apollo credits)
+TREG_TOKEN=trg_live_... npx vitest run src/lib/treg.live.test.ts   # Sift's Apollo calls live through treg (about $0.08)
 TYPESAFE_KEY=... node eval/roles-eval.mjs  # compares role-question wordings on labelled roles
 TYPESAFE_KEY=... node eval/site-signals-eval.mjs  # checks website-snippet labelling
 SITES=https://linear.app/ npx vitest run src/lib/site-scan.live.test.ts --silent=false  # website reader on real sites

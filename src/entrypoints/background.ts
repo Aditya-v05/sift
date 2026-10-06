@@ -1,14 +1,18 @@
 import { browser } from 'wxt/browser';
 import { defineBackground } from 'wxt/utils/define-background';
 import * as apollo from '@/lib/apollo';
+import { accessFor, hasDataKey } from '@/lib/access';
 import { toLookupError, describeError } from '@/lib/errors';
 import * as jev from '@/lib/jev';
-import type { KeyTest, Message } from '@/lib/messages';
+import type { KeyTest, Message, SourceSwitch } from '@/lib/messages';
 import { refreshBalance, revealContacts, runDiscover, runLookup, runProfileLookup } from '@/lib/pipeline';
 import { domainFromUrl, linkedinProfile } from '@/lib/resolver';
-import { setView, setViewTab } from '@/lib/storage';
+import { getKeys, recordUsd, setKeys, setView, setViewTab } from '@/lib/storage';
 
 export default defineBackground(() => {
+  // Through treg, every paid Apollo call reports its exact price; keep the month's dollars next to the credits.
+  apollo.onTregCost((micro) => recordUsd(micro));
+
   browser.runtime.onInstalled.addListener(({ reason }) => {
     if (reason === 'install') browser.runtime.openOptionsPage();
   });
@@ -47,6 +51,9 @@ export default defineBackground(() => {
       case 'discover':
         runDiscover({ more: msg.more, fresh: msg.fresh, allowOverBudget: msg.allowOverBudget }).then(sendResponse);
         return true;
+      case 'useSource':
+        useSource(msg.provider).then(sendResponse);
+        return true;
       case 'refreshBalance':
         refreshBalance(true).then(() => sendResponse({ ok: true }));
         return true;
@@ -57,7 +64,7 @@ export default defineBackground(() => {
         return true;
       case 'testKeys':
         Promise.all([
-          test(() => apollo.checkKey(msg.keys.apollo), 'Apollo key not recognized'),
+          test(() => apollo.checkKey(accessFor(msg.keys)), msg.keys.provider === 'treg' ? 'treg key not recognized' : 'Apollo key not recognized'),
           test(() => jev.checkKey(msg.keys.typesafe), 'TypeSafe key not recognized'),
         ]).then(([a, t]) => {
           sendResponse({ apollo: a, typesafe: t });
@@ -76,6 +83,18 @@ function siftTab(tab: { windowId: number; id?: number; url?: string }) {
   if (domain) runLookup(tab.windowId, domain, { tabId: tab.id });
   else if (profile) runProfileLookup(tab.windowId, profile);
   else setView(tab.windowId, { status: 'not_company', url: tab.url ?? null });
+}
+
+/** Switch the data source, but only to a saved key that still connects. */
+async function useSource(provider: 'apollo' | 'treg'): Promise<SourceSwitch> {
+  const keys = await getKeys();
+  const next = { apollo: '', typesafe: '', ...keys, provider };
+  if (!hasDataKey(next)) return { ok: false, reason: 'no_key', message: `Add your ${provider === 'treg' ? 'treg' : 'Apollo'} key first.` };
+  const t = await test(() => apollo.checkKey(accessFor(next)), `${provider === 'treg' ? 'treg' : 'Apollo'} key not recognized`);
+  if (!t.ok) return { ok: false, reason: 'failed', message: t.message };
+  await setKeys(next);
+  await refreshBalance(true);
+  return { ok: true };
 }
 
 async function test(fn: () => Promise<boolean>, failMessage: string): Promise<KeyTest> {

@@ -191,6 +191,45 @@ const savedRules = await opts.evaluate(async () => (await chrome.storage.local.g
 check(savedRules.keywords.includes('operations') && !savedRules.seniorities.includes('partner'), 'edited filters are saved with the profile');
 await opts.screenshot({ path: `${OUT}/settings.png`, fullPage: true });
 
+// treg as the data source: settings swap the key field, prices read in dollars, the bar shows treg's balance.
+await opts.selectOption('#source', 'treg');
+await opts.waitForSelector('text=treg API key', { timeout: 5000 }).catch(() => {});
+check(await opts.locator('text=treg API key').count() === 1 && await opts.locator('text=Apollo API key').count() === 0, 'choosing treg swaps the Apollo key field for a treg key');
+check(await opts.locator('text=Sift switches as soon as it connects').count() === 1 && await opts.locator('button', { hasText: 'Save & test' }).count() === 0, 'switching needs no Save button: it waits for the new key to connect');
+await opts.screenshot({ path: `${OUT}/settings-treg.png` });
+await panel.evaluate(async () => {
+  const { keys, credits } = await chrome.storage.local.get(['keys', 'credits']);
+  await chrome.storage.local.set({
+    keys: { ...keys, provider: 'treg', treg: 'trg_live_x' },
+    balance: { available: true, usd: 4.2, checkedAt: Date.now() },
+    credits: { ...credits, usdMicro: 312000 },
+  });
+});
+await panel.reload();
+await panel.waitForSelector('.credits');
+const bar = await panel.locator('.credits').innerText();
+check(bar.includes('$4.20') && bar.includes('left on treg') && bar.includes('$0.31'), `credit bar shows the treg balance and dollars spent (${bar.replace(/\s+/g, ' ')})`);
+// The budget is typed in dollars through treg and saves itself.
+await opts.waitForSelector('input[aria-label="Monthly budget in dollars"]');
+await opts.fill('input[aria-label="Monthly budget in dollars"]', '5');
+await opts.waitForSelector('span.ok:text-is("Saved")', { timeout: 3000 }).catch(() => {});
+const budget = await opts.evaluate(async () => (await chrome.storage.local.get('settings')).settings);
+check(budget.budgetUsd === 5 && budget.monthlyBudget === 192, `a $5 budget saves itself as 192 paid calls (${budget.budgetUsd}, ${budget.monthlyBudget})`);
+await panel.reload();
+await panel.waitForSelector('.credits');
+check((await panel.locator('.credits').innerText()).includes('of your $5.00 budget'), 'the credit bar shows the budget in dollars');
+await opts.fill('input[aria-label="Monthly budget in dollars"]', '');
+await opts.waitForTimeout(900);
+const refresh = await panel.locator('button', { hasText: 'Refresh (' }).innerText();
+check(refresh === 'Refresh ($0.052)', `buttons price in dollars through treg (${refresh})`);
+await panel.screenshot({ path: `${OUT}/panel-treg.png`, fullPage: true });
+await panel.evaluate(async () => {
+  const { keys } = await chrome.storage.local.get('keys');
+  await chrome.storage.local.set({ keys: { ...keys, provider: 'apollo' } });
+});
+await panel.reload();
+await panel.waitForSelector('.score');
+
 check(await panel.locator('text=Why now').count() > 0, 'side panel renders a lookup');
 for (const [name, pg] of [['panel', panel], ['My Accounts', page], ['settings', opts]]) {
   const found = await boxed(pg);

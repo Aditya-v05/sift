@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { revealable, splitContacts } from '@/lib/contacts';
-import { overBudget, totalSpent } from '@/lib/credits';
+import { budgetLabel, overBudget, priceLabel, spentLabel, totalSpent } from '@/lib/credits';
 import { describeError } from '@/lib/errors';
 import type { RevealOutcome } from '@/lib/pipeline';
 import type { Contact } from '@/lib/types';
@@ -18,6 +18,7 @@ type Reveal = (personIds: string[]) => Promise<RevealOutcome>;
  */
 export function ContactPicker({ contacts, reveal }: { contacts: Contact[]; reveal: Reveal }) {
   const { featured, others } = splitContacts(contacts);
+  const { viaTreg } = useCredits();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   // A different company starts closed.
@@ -40,7 +41,7 @@ export function ContactPicker({ contacts, reveal }: { contacts: Contact[]; revea
         <span className="small muted">{contacts.length} found</span>
       </div>
 
-      {featured.map((c) => <ContactRow key={c.apolloId} contact={c} reveal={run} />)}
+      {featured.map((c) => <ContactRow key={c.apolloId} contact={c} reveal={run} viaTreg={viaTreg} />)}
 
       {others.length > 0 && (
         <>
@@ -49,7 +50,7 @@ export function ContactPicker({ contacts, reveal }: { contacts: Contact[]; revea
           </button>
           {open && (
             <ul className="more">
-              {others.map((c) => <li key={c.apolloId}><ContactRow contact={c} reveal={run} compact /></li>)}
+              {others.map((c) => <li key={c.apolloId}><ContactRow contact={c} reveal={run} viaTreg={viaTreg} compact /></li>)}
             </ul>
           )}
         </>
@@ -70,7 +71,7 @@ function outcomeText(o: RevealOutcome): string {
 
 /** Reveal every remaining email at once, after an inline confirmation that states the cost. */
 function RevealAll({ contacts, reveal }: { contacts: Contact[]; reveal: Reveal }) {
-  const { settings, ledger } = useCredits();
+  const { settings, ledger, viaTreg } = useCredits();
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const pending = revealable(contacts);
@@ -88,17 +89,17 @@ function RevealAll({ contacts, reveal }: { contacts: Contact[]; reveal: Reveal }
   if (!confirming) {
     return (
       <button className="primary" onClick={() => setConfirming(true)}>
-        Reveal all {n} emails ({n} credits)
+        Reveal all {n} emails ({priceLabel(n, viaTreg, true)})
       </button>
     );
   }
   return (
     <div className="confirm stack">
       <p className="small" style={{ margin: 0 }}>
-        Reveal {n} emails for up to {n} Apollo credits? You're only charged for people Apollo finds.
+        Reveal {n} emails for up to {viaTreg ? `${priceLabel(n, true)} through treg` : `${n} Apollo credits`}? You're only charged for people Apollo finds.
         {over && (
           <span className="state-not_met">
-            {' '}This goes past your monthly budget ({totalSpent(ledger)} of {settings.monthlyBudget} used).
+            {' '}This goes past your monthly budget ({spentLabel(totalSpent(ledger), viaTreg)} of {budgetLabel(settings, viaTreg)} used).
           </span>
         )}
       </p>
@@ -110,7 +111,7 @@ function RevealAll({ contacts, reveal }: { contacts: Contact[]; reveal: Reveal }
   );
 }
 
-function ContactRow({ contact: c, reveal, compact }: { contact: Contact; reveal: Reveal; compact?: boolean }) {
+function ContactRow({ contact: c, reveal, compact, viaTreg = false }: { contact: Contact; reveal: Reveal; compact?: boolean; viaTreg?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const name = contactName(c);
@@ -139,7 +140,7 @@ function ContactRow({ contact: c, reveal, compact }: { contact: Contact; reveal:
       )
     ) : c.hasEmail ? (
       <button className={compact ? 'small' : 'primary'} disabled={busy} onClick={onReveal}>
-        {busy ? 'Revealing…' : compact ? 'Reveal (1 cr)' : 'Reveal email (1 credit)'}
+        {busy ? 'Revealing…' : compact ? `Reveal (${priceLabel(1, viaTreg)})` : `Reveal email (${priceLabel(1, viaTreg, true)})`}
       </button>
     ) : (
       <div className="small muted">No email</div>

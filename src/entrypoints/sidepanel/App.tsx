@@ -7,7 +7,7 @@ import { RequirementStrip, StateIcon } from '@/components/Icon';
 import { checkState, checksSummary, upgradeFit } from '@/lib/mapping';
 import { SiftThisPage, useTabSwitched } from '@/components/SiftThisPage';
 import { useCredits } from '@/components/useCredits';
-import { lookupCost } from '@/lib/credits';
+import { budgetLabel, lookupCost, priceLabel, spentLabel } from '@/lib/credits';
 import { describeError } from '@/lib/errors';
 import { openAccounts, send } from '@/lib/messages';
 import { isLinkedin, normalizeDomainInput } from '@/lib/resolver';
@@ -40,6 +40,7 @@ export default function App() {
 
   const credits = useCredits();
   const cost = lookupCost(credits.settings);
+  const viaTreg = credits.viaTreg;
   const openSettings = () => browser.runtime.openOptionsPage();
 
   const lookup: Lookup = (domain, force = false, allowOverBudget = false, profileUrl) => {
@@ -83,6 +84,8 @@ function viewSubject(view: ViewState): string | null {
 type Lookup = (domain: string, force?: boolean, allowOverBudget?: boolean, profileUrl?: string) => void;
 
 function Body({ view, windowId, lookup, cost }: { view: ViewState; windowId: number | null; lookup: Lookup; cost: number }) {
+  const credits = useCredits();
+  const { viaTreg } = credits;
   switch (view.status) {
     case 'idle':
       return (
@@ -132,7 +135,9 @@ function Body({ view, windowId, lookup, cost }: { view: ViewState; windowId: num
       return (
         <Empty
           title="Monthly credit budget reached"
-          body={`Sift has used ${view.spent} of your ${view.budget}-credit budget this month. Looking up ${view.domain} costs ${view.cost} more.`}
+          body={viaTreg
+            ? `Sift has spent ${spentLabel(view.spent, true)} of your ${budgetLabel(credits.settings, true)} budget this month. Looking up ${view.domain} costs ${priceLabel(view.cost, true)} more.`
+            : `Sift has used ${view.spent} of your ${view.budget}-credit budget this month. Looking up ${view.domain} costs ${view.cost} more.`}
         >
           <div className="row">
             <button className="primary" onClick={() => lookup(view.domain, false, true, view.profileUrl)}>Look up anyway</button>
@@ -171,6 +176,7 @@ function Empty({ title, body, children }: { title: string; body: string; childre
 }
 
 function DomainInput({ onSubmit, cost }: { onSubmit: (domain: string) => void; cost: number }) {
+  const { viaTreg } = useCredits();
   const [value, setValue] = useState('');
   const domain = normalizeDomainInput(value);
   return (
@@ -182,7 +188,7 @@ function DomainInput({ onSubmit, cost }: { onSubmit: (domain: string) => void; c
       }}
     >
       <input placeholder="acme.com" value={value} onChange={(e) => setValue(e.target.value)} />
-      <button type="submit" disabled={!domain} title={`Uncached lookups cost ${cost} Apollo credits`}>Look up ({cost} cr)</button>
+      <button type="submit" disabled={!domain} title={`Uncached lookups cost ${priceLabel(cost, viaTreg, true)}`}>Look up ({priceLabel(cost, viaTreg)})</button>
     </form>
   );
 }
@@ -200,6 +206,7 @@ interface ResultProps {
 }
 
 function ResultView({ domain, result, loadingStage, cached, windowId, lookup, cost }: ResultProps) {
+  const { viaTreg } = useCredits();
   const loading = loadingStage !== undefined;
   if (!result) return <CompanySkeleton domain={domain} />;
   const { company, persona, contacts } = result;
@@ -249,7 +256,7 @@ function ResultView({ domain, result, loadingStage, cached, windowId, lookup, co
       {!loading && (
         <div className="row spread small muted">
           <span>{cached ? `Updated ${ago(result.fetchedAt)}` : 'Just updated'}</span>
-          <button className="link small" onClick={() => lookup(domain, true, false, result.profile?.url)}>Refresh ({cost} credit{cost === 1 ? '' : 's'})</button>
+          <button className="link small" onClick={() => lookup(domain, true, false, result.profile?.url)}>Refresh ({priceLabel(cost, viaTreg, true)})</button>
         </div>
       )}
     </div>

@@ -39,7 +39,7 @@ Help a salesperson decide whether the company whose website they're on is worth 
 - **tabs (optional):** requested only when the user presses "Sift this page" in the panel, to read the active tab's address at that moment and look it up without clicking the toolbar icon again. Not requested at install; never read in the background.
 - **sidePanel:** show results beside the page.
 - **storage:** keep the user's API keys, profile, cached results, saved accounts and credit count locally.
-- **Host permissions (api.apollo.io, api.typesafe.ai):** call the two APIs the user brings keys for. No other hosts.
+- **Host permissions (api.apollo.io, api.typesafe.ai, treg.to):** call the APIs the user brings keys for. treg.to is used only if the user chooses treg as the data source instead of an Apollo key. No other hosts.
 
 ## Data usage disclosures
 - Collects: none. Sift has no server; the developer receives no user data.

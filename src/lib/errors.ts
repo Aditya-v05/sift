@@ -27,11 +27,12 @@ export function toLookupError(err: unknown): LookupError {
   };
 }
 
-const SERVICE_NAME: Record<Service, string> = { apollo: 'Apollo', jev: 'Jev (TypeSafe)' };
+const SERVICE_NAME: Record<Service, string> = { apollo: 'Apollo', jev: 'Jev (TypeSafe)', treg: 'treg' };
 
 export function describeError(e: LookupError): string {
   const name = SERVICE_NAME[e.service];
   if (e.invalidKey) return `${name} rejected the API key (${e.status}). Check it in Settings.`;
+  if (e.service === 'treg' && e.status === 402) return 'Your treg balance is too low for this call. Top up at treg.to, then retry.';
   if (e.status === 429) return `${name} rate limit hit. Wait a moment and retry.`;
   if (e.status === 529 || (e.status && e.status >= 500)) return `${name} is having trouble (${e.status}). Retry shortly.`;
   if (e.status === null) return `Couldn't reach ${name}: ${e.message}`;
@@ -39,7 +40,14 @@ export function describeError(e: LookupError): string {
 }
 
 /** fetch() with a timeout, one retry on 429/529, and ApiError on failure. */
-export async function request(service: Service, url: string, init: RequestInit, timeoutMs = 15000): Promise<unknown> {
+export async function request(
+  service: Service,
+  url: string,
+  init: RequestInit,
+  timeoutMs = 15000,
+  /** Sees the response headers of a successful call (treg reports its charge there). */
+  onHeaders?: (headers: Headers) => void,
+): Promise<unknown> {
   for (let attempt = 0; ; attempt++) {
     let res: Response;
     try {
@@ -61,6 +69,7 @@ export async function request(service: Service, url: string, init: RequestInit, 
       body = text;
     }
     if (!res.ok) throw new ApiError(service, res.status, extractMessage(body) ?? res.statusText);
+    onHeaders?.(res.headers);
     return body;
   }
 }

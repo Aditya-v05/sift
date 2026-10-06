@@ -3,6 +3,9 @@ import type { SiteSignalType } from './site-types';
 export interface Keys {
   apollo: string;
   typesafe: string;
+  /** Where Apollo data comes from: the user's own Apollo key, or treg.to with a treg key. Missing = 'apollo'. */
+  provider?: 'apollo' | 'treg';
+  treg?: string;
 }
 
 /** The seller's own answers from onboarding, kept verbatim for Jev's context. */
@@ -160,7 +163,7 @@ export interface LookupResult {
   profile?: { apolloId: string; url: string };
 }
 
-export type Service = 'apollo' | 'jev';
+export type Service = 'apollo' | 'jev' | 'treg';
 
 export interface LookupError {
   service: Service;
