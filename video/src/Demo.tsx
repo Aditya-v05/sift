@@ -25,11 +25,59 @@ const SRC = { w: 2940, h: 1838 };
 const NIGHT = '#071d1a';
 const CREAM = '#efece4';
 const MINT = '#9ff2d6';
-/** Captions get their own band under the picture, so they never sit on the page's own text. */
-const BAND = { desktop: 170, vertical: 250 };
-
 type Rect = { x: number; y: number; w: number; h: number };
 type Key = [t: number, rect: Rect];
+
+// ---------- formats: the site's two cuts, and two for LinkedIn / X feeds ----------
+
+/** One rectangle of the recording: `w` wide, centred on (cx, cy). Its height follows the picture's aspect. */
+type Shot = [cx: number, cy: number, w: number];
+
+export interface Format {
+  id: 'SiftDemo' | 'SiftDemoVertical' | 'SiftSocialPortrait' | 'SiftSocialSquare';
+  width: number;
+  height: number;
+  /** Captions get their own band under the picture, so they never sit on the page's own text. */
+  band: number;
+  /** The panel column at a given height in the recording (x of its centre and the width shown). */
+  panel: [cx: number, w: number];
+  /** The toolbar before Chrome goes fullscreen, the zoom on the Sift icon, and the first look at the result. */
+  top: Shot;
+  icon: Shot;
+  start: Shot;
+  caption: { size: number; label: number; side: number };
+  card: { size: number; mark: number };
+  intro: number;
+  outro: number;
+  /** Feeds autoplay muted and get scrolled past: a hook first, a longer end card, a progress line. */
+  social: boolean;
+}
+
+const MID = 919; // half the recording's height
+
+export const FORMATS: Format[] = [
+  {
+    id: 'SiftDemo', width: 1600, height: 1000, band: 170, panel: [2330, 1260],
+    top: [1470, 0, 2940], icon: [2250, 440, 1500], start: [1470, MID, 2940],
+    caption: { size: 60, label: 20, side: 64 }, card: { size: 84, mark: 64 }, intro: 36, outro: 66, social: false,
+  },
+  {
+    id: 'SiftDemoVertical', width: 720, height: 1280, band: 250, panel: [2555, 780],
+    top: [2300, 0, 1034], icon: [2384, 520, 1000], start: [2300, MID, 1034],
+    caption: { size: 64, label: 22, side: 44 }, card: { size: 70, mark: 76 }, intro: 36, outro: 66, social: false,
+  },
+  {
+    // 4:5 is the tallest shape LinkedIn's feed shows in full, and X shows it as is.
+    id: 'SiftSocialPortrait', width: 1080, height: 1350, band: 300, panel: [2480, 960],
+    top: [2150, 0, 1500], icon: [2300, 500, 1100], start: [2100, MID, 1680],
+    caption: { size: 78, label: 27, side: 70 }, card: { size: 100, mark: 96 }, intro: 72, outro: 110, social: true,
+  },
+  {
+    id: 'SiftSocialSquare', width: 1080, height: 1080, band: 250, panel: [2420, 1100],
+    top: [2000, 0, 1880], icon: [2250, 450, 1300], start: [1950, MID, 2200],
+    caption: { size: 72, label: 25, side: 64 }, card: { size: 92, mark: 88 }, intro: 72, outro: 110, social: true,
+  },
+];
 
 // ---------- the cut: [start, end] in seconds of the recording ----------
 
@@ -39,20 +87,20 @@ const CLIPS = [
   { from: 22.0, to: 25.6 },  // back at the top: Save, Saved
 ] as const;
 
-const INTRO = 36;
-const OUTRO = 66;
 const FADE = 10;
 const len = (c: { from: number; to: number }) => Math.round((c.to - c.from) * FPS);
-const starts: number[] = [];
-{
-  let at = INTRO - FADE;
+
+/** Where each clip (and then the outro) starts, and the total length, for a format. */
+export function timeline(f: Format) {
+  const starts: number[] = [];
+  let at = f.intro - FADE;
   for (const c of CLIPS) {
     starts.push(at);
     at += len(c) - FADE;
   }
   starts.push(at); // outro
+  return { starts, total: at + f.outro };
 }
-export const TOTAL = starts[3]! + OUTRO;
 
 // ---------- the camera: rectangles of the recording to fill the frame with, over recording time ----------
 
@@ -67,17 +115,18 @@ function box(cx: number, cy: number, w: number, aspect: number): Rect {
   };
 }
 
-function cameraKeys(vertical: boolean): Key[] {
-  const a = vertical ? 720 / (1280 - BAND.vertical) : 1600 / (1000 - BAND.desktop);
+function cameraKeys(f: Format): Key[] {
+  const a = f.width / (f.height - f.band);
+  const shot = ([cx, cy, w]: Shot) => box(cx, cy, w, a);
   // Panel column: x 2180..2930. Where things sit in the panel changes as it scrolls (see README.md).
-  const panel = (cy: number) => (vertical ? box(2555, cy, 780, a) : box(2330, cy, 1260, a));
+  const panel = (cy: number) => box(f.panel[0], cy, f.panel[1], a);
   // Before Chrome went fullscreen the toolbar (with the Sift icon) is at the top: keep it in frame.
-  const top = vertical ? box(2300, 0, 1034, a) : box(SRC.w / 2, 0, SRC.w, a);
-  const start = vertical ? box(2300, SRC.h / 2, 1034, a) : box(SRC.w / 2, SRC.h / 2, SRC.w, a);
+  const top = shot(f.top);
+  const start = shot(f.start);
   return [
     [1.0, top],
-    [1.5, vertical ? box(2384, 520, 1000, a) : box(2250, 440, 1500, a)], // towards the icon
-    [2.4, vertical ? box(2384, 520, 1000, a) : box(2250, 440, 1500, a)],
+    [1.5, shot(f.icon)], // towards the icon
+    [2.4, shot(f.icon)],
     [3.85, top],
     [4.3, start],
     [5.0, start],
@@ -141,12 +190,12 @@ const CAPTIONS: { from: number; to: number; label: string; text: ReactNode }[] =
 
 // ---------- pieces ----------
 
-function Clip({ clip, vertical }: { clip: (typeof CLIPS)[number]; vertical: boolean }) {
+function Clip({ clip, f }: { clip: (typeof CLIPS)[number]; f: Format }) {
   const frame = useCurrentFrame();
   const { width, height, durationInFrames } = useVideoConfig();
-  const band = vertical ? BAND.vertical : BAND.desktop;
+  const band = f.band;
   const t = clip.from + frame / FPS;
-  const cam = cameraAt(cameraKeys(vertical), t);
+  const cam = cameraAt(cameraKeys(f), t);
   const scale = width / cam.w;
   const fade = Math.min(
     interpolate(frame, [0, FADE], [0, 1], { extrapolateRight: 'clamp' }),
@@ -171,66 +220,87 @@ function Clip({ clip, vertical }: { clip: (typeof CLIPS)[number]; vertical: bool
         <FakeEmail t={t} />
       </div>
       </div>
-      {caption && <Caption key={caption.label} {...caption} t={t} vertical={vertical} band={band} />}
+      {caption && <Caption key={caption.label} {...caption} t={t} f={f} />}
     </AbsoluteFill>
   );
 }
 
-function Caption({ label, text, from, to, t, vertical, band }: { label: string; text: ReactNode; from: number; to: number; t: number; vertical: boolean; band: number }) {
+function Caption({ label, text, from, to, t, f }: { label: string; text: ReactNode; from: number; to: number; t: number; f: Format }) {
+  const { size, label: labelSize, side } = f.caption;
   const inK = interpolate(t, [from, from + 0.45], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
   const outK = interpolate(t, [to - 0.3, to], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
   return (
     <div
       style={{
-        position: 'absolute', left: vertical ? 44 : 64, right: vertical ? 44 : undefined, bottom: 0, height: band,
+        position: 'absolute', left: side, right: side, bottom: 0, height: f.band,
         display: 'flex', flexDirection: 'column', justifyContent: 'center',
         opacity: Math.min(inK, outK), transform: `translateY(${(1 - inK) * 18}px)`, color: CREAM,
       }}
     >
-      <div style={{ fontFamily: mono, fontSize: vertical ? 22 : 20, color: MINT, letterSpacing: '0.02em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{ width: 8, height: 8, borderRadius: 4, background: MINT, boxShadow: `0 0 12px ${MINT}` }} />
+      <div style={{ fontFamily: mono, fontSize: labelSize, color: MINT, letterSpacing: '0.02em', marginBottom: labelSize * 0.5, display: 'flex', alignItems: 'center', gap: labelSize * 0.45 }}>
+        <span style={{ width: labelSize * 0.38, height: labelSize * 0.38, borderRadius: '50%', background: MINT, boxShadow: `0 0 12px ${MINT}` }} />
         {label}
       </div>
-      <div style={{ fontFamily: serif, fontSize: vertical ? 64 : 60, lineHeight: 1, letterSpacing: '-0.02em' }}>{text}</div>
+      <div style={{ fontFamily: serif, fontSize: size, lineHeight: 1, letterSpacing: '-0.02em' }}>{text}</div>
     </div>
   );
 }
 
-function Card({ children, sub }: { children: ReactNode; sub?: string }) {
+function Card({ children, sub, f, kicker }: { children: ReactNode; sub?: ReactNode; f: Format; kicker?: string }) {
   const frame = useCurrentFrame();
-  const { durationInFrames, width } = useVideoConfig();
+  const { durationInFrames } = useVideoConfig();
   const k = interpolate(frame, [0, 14], [0, 1], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
   const out = interpolate(frame, [durationInFrames - FADE, durationInFrames], [1, 0], { extrapolateLeft: 'clamp' });
-  const small = width < 1000;
+  const { size, mark } = f.card;
   return (
-    <AbsoluteFill style={{ backgroundColor: NIGHT, alignItems: 'center', justifyContent: 'center', textAlign: 'center', opacity: out, padding: 48 }}>
-      <div style={{ opacity: k, transform: `translateY(${(1 - k) * 16}px)`, display: 'grid', justifyItems: 'center', gap: small ? 28 : 30 }}>
-        <Img src={staticFile('icon.png')} style={{ width: small ? 76 : 64, height: small ? 76 : 64, borderRadius: 16 }} />
-        <div style={{ fontFamily: serif, color: CREAM, fontSize: small ? 70 : 84, lineHeight: 1.02, letterSpacing: '-0.02em' }}>{children}</div>
-        {sub && <div style={{ fontFamily: mono, color: '#6b807c', fontSize: small ? 22 : 20 }}>{sub}</div>}
+    <AbsoluteFill style={{ backgroundColor: NIGHT, alignItems: 'center', justifyContent: 'center', textAlign: 'center', opacity: out, padding: f.social ? 80 : 48 }}>
+      <div style={{ opacity: k, transform: `translateY(${(1 - k) * 16}px)`, display: 'grid', justifyItems: 'center', gap: size * 0.36 }}>
+        <Img src={staticFile('icon.png')} style={{ width: mark, height: mark, borderRadius: mark / 4 }} />
+        {kicker && <div style={{ fontFamily: mono, color: MINT, fontSize: size * 0.27 }}>{kicker}</div>}
+        <div style={{ fontFamily: serif, color: CREAM, fontSize: size, lineHeight: 1.02, letterSpacing: '-0.02em', textWrap: 'balance' }}>{children}</div>
+        {sub && <div style={{ fontFamily: mono, color: '#7f9a97', fontSize: size * (f.social ? 0.27 : 0.24), lineHeight: 1.6 }}>{sub}</div>}
       </div>
     </AbsoluteFill>
   );
 }
 
+/** A thin mint line along the bottom that fills as the video plays (feeds show no scrubber). */
+function Progress() {
+  const frame = useCurrentFrame();
+  const { durationInFrames, width } = useVideoConfig();
+  return <div style={{ position: 'absolute', left: 0, bottom: 0, height: 6, width: (width * frame) / (durationInFrames - 1), background: MINT, opacity: 0.85 }} />;
+}
+
 // ---------- the whole thing ----------
 
-export function Demo({ vertical }: { vertical: boolean }) {
+export function Demo({ format }: { format: Format['id'] }) {
+  const f = FORMATS.find((x) => x.id === format)!;
+  const { starts } = timeline(f);
   return (
     <AbsoluteFill style={{ backgroundColor: NIGHT }}>
-      <Sequence durationInFrames={INTRO}>
-        <Card>Sift, on a real site.</Card>
+      <Sequence durationInFrames={f.intro}>
+        {f.social ? (
+          <Card f={f} kicker="a free Chrome extension">
+            Know who to email <em style={{ color: MINT }}>before you leave their homepage.</em>
+          </Card>
+        ) : (
+          <Card f={f}>Sift, on a real site.</Card>
+        )}
       </Sequence>
       {CLIPS.map((c, i) => (
         <Sequence key={c.from} from={starts[i]} durationInFrames={len(c)}>
-          <Clip clip={c} vertical={vertical} />
+          <Clip clip={c} f={f} />
         </Sequence>
       ))}
-      <Sequence from={starts[3]} durationInFrames={OUTRO}>
-        <Card sub="Free and open source · sift-through.vercel.app">
+      <Sequence from={starts[3]} durationInFrames={f.outro}>
+        <Card
+          f={f}
+          sub={f.social ? <>Free and open source, on your own Apollo + Jev keys<br />sift-through.vercel.app</> : 'Free and open source · sift-through.vercel.app'}
+        >
           Sift through companies.<br /><em style={{ color: MINT }}>Talk to the right ones.</em>
         </Card>
       </Sequence>
+      {f.social && <Progress />}
     </AbsoluteFill>
   );
 }

@@ -4,6 +4,30 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-06 — Demo video cut for LinkedIn and X
+
+> "can u make the demo fit for like a linkedin / x post"
+
+- **Formats:** two new Remotion compositions from the same timeline:
+  - `SiftSocialPortrait`, 1080×1350 (4:5, the tallest shape LinkedIn's feed shows in full, and fine on X);
+  - `SiftSocialSquare`, 1080×1080 (works anywhere).
+- **What's different from the site cut** (feeds autoplay muted and get scrolled past):
+  - a hook card first: "a free Chrome extension / Know who to email *before you leave their homepage.*";
+  - framing tighter on the panel;
+  - captions about 30% bigger;
+  - the end card held 3.7 s, with "Free and open source, on your own Apollo + Jev keys" and the URL;
+  - a thin mint progress line along the bottom.
+
+  Each runs about 21 s, at CRF 18 (6–6.5 MB), since the platforms re-encode uploads anyway.
+- **Code:** the formats are now config objects (`FORMATS` in `video/src/Demo.tsx`). The site cuts' framing, sizes and timing are unchanged. A new script, `npm run render:social`, renders both; the README is updated.
+- **Verified:**
+  - stills at every moment;
+  - every frame of the reveal in both cuts shows only `dan@usepylon.example`;
+  - the type check passes.
+- **Files:** `sift-social-4x5.mp4` and `sift-social-1x1.mp4` are on the Desktop.
+
+---
+
 ## 2026-10-06 — Deleted the `site-redesign` branch
 
 > "delete it - and give me the video - mp4 we used"

@@ -19,7 +19,9 @@ It stays out of git because the raw clip shows that email unblurred after 14.4 s
 - **Camera:** a rectangle of the recording per moment, eased between. Coordinates are recording pixels, and times are seconds of the original recording.
 - **Captions:** one per moment, in their own band under the picture, so they never sit on the page's text.
 - **Made-up email:** the revealed address belongs to a real person, so `FakeEmail` draws `dan@usepylon.example` over it in the panel's font and background, inside the camera's coordinate space, from 11.7 s to 14.4 s. `.example` is reserved and can never be anyone's.
-- **Two compositions:** `SiftDemo` (desktop) and `SiftDemoVertical` (phones) share the timeline and differ only in framing.
+- **Four formats** (`FORMATS` in `Demo.tsx`) share the timeline and differ in framing, caption size and cards:
+  - `SiftDemo` (1600×1000) and `SiftDemoVertical` (720×1280) are for the site;
+  - `SiftSocialPortrait` (1080×1350, 4:5) and `SiftSocialSquare` (1080×1080) are for LinkedIn and X feeds. They open on a hook card ("Know who to email before you leave their homepage."), use bigger captions for phones with the sound off, hold the end card longer (with the URL and "free and open source"), and show a thin progress line, since feeds have no scrubber.
 
 ## Commands
 
@@ -27,7 +29,8 @@ It stays out of git because the raw clip shows that email unblurred after 14.4 s
 cd video
 npm install
 npm run studio   # preview and scrub
-npm run render   # writes out/demo.mp4 and out/demo-m.mp4
+npm run render          # the site cuts: out/demo.mp4, out/demo-m.mp4
+npm run render:social   # feed cuts: out/sift-social-4x5.mp4, out/sift-social-1x1.mp4 (upload as is)
 ```
 
 Then re-encode for the web and copy to the site:
