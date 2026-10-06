@@ -4,6 +4,19 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-07 — GitHub About section and a test line in the README
+
+> Pasted suggestions: fix the repo's About website (still the old sift-rosy-omega.vercel.app), add a description and topics, and state the test numbers once, low in the README.
+
+- **About:**
+  - website set to https://sift-through.vercel.app (was https://sift-rosy-omega.vercel.app);
+  - description "Open-source Chrome extension for outbound research.";
+  - topics: chrome-extension, sales, outbound, gtm, apollo, open-source.
+- **README:** under How it works, "Tested with 123 Vitest unit tests and 31 Playwright browser checks, with CI on every push."
+- **Verified:** the numbers were re-run on `main` before quoting them (123 passed, 31 smoke checks, 0 failures). `gh repo view` shows the new About values.
+
+---
+
 ## 2026-10-07 — README: install made obvious; first GitHub release
 
 > "Your GitHub README should make installation extremely obvious near the top: what Sift does, screenshot/demo, install instructions, Apollo + Jev requirements, privacy/no backend."
