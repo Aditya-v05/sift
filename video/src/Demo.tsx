@@ -21,7 +21,7 @@ const { fontFamily: mono } = loadMono('normal', { weights: ['400'], subsets: ['l
 const { fontFamily: sans } = loadSans('normal', { weights: ['400'], subsets: ['latin'] }); // the panel's font
 
 const FPS = 30;
-const SRC = { w: 2940, h: 1838 };
+export const SRC = { w: 2940, h: 1838 };
 const NIGHT = '#071d1a';
 const CREAM = '#efece4';
 const MINT = '#9ff2d6';
@@ -34,7 +34,7 @@ type Key = [t: number, rect: Rect];
 type Shot = [cx: number, cy: number, w: number];
 
 export interface Format {
-  id: 'SiftDemo' | 'SiftDemoVertical' | 'SiftSocialPortrait' | 'SiftSocialSquare';
+  id: 'SiftDemo' | 'SiftDemoVertical' | 'SiftSocialPortrait' | 'SiftSocialSquare' | 'SiftSocialLandscape';
   width: number;
   height: number;
   /** Captions get their own band under the picture, so they never sit on the page's own text. */
@@ -77,6 +77,12 @@ export const FORMATS: Format[] = [
     top: [2000, 0, 1880], icon: [2250, 450, 1300], start: [1950, MID, 2200],
     caption: { size: 72, label: 25, side: 64 }, card: { size: 92, mark: 88 }, intro: 72, outro: 110, social: true,
   },
+  {
+    // 16:9, the way most people post screen recordings; shows the page beside the panel.
+    id: 'SiftSocialLandscape', width: 1920, height: 1080, band: 190, panel: [2270, 1400],
+    top: [1470, 0, 2940], icon: [2250, 440, 1500], start: [1470, MID, 2940],
+    caption: { size: 68, label: 23, side: 80 }, card: { size: 96, mark: 84 }, intro: 72, outro: 110, social: true,
+  },
 ];
 
 // ---------- the cut: [start, end] in seconds of the recording ----------
@@ -105,7 +111,7 @@ export function timeline(f: Format) {
 // ---------- the camera: rectangles of the recording to fill the frame with, over recording time ----------
 
 /** A rectangle of the given aspect, `w` wide, centred on (cx, cy), kept inside the recording. */
-function box(cx: number, cy: number, w: number, aspect: number): Rect {
+export function box(cx: number, cy: number, w: number, aspect: number): Rect {
   const h = w / aspect;
   return {
     x: Math.min(Math.max(cx - w / 2, 0), SRC.w - w),

@@ -4,6 +4,21 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-06 — Social thumbnails and a landscape cut
+
+> "can we generate a thumbnail as well" / "i think the text thing is not necessary" / "having a landscape orientation is fine because many people post using that"
+
+- **Thumbnails:** no text, just the panel on Pylon at 82% strong fit with why now, framed like each video. Three sizes: `sift-thumb-4x5.png`, `sift-thumb-1x1.png`, `sift-thumb-16x9.png`.
+- **Landscape:** `SiftSocialLandscape` (1920×1080, 16:9), the same social cut with the page beside the panel.
+- **A mistake caught before anything left the machine:** the first thumbnail render seeked `clean.mp4` from a Remotion still. It landed on a later frame that showed the real email unblurred. Those two PNGs were only in the git-ignored `video/out/` and were deleted at once; they never reached the Desktop or git. Thumbnails now come from a still image extracted at exactly 6.6 s (`video/public/thumb-frame.png`, kept local). The README warns against seeking video from a still.
+- **Verified:**
+  - all three thumbnails viewed: no contact or email in frame;
+  - every frame of the landscape cut's reveal shows only `dan@usepylon.example`;
+  - the type check passes.
+- **Files:** everything is on the Desktop.
+
+---
+
 ## 2026-10-06 — Demo video cut for LinkedIn and X
 
 > "can u make the demo fit for like a linkedin / x post"

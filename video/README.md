@@ -21,7 +21,9 @@ It stays out of git because the raw clip shows that email unblurred after 14.4 s
 - **Made-up email:** the revealed address belongs to a real person, so `FakeEmail` draws `dan@usepylon.example` over it in the panel's font and background, inside the camera's coordinate space, from 11.7 s to 14.4 s. `.example` is reserved and can never be anyone's.
 - **Four formats** (`FORMATS` in `Demo.tsx`) share the timeline and differ in framing, caption size and cards:
   - `SiftDemo` (1600×1000) and `SiftDemoVertical` (720×1280) are for the site;
-  - `SiftSocialPortrait` (1080×1350, 4:5) and `SiftSocialSquare` (1080×1080) are for LinkedIn and X feeds. They open on a hook card ("Know who to email before you leave their homepage."), use bigger captions for phones with the sound off, hold the end card longer (with the URL and "free and open source"), and show a thin progress line, since feeds have no scrubber.
+  - `SiftSocialPortrait` (1080×1350, 4:5) and `SiftSocialSquare` (1080×1080) are for LinkedIn and X feeds. They open on a hook card ("Know who to email before you leave their homepage."), use bigger captions for phones with the sound off, hold the end card longer (with the URL and "free and open source"), and show a thin progress line, since feeds have no scrubber;
+  - `SiftSocialLandscape` (1920×1080, 16:9) is the same social cut for people who post landscape.
+- **Thumbnails** (`src/Thumb.tsx`, stills `SiftSocial*Thumb`): no text, just the panel at Pylon 82% strong fit. They are made from `public/thumb-frame.png`, a still of `clean.mp4` at 6.6 s (`ffmpeg -ss 6.6 -i public/clean.mp4 -frames:v 1 public/thumb-frame.png`), before any contact or email is on screen. Don't seek `clean.mp4` from a still: `OffthreadVideo`'s `startFrom` in a Still landed on a later frame that shows the real email.
 
 ## Commands
 
@@ -30,7 +32,8 @@ cd video
 npm install
 npm run studio   # preview and scrub
 npm run render          # the site cuts: out/demo.mp4, out/demo-m.mp4
-npm run render:social   # feed cuts: out/sift-social-4x5.mp4, out/sift-social-1x1.mp4 (upload as is)
+npm run render:social   # feed cuts: out/sift-social-4x5.mp4, -1x1.mp4, -16x9.mp4 (upload as is)
+npx remotion still src/index.ts SiftSocialPortraitThumb out/sift-thumb-4x5.png   # likewise Square / Landscape
 ```
 
 Then re-encode for the web and copy to the site:

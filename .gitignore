@@ -13,3 +13,4 @@ site/dist
 video/public/clean.mp4
 video/out/
 video/node_modules/
+video/public/thumb-frame.png
