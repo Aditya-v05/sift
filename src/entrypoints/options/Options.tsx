@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { StateIcon } from '@/components/Icon';
 import { useCredits } from '@/components/useCredits';
 import { isTregBalance, lookupCost, priceLabel, totalSpent, usdFor } from '@/lib/credits';
-import { openAccounts, send, type KeyTest } from '@/lib/messages';
+import { openAccounts, send, type KeyTest, type SourceSwitch } from '@/lib/messages';
 import { SENIORITY_OPTIONS, peopleFilters } from '@/lib/people';
 import { generateRules } from '@/lib/rules';
 import * as store from '@/lib/storage';
@@ -31,6 +31,24 @@ export default function Options() {
 type Source = 'apollo' | 'treg';
 type FieldStatus = { state: 'checking' } | KeyTest;
 
+/** The data sources, in the order the dropdown lists them. Add new ones here. */
+const SOURCES: { id: Source; label: string }[] = [
+  { id: 'apollo', label: 'Apollo, with your API key' },
+  { id: 'treg', label: 'treg, pay per call (no Apollo plan needed)' },
+];
+const sourceName = (s: Source) => (s === 'treg' ? 'treg' : 'your Apollo key');
+
+/** Asked from elsewhere on the page (the costs section) to show a source whose key still has to be added. */
+const PICK_EVENT = 'sift:pick-source';
+
+/**
+ * Switch the data source. With a saved key that still connects it switches at once (the background checks
+ * and saves); otherwise it says why. Shared by the dropdown and the link in the costs section.
+ */
+function switchSource(src: Source): Promise<SourceSwitch> {
+  return send({ type: 'useSource', provider: src });
+}
+
 /**
  * Keys save themselves: a key is tested a moment after you paste or type it, and kept once it connects.
  * Picking a data source switches at once when its key is already saved; otherwise its key field opens and
@@ -46,12 +64,25 @@ function KeysSection() {
   const dataKey = (k: Keys, src: Source) => (src === 'treg' ? k.treg ?? '' : k.apollo);
 
   useEffect(() => {
-    store.getKeys().then((k) => {
-      const full: Keys = { apollo: '', typesafe: '', provider: 'apollo', treg: '', ...k };
-      setSaved(full);
-      setDraft(full);
-      setReady(true);
-    });
+    const load = (first: boolean) =>
+      store.getKeys().then((k) => {
+        const full: Keys = { apollo: '', typesafe: '', provider: 'apollo', treg: '', ...k };
+        setSaved(full);
+        // A switch made elsewhere (the costs section) moves the dropdown too; typed keys are kept.
+        setDraft((d) => (first ? full : { ...d, provider: full.provider }));
+        setReady(true);
+      });
+    load(true);
+    const off = store.onLocalChange(['keys'], () => load(false));
+    const onPick = (e: Event) => {
+      setDraft((d) => ({ ...d, provider: (e as CustomEvent<Source>).detail }));
+      document.getElementById('keys')?.scrollIntoView({ behavior: 'smooth' });
+    };
+    window.addEventListener(PICK_EVENT, onPick);
+    return () => {
+      off();
+      window.removeEventListener(PICK_EVENT, onPick);
+    };
   }, []);
 
   // Test whatever changed, a moment after the last keystroke, and keep what connects.
@@ -85,9 +116,18 @@ function KeysSection() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft, ready]);
 
-  const pick = (src: Source) => {
+  const [switching, setSwitching] = useState(false);
+  const pick = async (src: Source) => {
     setStatus((st) => ({ ...st, data: undefined }));
-    setDraft({ ...draft, provider: src });
+    if (src === using) return setDraft({ ...draft, provider: src });
+    setSwitching(true);
+    const res = await switchSource(src);
+    setSwitching(false);
+    // Switched: the storage listener moves everything over. Otherwise show that source's key field.
+    if (!res.ok) {
+      setDraft({ ...draft, provider: src });
+      if (res.reason === 'failed') setStatus((st) => ({ ...st, data: { ok: false, message: res.message } }));
+    }
   };
 
   const pending = source !== using;
@@ -95,15 +135,16 @@ function KeysSection() {
     <section className="card stack" id="keys">
       <h2>API keys</h2>
       <div>
-        <label>Company and people data</label>
-        <div className="choice" role="radiogroup" aria-label="Where company and people data comes from">
-          <label className="row"><input type="radio" name="provider" checked={source === 'apollo'} onChange={() => pick('apollo')} /> Your Apollo key</label>
-          <label className="row"><input type="radio" name="provider" checked={source === 'treg'} onChange={() => pick('treg')} /> treg (pay per call, no Apollo plan needed)</label>
-        </div>
+        <label htmlFor="source">Company and people data</label>
+        <select id="source" className="source" value={source} disabled={switching} onChange={(e) => pick(e.target.value as Source)}>
+          {SOURCES.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+        </select>
         <div className={`small hint ${pending ? 'state-unsure' : 'muted'}`}>
-          {pending
-            ? `Paste your ${source === 'treg' ? 'treg' : 'Apollo'} key below. Sift switches as soon as it connects.`
-            : `Sift is using ${using === 'treg' ? 'treg' : 'your Apollo key'}.`}
+          {switching
+            ? 'Switching…'
+            : pending
+              ? `Paste your ${source === 'treg' ? 'treg' : 'Apollo'} key below. Sift switches as soon as it connects.`
+              : `Sift is using ${sourceName(using)}.`}
         </div>
       </div>
       {source === 'treg' ? (
@@ -370,6 +411,31 @@ function CreditsSection() {
   const [budgetText, setBudgetText] = useState<string | null>(null);
   const [budgetSaved, setBudgetSaved] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [switchMsg, setSwitchMsg] = useState<string | null>(null);
+
+  // Switch right here when the other source's key is saved; otherwise open its key field above.
+  const switchHere = async () => {
+    const target: Source = viaTreg ? 'apollo' : 'treg';
+    setSwitchMsg('Switching…');
+    const res = await switchSource(target);
+    if (res.ok) {
+      setSwitchMsg(`Switched to ${sourceName(target)}.`);
+      setTimeout(() => setSwitchMsg(null), 2500);
+    } else if (res.reason === 'no_key') {
+      setSwitchMsg(null);
+      window.dispatchEvent(new CustomEvent(PICK_EVENT, { detail: target }));
+    } else {
+      setSwitchMsg(res.message);
+    }
+  };
+
+  // The balance shown must match the source in use; fetch it when it doesn't (e.g. right after a switch).
+  const balanceMatches = viaTreg === isTregBalance(balance);
+  useEffect(() => {
+    if (balanceMatches) return;
+    setChecking(true);
+    send({ type: 'refreshBalance' }).finally(() => setChecking(false));
+  }, [balanceMatches]);
   const shownBudget = settings.monthlyBudget === null
     ? ''
     : viaTreg ? String(+(settings.budgetUsd ?? usdFor(settings.monthlyBudget)).toFixed(2)) : String(settings.monthlyBudget);
@@ -404,9 +470,12 @@ function CreditsSection() {
   return (
     <section className="card stack">
       <h2>{viaTreg ? 'Costs (treg)' : 'Apollo credits'}</h2>
-      <div className="small">
-        <span className="muted">Data comes from {viaTreg ? 'treg' : 'your Apollo key'}. </span>
-        <a href="#keys">Switch to {viaTreg ? 'your Apollo key' : 'treg'}</a>
+      <div className="small row">
+        <span className="muted">Data comes from {viaTreg ? 'treg' : 'your Apollo key'}.</span>
+        <button className="link small" disabled={switchMsg === 'Switching…'} onClick={switchHere}>
+          Switch to {viaTreg ? 'your Apollo key' : 'treg'}
+        </button>
+        {switchMsg && <span className={switchMsg.startsWith('Switched') ? 'ok' : switchMsg === 'Switching…' ? 'muted' : 'err'}>{switchMsg}</span>}
       </div>
       {viaTreg ? (
         <p className="small muted" style={{ margin: 0 }}>
@@ -441,7 +510,7 @@ function CreditsSection() {
           isTregBalance(balance) ? (
             <div><strong>${balance.usd.toFixed(2)}</strong> left on treg <span className="muted small">(top up at treg.to)</span></div>
           ) : (
-            <div className="small muted">Save and test your treg key to see its balance.</div>
+            <div className="small muted">{checking ? 'Checking balance…' : 'The balance shows here once your treg key connects.'}</div>
           )
         ) : balance?.available && !isTregBalance(balance) ? (
           <div>

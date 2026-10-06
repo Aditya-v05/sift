@@ -30,6 +30,12 @@
 .seniorities { gap: 6px 18px; }
 .wrap { flex-wrap: wrap; }
 
-/* Data source choice: two radio lines, no boxes. */
-.choice { display: grid; gap: 6px; margin-top: 4px; }
-.choice label { font-weight: 400; gap: 8px; margin: 0; }
+/* Data source: a dropdown drawn as a line, like the inputs (no box). */
+select.source {
+  appearance: none; -webkit-appearance: none; width: 100%; max-width: 420px; margin-top: 4px; padding: 6px 24px 6px 0;
+  font: inherit; color: var(--text); background: transparent; border: none; border-bottom: 1px solid var(--border-strong);
+  border-radius: 0; cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 9px) 55%, calc(100% - 4px) 55%; background-size: 5px 5px; background-repeat: no-repeat;
+}
+select.source:focus-visible { outline: none; border-bottom-color: var(--accent); }

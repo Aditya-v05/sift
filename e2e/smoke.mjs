@@ -192,7 +192,8 @@ check(savedRules.keywords.includes('operations') && !savedRules.seniorities.incl
 await opts.screenshot({ path: `${OUT}/settings.png`, fullPage: true });
 
 // treg as the data source: settings swap the key field, prices read in dollars, the bar shows treg's balance.
-await opts.click('text=treg (pay per call');
+await opts.selectOption('#source', 'treg');
+await opts.waitForSelector('text=treg API key', { timeout: 5000 }).catch(() => {});
 check(await opts.locator('text=treg API key').count() === 1 && await opts.locator('text=Apollo API key').count() === 0, 'choosing treg swaps the Apollo key field for a treg key');
 check(await opts.locator('text=Sift switches as soon as it connects').count() === 1 && await opts.locator('button', { hasText: 'Save & test' }).count() === 0, 'switching needs no Save button: it waits for the new key to connect');
 await opts.screenshot({ path: `${OUT}/settings-treg.png` });

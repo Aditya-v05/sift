@@ -4,6 +4,23 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-07 — dev-sift: switch in place, data source as a dropdown, balance loads itself
+
+> "wouldn't it be nice if when i click the switch to so and so button it automatically switches instead of punting me back to the top ... if i keep adding stuff i think a drop down would be cool"
+
+- **Switch in place:** "Switch to your Apollo key" / "Switch to treg" in the costs section now switches right there when that key is saved and still connects, and confirms with "Switched to …". The page stays where it is (it moved 19 px as the text changed). Only when the key is missing does it scroll to API keys with that source picked; a key that fails shows why.
+  - How: a new background message, `useSource`, tests the saved key for the source and saves the switch only if it connects.
+- **Dropdown:** the data source is a dropdown, drawn as a line like the other inputs. The list is a `SOURCES` array, so new sources are one entry. Choosing a source with a saved key switches at once; otherwise its key field opens.
+- **Balance:** it loads by itself whenever the shown balance doesn't match the source in use (e.g. right after a switch), instead of saying "Save and test your treg key to see its balance".
+- **Verified with real keys:**
+  - the treg balance loaded on its own ($0.28);
+  - the costs-section switch moved to Apollo with no page jump, and the dropdown followed;
+  - the dropdown back to treg switched at once;
+  - no page errors;
+  - smoke 37 and 131 tests pass.
+
+---
+
 ## 2026-10-07 — dev-sift: settings without a Save button; budget in dollars on treg
 
 > "this flow is annoying - save and test and change budget limits and its not intuitive"
