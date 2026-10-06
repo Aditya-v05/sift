@@ -194,6 +194,7 @@ await opts.screenshot({ path: `${OUT}/settings.png`, fullPage: true });
 // treg as the data source: settings swap the key field, prices read in dollars, the bar shows treg's balance.
 await opts.click('text=treg (pay per call');
 check(await opts.locator('text=treg API key').count() === 1 && await opts.locator('text=Apollo API key').count() === 0, 'choosing treg swaps the Apollo key field for a treg key');
+check(await opts.locator('text=Press Save & test keys to switch').count() === 1, 'an unsaved switch says it needs Save & test');
 await opts.screenshot({ path: `${OUT}/settings-treg.png` });
 await panel.evaluate(async () => {
   const { keys, credits } = await chrome.storage.local.get(['keys', 'credits']);

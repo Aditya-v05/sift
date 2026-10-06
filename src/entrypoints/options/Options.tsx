@@ -32,10 +32,16 @@ function KeysSection() {
   const [keys, setKeys] = useState<Keys>({ apollo: '', typesafe: '', provider: 'apollo', treg: '' });
   const [tests, setTests] = useState<{ apollo: KeyTest; typesafe: KeyTest } | null>(null);
   const [busy, setBusy] = useState(false);
+  /** The source Sift is using right now (what's saved), as opposed to the one picked on screen. */
+  const [savedProvider, setSavedProvider] = useState<'apollo' | 'treg'>('apollo');
   const viaTreg = keys.provider === 'treg';
 
   useEffect(() => {
-    store.getKeys().then((k) => k && setKeys({ provider: 'apollo', treg: '', ...k }));
+    store.getKeys().then((k) => {
+      if (!k) return;
+      setKeys({ provider: 'apollo', treg: '', ...k });
+      setSavedProvider(k.provider ?? 'apollo');
+    });
   }, []);
 
   const saveAndTest = async () => {
@@ -43,6 +49,7 @@ function KeysSection() {
     const trimmed: Keys = { apollo: keys.apollo.trim(), typesafe: keys.typesafe.trim(), provider: keys.provider ?? 'apollo', treg: (keys.treg ?? '').trim() };
     await store.setKeys(trimmed);
     setKeys(trimmed);
+    setSavedProvider(trimmed.provider ?? 'apollo');
     setTests(await send({ type: 'testKeys', keys: trimmed }));
     setBusy(false);
   };
@@ -62,6 +69,11 @@ function KeysSection() {
           <label className="row"><input type="radio" name="provider" checked={!viaTreg} onChange={() => pick('apollo')} /> Your Apollo key</label>
           <label className="row"><input type="radio" name="provider" checked={viaTreg} onChange={() => pick('treg')} /> treg (pay per call, no Apollo plan needed)</label>
         </div>
+        {(keys.provider ?? 'apollo') !== savedProvider && (
+          <div className="small state-unsure hint">
+            Sift still uses {savedProvider === 'treg' ? 'treg' : 'your Apollo key'}. Press Save &amp; test keys to switch.
+          </div>
+        )}
       </div>
       {viaTreg ? (
         <KeyField
@@ -414,7 +426,7 @@ function CreditsSection() {
           checked={settings.fetchJobs}
           onChange={(e) => store.setSettings({ ...settings, fetchJobs: e.target.checked })}
         />
-        <span>Hiring signals: fetch job postings for "why now" (+1 credit per lookup)</span>
+        <span>Hiring signals: fetch job postings for "why now" (+{viaTreg ? "$0.026" : "1 credit"} per lookup)</span>
       </label>
 
       <label className="row checkbox">

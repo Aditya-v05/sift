@@ -4,6 +4,24 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-07 — dev-sift: treg compared with Apollo live, and a clearer switch
+
+> "lets choose a website and check if apollo and treg both work" / "now try revealing an email in both" / "how can i switch keys is the ui good enough"
+
+- **Side-by-side on gorgias.com** (built extension, fresh browser per mode):
+  - the key test, company record (same Apollo id, 520 employees), requirement checks, hiring signals and all 30 people (same ids) are identical;
+  - fit 80 vs 78 and timing 48 vs 51 differ only through Jev, which scores with probabilities, since every Apollo input matched;
+  - revealing the top contact returned the same verified address in both (compared by hash, shown masked);
+  - Apollo charged 1 credit and treg exactly $0.026, which Sift recorded.
+  - Cost: 5 Apollo credits. treg's own ledger showed $0.026 charges, free people searches, and a balance drop exactly equal to Sift's record.
+- **Switching UI:**
+  - picking the other data source now says "Sift still uses your Apollo key. Press Save & test keys to switch." until you save;
+  - the hiring-signals setting reads "+$0.026 per lookup" in treg mode.
+
+  Smoke is now 35 checks, and 131 tests pass.
+
+---
+
 ## 2026-10-06 — dev-sift: treg as an alternative to Apollo (private repo)
 
 > "lets build treg as an option instead of apollo - let us maintain separate repo for dev-sift or something thats private"
