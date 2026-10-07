@@ -4,6 +4,12 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-08 — Privacy diagram: the data node phases Apollo, treg, Monid
+
+- **What:** in the privacy band's diagram, the node that read "Apollo" now cycles Apollo → treg → Monid every 2.2 s with a blur crossfade (`DataSource` in `site/Landing.tsx`). Under reduced motion it stays on Apollo. The diagram's alt text names all three.
+- **Why:** the page offers three data sources; the diagram showed one.
+- **Verified:** compile, site build; Playwright sampled the label every 0.7 s (Apollo, treg, Monid in turn), no page errors; with reduced motion it stays "Apollo"; screenshot checked. Local branch `monid`, not pushed.
+
 ## 2026-10-08 — Costs receipt: Apollo, treg or Monid
 
 - **What:** the receipt in Costs has a switch at the top: Apollo (credits, as before), treg or Monid (dollars at $0.026 a credit: $0.052 a new company, $0 to find people, $0.026 an email, $0.026 a LinkedIn lookup, Sift's fee $0). The notes follow the source ("free through treg too", "$0.026 for the company, $0.026 for its job postings"), and Monid adds that Discover isn't available through it yet. The prices swap with a short rise; Apollo keeps its count-up.

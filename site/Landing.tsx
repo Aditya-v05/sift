@@ -433,6 +433,18 @@ function Costs() {
 
 // ---------- privacy: a dark band ----------
 
+/** The data node in the privacy diagram: Apollo, then treg, then Monid, crossfading (still Apollo under reduced motion). */
+const DATA_SOURCES = ['Apollo', 'treg', 'Monid'];
+function DataSource() {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const t = setInterval(() => setI((n) => (n + 1) % DATA_SOURCES.length), 2200);
+    return () => clearInterval(t);
+  }, []);
+  return <text key={i} className="src" x="366" y="75">{DATA_SOURCES[i]}</text>;
+}
+
 function Privacy() {
   return (
     <section id="privacy" className="l-privacy">
@@ -449,11 +461,11 @@ function Privacy() {
           </ul>
           <a className="l-btn glass" href={PRIVACY}>Read the privacy policy</a>
         </div>
-        <svg className="l-diagram" viewBox="0 0 440 300" role="img" aria-label="Your browser talks directly to Apollo and TypeSafe; there is no Sift server in between">
+        <svg className="l-diagram" viewBox="0 0 440 300" role="img" aria-label="Your browser talks directly to Apollo (or treg, or Monid) and TypeSafe; there is no Sift server in between">
           <path className="flow" d="M150 150 C 230 150, 250 70, 330 70" />
           <path className="flow" d="M150 150 C 230 150, 250 230, 330 230" />
           <g className="node you"><circle cx="110" cy="150" r="42" /><text x="110" y="146">Your</text><text x="110" y="162">browser</text></g>
-          <g className="node"><circle cx="366" cy="70" r="36" /><text x="366" y="75">Apollo</text></g>
+          <g className="node"><circle cx="366" cy="70" r="36" /><DataSource /></g>
           <g className="node"><circle cx="366" cy="230" r="36" /><text x="366" y="235">TypeSafe</text></g>
           <g className="gone"><circle cx="280" cy="150" r="22" /><text x="280" y="154">Sift</text><text x="280" y="190" className="gone-label">no server</text></g>
         </svg>

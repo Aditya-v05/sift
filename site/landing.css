@@ -255,6 +255,10 @@ main p { line-height: 1.6; }
 .l-diagram .node.you circle { fill: var(--mint); stroke: var(--mint); }
 .l-diagram .node.you text { fill: var(--pine); }
 .l-diagram text { font: 600 12.5px 'Schibsted Grotesk Variable', sans-serif; text-anchor: middle; fill: #eef6f3; }
+/* The data node phases Apollo, treg, Monid. */
+.l-diagram .node .src { animation: l-src 2.2s var(--ease-out) both; }
+@keyframes l-src { 0% { opacity: 0; filter: blur(3px); } 18% { opacity: 1; filter: blur(0); } 82% { opacity: 1; filter: blur(0); } 100% { opacity: 0; filter: blur(3px); } }
+@media (prefers-reduced-motion: reduce) { .l-diagram .node .src { animation: none; } }
 .l-diagram .gone circle { fill: none; stroke: rgba(255, 255, 255, 0.25); stroke-width: 1.5; stroke-dasharray: 4 4; }
 .l-diagram .gone text { fill: rgba(255, 255, 255, 0.35); }
 .l-diagram .gone .gone-label { font-weight: 500; font-size: 12px; }
