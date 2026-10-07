@@ -1,9 +1,9 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode, type RefObject } from 'react';
 
 /** Stagger order for a child of a revealed block (CSS reads --i). */
 const nth = (i: number) => ({ '--i': i }) as CSSProperties;
 import session from './agent-session.json';
-import { End, Eyebrow, Nav, useReveal } from './Landing';
+import { Arrow, CopyLabel, End, Eyebrow, Nav, useReveal } from './Landing';
 import { SlatWord } from './SlatWord';
 
 const NPM = 'https://www.npmjs.com/package/sift-gtm';
@@ -34,10 +34,11 @@ function Copy({ text, label = 'Copy' }: { text: string; label?: string }) {
   const [done, setDone] = useState(false);
   return (
     <button
-      className={`a-copy ${done ? 'done' : ''}`}
+      className={`a-copy cp ${done ? 'done' : ''}`}
+      aria-label={done ? 'Copied' : `${label}: ${text.split('\n')[0]}`}
       onClick={() => navigator.clipboard?.writeText(text).then(() => (setDone(true), setTimeout(() => setDone(false), 1400)))}
     >
-      {done ? 'Copied ✓' : label}
+      <CopyLabel done={done} label={label} />
     </button>
   );
 }
@@ -61,8 +62,8 @@ function Hero() {
           <Copy text="npx sift-gtm mcp" />
         </div>
         <div className="l-ctas">
-          <a className="l-btn cream" href="#setup">Set it up</a>
-          <a className="l-btn glass" href="#session">See a real session</a>
+          <a className="l-btn cream" href="#setup">Set it up <Arrow down /></a>
+          <a className="l-btn glass" href="#session">See a real session <Arrow down /></a>
         </div>
         <p className="l-fine">Works with Claude Code, Codex, Gemini CLI, Cursor, Claude Desktop, VS Code, Windsurf, opencode and any MCP client · MIT</p>
       </div>
@@ -286,6 +287,48 @@ env:      TYPESAFE_KEY   Jev, from typesafe.ai
   },
 ];
 
+const STEPS = [
+  { title: 'Get two keys', text: 'Jev from typesafe.ai, and treg or Apollo for the data.' },
+  { title: 'Add Sift to your agent', text: 'Pick yours below and paste one command or block.' },
+  { title: 'Ask in plain words', text: '“Which of these accounts first?” It prices before it spends.' },
+];
+
+/** How far the reader has scrolled through an element, 0 to 1 (1 straight away under reduced motion). */
+function useScrollProgress(ref: RefObject<HTMLElement | null>) {
+  const [p, setP] = useState(0);
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return setP(1);
+    const on = () => {
+      const r = ref.current?.getBoundingClientRect();
+      if (!r) return;
+      const vh = window.innerHeight;
+      setP(Math.round(Math.max(0, Math.min(1, (vh * 0.85 - r.top) / (vh * 0.4))) * 100) / 100);
+    };
+    on();
+    window.addEventListener('scroll', on, { passive: true });
+    window.addEventListener('resize', on);
+    return () => (window.removeEventListener('scroll', on), window.removeEventListener('resize', on));
+  }, [ref]);
+  return p;
+}
+
+/** Three steps; the line between them fills as you scroll, and each dot lights when the line reaches it. */
+function Stepper() {
+  const el = useRef<HTMLOListElement>(null);
+  const v = useScrollProgress(el) * (STEPS.length - 1);
+  return (
+    <ol className="a-stepper" ref={el}>
+      {STEPS.map((s, i) => (
+        <li key={s.title} className={(i === 0 ? v > 0 : v >= i) ? 'on' : ''} style={{ '--f': Math.max(0, Math.min(1, v - i)) } as CSSProperties}>
+          <span className="a-dot">{i + 1}</span>
+          <b>{s.title}</b>
+          <p>{s.text}</p>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 function Setup() {
   const [tab, setTab] = useState(SETUPS[0]!.id);
   const s = SETUPS.find((x) => x.id === tab)!;
@@ -301,6 +344,16 @@ function Setup() {
     window.addEventListener('resize', place);
     return () => window.removeEventListener('resize', place);
   }, [tab]);
+  // Arrow keys, Home and End move between tabs (and focus follows), as a tablist should.
+  const onKey = (e: KeyboardEvent) => {
+    const i = SETUPS.findIndex((x) => x.id === tab);
+    const n = SETUPS.length;
+    const to = { ArrowRight: (i + 1) % n, ArrowLeft: (i - 1 + n) % n, Home: 0, End: n - 1 }[e.key];
+    if (to === undefined) return;
+    e.preventDefault();
+    setTab(SETUPS[to]!.id);
+    tabs.current?.querySelectorAll<HTMLElement>('[role=tab]')[to]?.focus();
+  };
   return (
     <section id="setup" className="l-wrap a-setup">
       <div className="l-section-head" data-reveal>
@@ -311,11 +364,12 @@ function Setup() {
           Apollo plan) or <strong>APOLLO_KEY</strong>. The budget defaults to 40 credits a month.
         </p>
       </div>
+      <Stepper />
       <div className="a-code-wrap" data-reveal>
-        <div className="a-tabs" role="tablist" ref={tabs}>
+        <div className="a-tabs" role="tablist" aria-label="Your agent" ref={tabs} onKeyDown={onKey}>
           <span className="a-tabbar" style={bar} aria-hidden />
           {SETUPS.map((x) => (
-            <button key={x.id} role="tab" aria-selected={tab === x.id} className={tab === x.id ? 'on' : ''} onClick={() => setTab(x.id)}>{x.label}</button>
+            <button key={x.id} role="tab" aria-selected={tab === x.id} tabIndex={tab === x.id ? 0 : -1} className={tab === x.id ? 'on' : ''} onClick={() => setTab(x.id)}>{x.label}</button>
           ))}
         </div>
         <div className="a-swap" key={tab}>

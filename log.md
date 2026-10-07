@@ -4,6 +4,26 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-08 — Micro-interactions, round two: nav scrollspy, setup stepper, arrows, copy morph, focus
+
+> "https://www.microinteractionsui.com/ - for more micro reactions"
+
+Patterns from MicroInteractions UI, rebuilt in plain CSS and two small hooks (no Tailwind or Motion, no new dependencies). Everything is driven by scrolling, clicks or keyboard focus, and is off under reduced motion.
+- **Nav scrollspy:** one indicator slides to the link for the section you're reading (How it works, Costs on home), and fades out between sections. On /agents, Agents is marked as the current page. The links carry `aria-current`.
+- **Setup stepper (/agents):** Get two keys, Add Sift to your agent, Ask in plain words. The rule between steps fills as you scroll, and each dot lights when the line reaches it. It's lines only, and stacks vertically on phones. Under reduced motion it shows fully lit.
+- **Arrows:** Install Sift, the hero's "New: Sift for AI agents", and /agents' "Set it up" and "See a real session" have an arrow that slides out and back in on hover or focus.
+- **Copy buttons:** "Copy" slides up and out as "Copied ✓" slides in, in the same cell, so the button never changes size.
+- **Focus:** keyboard focus gets a ring that settles in, plus the same feedback as hover (buttons, nav, tabs, contact cards, footer links). Setup tabs now move with the arrow keys, Home and End.
+- **Verified:** Playwright at 1440 and 390 px, with and without reduced motion, on / and /agents (66 checks, scratchpad `micro-verify.mjs`):
+  - the indicator sits under the active link (within 0.2 px) at #answers and #costs, and no link is active at the top or in privacy;
+  - the stepper goes 0 → 1 → 2 → 3 lit while scrolling;
+  - ArrowRight moves the tab and focus, and the underline follows;
+  - both copy buttons put the right text on the clipboard without resizing;
+  - there is no horizontal overflow and there are no page errors.
+- **Also run:** compile, site build and smoke all pass.
+
+---
+
 ## 2026-10-08 — Footer: contact cards instead of pill buttons
 
 > "these contact buttons can be made a bit good looking"

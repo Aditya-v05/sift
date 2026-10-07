@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useRef, useState, type ReactNode } from 'react';
+import React, { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { ContactPicker } from '@/components/ContactPicker';
 import { FitCard, ProfileCard, WhyNowCard } from '@/entrypoints/sidepanel/App';
 import type { LookupResult } from '@/lib/types';
@@ -68,20 +68,58 @@ export function Eyebrow({ label, score, dark }: { label: string; score?: string;
 
 // ---------- nav: a full-width bar; a mint line reads how far down the page you are ----------
 
+/** An arrow that slides out and back in when its link is hovered or focused. */
+export function Arrow({ down }: { down?: boolean }) {
+  return <span className={`l-arr ${down ? 'down' : ''}`} aria-hidden><i>{down ? '↓' : '→'}</i></span>;
+}
+
+const NAV_LINKS = [
+  { href: '/#answers', label: 'How it works' },
+  { href: '/#costs', label: 'Costs' },
+  { href: '/agents', label: 'Agents' },
+  { href: REPO, label: 'GitHub' },
+];
+
+/** Which nav link the reader is in: /agents is its own page; on home, the section under the top third of the screen. */
+function spy(): string | null {
+  if (location.pathname.startsWith('/agents')) return '/agents';
+  const y = window.innerHeight * 0.35;
+  const top = (id: string) => document.getElementById(id)?.getBoundingClientRect().top ?? Infinity;
+  if (top('costs') <= y && top('privacy') > y) return '/#costs';
+  if (top('answers') <= y && top('costs') > y) return '/#answers';
+  return null;
+}
+
 /** Shared with /agents: section links point at the home page (`/#…`), which scrolls in place when already there. */
 export function Nav() {
   const [scrolled, setScrolled] = useState(false);
+  const [active, setActive] = useState<string | null>(null);
   const line = useRef<HTMLSpanElement>(null);
+  const links = useRef<HTMLElement>(null);
   useEffect(() => {
     const on = () => {
       setScrolled(window.scrollY > window.innerHeight * 0.6);
+      setActive(spy());
       const max = document.documentElement.scrollHeight - window.innerHeight;
       line.current?.style.setProperty('transform', `scaleX(${max > 0 ? window.scrollY / max : 0})`);
     };
     on();
     window.addEventListener('scroll', on, { passive: true });
-    return () => window.removeEventListener('scroll', on);
+    window.addEventListener('resize', on);
+    return () => (window.removeEventListener('scroll', on), window.removeEventListener('resize', on));
   }, []);
+  // One indicator slides to the link for the section in view, and fades out between sections.
+  const [bar, setBar] = useState<CSSProperties>({ opacity: 0 });
+  useLayoutEffect(() => {
+    const place = () => {
+      const el = links.current?.querySelector<HTMLElement>('a[aria-current]');
+      setBar((b) => (el ? { width: el.offsetWidth, transform: `translateX(${el.offsetLeft}px)`, opacity: 1 } : { ...b, opacity: 0 }));
+    };
+    place();
+    document.fonts?.ready.then(place);
+    window.addEventListener('resize', place);
+    return () => window.removeEventListener('resize', place);
+  }, [active]);
   return (
     <header className={`l-nav ${scrolled ? 'scrolled' : ''}`}>
       <div className="l-nav-in">
@@ -89,11 +127,11 @@ export function Nav() {
           <img src={icon48} alt="" width="24" height="24" />
           Sift
         </a>
-        <nav>
-          <a href="/#answers">How it works</a>
-          <a href="/#costs">Costs</a>
-          <a href="/agents">Agents</a>
-          <a href={REPO}>GitHub</a>
+        <nav ref={links}>
+          {NAV_LINKS.map((l) => (
+            <a key={l.href} href={l.href} aria-current={active === l.href ? (l.href === '/agents' ? 'page' : 'location') : undefined}>{l.label}</a>
+          ))}
+          <span className="l-navbar" style={bar} aria-hidden />
         </nav>
         <a className="l-pill" href={INSTALL}>Install</a>
       </div>
@@ -144,9 +182,9 @@ function Hero() {
           (or treg) and Jev keys.
         </p>
         <div className="l-ctas">
-          <a className="l-btn cream" href={INSTALL}>Install Sift</a>
+          <a className="l-btn cream" href={INSTALL}>Install Sift <Arrow /></a>
         </div>
-        <p className="l-fine">Free and open source · <a className="l-new" href="/agents">New: Sift for AI agents (MCP) →</a></p>
+        <p className="l-fine">Free and open source · <a className="l-new" href="/agents">New: Sift for AI agents (MCP) <Arrow /></a></p>
       </div>
     </section>
   );
@@ -399,6 +437,16 @@ const ICONS: Record<'web' | 'mail' | 'github', ReactNode> = {
   github: <path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21" />,
 };
 
+/** "Copy" slides up and out as "Copied ✓" slides in; both share one cell, so the button never changes size. */
+export function CopyLabel({ done, label = 'Copy' }: { done: boolean; label?: string }) {
+  return (
+    <>
+      <span aria-hidden={done}>{label}</span>
+      <span aria-hidden={!done}>Copied ✓</span>
+    </>
+  );
+}
+
 function ContactLinks() {
   const [copied, setCopied] = useState(false);
   const cards: { icon: keyof typeof ICONS; label: string; detail: string; href: string; primary?: boolean }[] = [
@@ -420,11 +468,11 @@ function ContactLinks() {
           </a>
           {c.icon === 'mail' && (
             <button
-              className={`l-contact-copy ${copied ? 'done' : ''}`}
-              aria-label="Copy email address"
+              className={`l-contact-copy cp ${copied ? 'done' : ''}`}
+              aria-label={copied ? 'Copied' : 'Copy email address'}
               onClick={() => navigator.clipboard?.writeText(EMAIL).then(() => (setCopied(true), setTimeout(() => setCopied(false), 1400)))}
             >
-              {copied ? 'Copied ✓' : 'Copy'}
+              <CopyLabel done={copied} />
             </button>
           )}
         </div>
@@ -439,7 +487,7 @@ export function End() {
       <div className="l-end-copy l-wrap" data-reveal>
         <h2>Sift the next company <em>you visit.</em></h2>
         <div className="l-ctas">
-          <a className="l-btn cream" href={INSTALL}>Install Sift</a>
+          <a className="l-btn cream" href={INSTALL}>Install Sift <Arrow /></a>
           <a className="l-btn glass" href={REPO}>Read the source</a>
         </div>
       </div>

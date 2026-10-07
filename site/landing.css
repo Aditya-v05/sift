@@ -443,3 +443,74 @@ main p { line-height: 1.6; }
   .l-footer-cols { grid-template-columns: 1fr 1fr; }
   .l-sea { height: 240px; }
 }
+
+/* ---------- micro-interactions, round two (inspired by microinteractionsui.com, in plain CSS) ---------- */
+
+/* Focus: a ring that settles in from a little further out; keyboard users get the same feedback as hover. */
+:where(a, button, summary, [tabindex]):focus-visible { outline: 2px solid var(--mint-deep); outline-offset: 3px; border-radius: 6px; animation: l-ring 0.25s var(--ease-out); }
+@keyframes l-ring { from { outline-offset: 8px; outline-color: transparent; } }
+.l-btn:focus-visible { transform: translateY(-2px); }
+.l-btn.cream:focus-visible { background: #fff; }
+.l-btn.glass:focus-visible { background: rgba(255, 255, 255, 0.14); }
+.l-pill:focus-visible { transform: translateY(-1px); }
+.l-nav nav a:focus-visible { color: #fff; }
+.l-nav.scrolled nav a:focus-visible { color: var(--ink); }
+.l-nav nav a:focus-visible::after { transform: scaleX(1); }
+.l-new:focus-visible { border-bottom-color: var(--mint); }
+.a-copy:focus-visible, .l-contact-copy:focus-visible { background: #fff; }
+.a-tabs button:focus-visible { color: var(--ink); }
+.l-footer-cols a:focus-visible { color: var(--mint); transform: translateX(3px); }
+.l-contact-card:has(.l-contact-link:focus-visible) { border-color: color-mix(in srgb, var(--mint) 45%, transparent); background: rgba(159, 242, 214, 0.06); transform: translateY(-1px); }
+.l-contact-card:has(.l-contact-link:focus-visible) .l-contact-icon { background: rgba(159, 242, 214, 0.16); transform: rotate(-6deg); }
+.l-contact-card:has(.l-contact-link:focus-visible) .l-contact-arrow { transform: translate(3px, -1px); }
+.l-contact-link:focus-visible { outline-offset: -2px; border-radius: 14px; }
+
+/* Nav: one indicator slides to the link for the section in view (or this page), and fades between sections. */
+.l-nav nav { position: relative; }
+.l-navbar { position: absolute; left: 0; bottom: -4px; height: 1.5px; background: var(--mint); pointer-events: none;
+  transition: transform 0.5s var(--ease-expo), width 0.5s var(--ease-expo), opacity 0.3s, background 0.35s; }
+.l-nav.scrolled .l-navbar { background: var(--ink); }
+.l-nav nav a[aria-current] { color: #fff; }
+.l-nav.scrolled nav a[aria-current] { color: var(--ink); }
+.l-nav nav a[aria-current]::after { display: none; }
+
+/* Arrows: on hover or focus, the arrow slides out the far side and back in. */
+.l-arr { display: inline-flex; overflow: hidden; vertical-align: -0.1em; margin-left: 0.3em; line-height: 1; }
+.l-arr i { font-style: normal; display: inline-block; }
+:is(a, button):is(:hover, :focus-visible) > .l-arr i { animation: l-arr 0.55s var(--ease-out); }
+:is(a, button):is(:hover, :focus-visible) > .l-arr.down i { animation-name: l-arr-down; }
+@keyframes l-arr { 45% { transform: translateX(110%); } 46% { transform: translateX(-110%); } }
+@keyframes l-arr-down { 45% { transform: translateY(110%); } 46% { transform: translateY(-110%); } }
+
+/* Copy buttons: the label slides up and out as "Copied ✓" slides in, in one cell, so nothing shifts. */
+.cp { display: inline-grid; overflow: hidden; }
+.cp > span { grid-area: 1 / 1; text-align: center; transition: transform 0.35s var(--ease-expo), opacity 0.2s; }
+.cp > span + span { transform: translateY(110%); opacity: 0; }
+.cp.done > span:first-child { transform: translateY(-110%); opacity: 0; }
+.cp.done > span + span { transform: none; opacity: 1; }
+
+/* Setup stepper: lines only. The rule between steps fills as you scroll; a dot lights when it's reached. */
+.a-stepper { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); max-width: 860px; margin: 0 auto 44px; padding: 0; text-align: center; }
+.a-stepper li { position: relative; display: grid; justify-items: center; gap: 4px; padding: 0 10px; }
+.a-stepper li:not(:last-child)::before,
+.a-stepper li:not(:last-child)::after { content: ''; position: absolute; top: 13px; left: calc(50% + 22px); width: calc(100% - 44px); height: 1px; background: var(--hair); }
+.a-stepper li:not(:last-child)::after { height: 2px; top: 12.5px; background: var(--pine); transform: scaleX(var(--f, 0)); transform-origin: left; transition: transform 0.15s linear; }
+.a-dot { width: 27px; height: 27px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 8px; font: 600 12px var(--mono); color: var(--ink-3); border: 1px solid var(--hair); background: var(--snow);
+  transition: background 0.3s, color 0.3s, border-color 0.3s; }
+.a-stepper li.on .a-dot { background: var(--pine); border-color: var(--pine); color: var(--mint); animation: a-pop 0.4s var(--ease-out); }
+.a-stepper b { font-size: 16px; font-weight: 600; color: var(--ink-3); transition: color 0.3s; }
+.a-stepper li.on b { color: var(--ink); }
+.a-stepper p { margin: 0; font-size: 14px; color: var(--ink-3); max-width: 17em; line-height: 1.45; }
+@media (max-width: 700px) {
+  .a-stepper { grid-template-columns: 1fr; text-align: left; margin-bottom: 32px; }
+  .a-stepper li { grid-template-columns: 27px 1fr; justify-items: start; column-gap: 14px; row-gap: 2px; padding: 0 0 22px; }
+  .a-dot { grid-row: span 2; margin: 0; }
+  .a-stepper li:not(:last-child)::before,
+  .a-stepper li:not(:last-child)::after { top: 33px; left: 13px; width: 1px; height: auto; bottom: 4px; }
+  .a-stepper li:not(:last-child)::after { width: 2px; left: 12.5px; transform: scaleY(var(--f, 0)); transform-origin: top; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(a, button, summary, [tabindex]):focus-visible, .l-arr i, .a-stepper *, .a-stepper *::before, .a-stepper *::after,
+  .a-stepper li::after, .cp > span, .l-navbar { animation: none !important; transition: none !important; }
+}
