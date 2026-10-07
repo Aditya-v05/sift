@@ -4,6 +4,16 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-08 — v0.4.0: Monid in public Sift (local branch `monid`, not pushed)
+
+- **What:** brought the Monid work over from dev-sift (cherry-picked 697b52b, 6395b9b and the two test-log commits onto `agents-launch`). The extension and `sift-gtm` both take a Monid key. Version 0.4.0. Site copy names Monid wherever treg is offered:
+  - the announcement bar ("Sift now runs on treg and Monid", new id `gateways-2026-10` so it shows again to people who closed the treg one);
+  - the hero, costs, privacy lines, a new "What is Monid?" FAQ (including that Discover isn't available through it), the footer;
+  - /agents: the budget tool, the costs line, guardrails, the setup stepper, `MONID_KEY` in the generic MCP config and the keys paragraph.
+- **Why:** Monid passed the live test 3 of 3 and an end-to-end `sift-gtm` run, with the ledger matching the wallet to the cent. The user asked to bring it to public Sift but hold deployment until tomorrow, so this stays on a local branch: `agents-launch` deploys a preview and `main` deploys the site.
+- **Verified:** compile; 143 unit tests (6 live tests skipped without keys); 12 agent tests; extension build (manifest 0.4.0); agent build; site build; smoke 40/40; the bar measured at 1440 px (one line) and 390 px (two lines).
+- **Not done:** `sift-gtm` is still 0.1.0, and the staged 0.1.0 on npm was packed before Monid. Publish a new version from this branch rather than approving that one.
+
 ## 2026-10-08 — Monid end to end: sift-gtm with Jev, a real lookup and a reveal
 
 - **What:** ran the built `sift-gtm` CLI with `SIFT_PROVIDER=monid`, a fresh `SIFT_HOME` and a real Jev key: set an ICP, looked up intercom.com (not cached), revealed one email, then looked it up again.

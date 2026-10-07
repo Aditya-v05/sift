@@ -174,7 +174,7 @@ const TOOLS: [string, string, string][] = [
   ['list_contacts', 'Every ranked person Sift found at a company it already looked up.', 'free'],
   ['reveal_email', 'Verified emails for the people the agent chooses.', '1 credit per person found'],
   ['quote', 'What a batch would cost, and whether it fits the budget. Agents call it first.', 'free'],
-  ['budget', 'This month’s spend, the limit, and the Apollo or treg balance.', 'free'],
+  ['budget', 'This month’s spend, the limit, and the Apollo, treg or Monid balance.', 'free'],
   ['get_icp / set_icp', 'The ideal customer profile everything is judged against.', 'free'],
 ];
 
@@ -184,7 +184,7 @@ function Tools() {
       <div className="l-section-head" data-reveal>
         <Eyebrow label="The tools" />
         <h2>Cheap first. <em>Spending explicit.</em></h2>
-        <p>Through treg a credit is $0.026: about $0.05 for a new company and $0.026 per email. Finding people is free.</p>
+        <p>Through treg or Monid a credit is $0.026: about $0.05 for a new company and $0.026 per email. Finding people is free.</p>
       </div>
       <div className="a-table" data-reveal>
         {TOOLS.map(([name, what, cost]) => (
@@ -206,7 +206,7 @@ function Guardrails() {
     ['A budget it can’t raise', 'The monthly cap is enforced inside Sift before anything is charged, and there is no tool to change it. Only you can, from the environment or the CLI.'],
     ['Reveals are deliberate', 'Looking a company up never reveals an email. The agent asks for specific people, and pays only for those.'],
     ['Reasons, not prose', 'Every score carries its checks and every signal its source, so the agent explains with evidence instead of inventing why.'],
-    ['Your keys, no server', 'Keys stay in the environment and are never written to disk. Calls go from your machine to Apollo or treg, and Jev.'],
+    ['Your keys, no server', 'Keys stay in the environment and are never written to disk. Calls go from your machine to Apollo, treg or Monid, and Jev.'],
   ];
   return (
     <section className="l-wrap a-guard">
@@ -311,13 +311,13 @@ SIFT_BUDGET_USD = "5"`,
     id: 'other', label: 'Any MCP client', where: 'Sift is a standard stdio MCP server. Point your client at this command, with the keys in its environment.',
     code: `command:  npx -y sift-gtm mcp        (stdio)
 env:      TYPESAFE_KEY   Jev, from typesafe.ai
-          TREG_KEY       or APOLLO_KEY
+          TREG_KEY       or MONID_KEY, or APOLLO_KEY
           SIFT_BUDGET_USD  optional monthly cap, e.g. 5`,
   },
 ];
 
 const STEPS = [
-  { title: 'Get two keys', text: 'Jev from typesafe.ai, and treg or Apollo for the data.' },
+  { title: 'Get two keys', text: 'Jev from typesafe.ai, and Apollo, treg or Monid for the data.' },
   { title: 'Add Sift to your agent', text: 'Pick yours below and paste one command or block.' },
   { title: 'Ask in plain words', text: '“Which of these accounts first?” It prices before it spends.' },
 ];
@@ -389,8 +389,8 @@ function Setup() {
         <Eyebrow label="Setup" />
         <h2>Any agent. <em>Two keys.</em></h2>
         <p>
-          <strong>TYPESAFE_KEY</strong> for Jev, from typesafe.ai, and either <strong>TREG_KEY</strong> (pay per call, no
-          Apollo plan) or <strong>APOLLO_KEY</strong>. The budget defaults to 40 credits a month.
+          <strong>TYPESAFE_KEY</strong> for Jev, from typesafe.ai, and one of <strong>TREG_KEY</strong> or{' '}
+          <strong>MONID_KEY</strong> (pay per call, no Apollo plan) or <strong>APOLLO_KEY</strong>. The budget defaults to 40 credits a month.
         </p>
       </div>
       <Stepper />
