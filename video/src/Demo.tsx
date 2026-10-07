@@ -145,7 +145,7 @@ export function box(cx: number, cy: number, w: number, aspect: number): Rect {
   };
 }
 
-function cameraAt(keys: Key[], t: number): Rect {
+export function cameraAt(keys: Key[], t: number): Rect {
   let i = 0;
   while (i < keys.length - 2 && keys[i + 1]![0] <= t) i++;
   const [t0, r0] = keys[i]!;

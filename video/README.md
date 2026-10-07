@@ -73,3 +73,20 @@ npx remotion still src/index.ts TregPortraitThumb out/treg-thumb-Portrait.png   
 ```
 
 Then apply the export step above before posting.
+
+## The showreel cuts (`src/Reel.tsx`)
+
+Since 2026-10-08 the site's videos, and the style for new ones, are the showreel cuts: a motion-design reel built around real product footage.
+
+- **Look:** a HUD frame on every shot (corner labels, a running timecode, a progress hairline, and a spec line carrying Sift's real numbers such as "Fit 82% · strong" or "quote · 3 companies · 0 credits"). Archivo (variable: weight and width) for the big type, Instrument Serif for captions, JetBrains Mono for labels. Night green, cream and mint only.
+- **Motion:** 60 fps; springs (stiffness 190, damping 18) instead of eased fades; words rise letter by letter out of a mask; hard-cut word beats on solid grounds; layered bands that wipe across a cut; a 3D tile grid that flips to show ICP fit.
+- **Footage:** the usepylon.com recording goes through `Demo.tsx`'s camera and text patches (`PYLON.camera`, `PYLON.patches`), so the email on screen is the made-up `dan@usepylon.example` and the clip ranges stay inside the ones checked above (1.0–3.85, 4.3–7.4, 7.9–14.0 s). The agent reel replays `site/agent-session.json` (the real tool calls) in a terminal panel.
+- **Reels:** `home` (the extension) and `agents` (sift-gtm), each as `Reel{Home,Agents}{Landscape,Portrait,Square}` (1920×1080, 1080×1350, 1080×1080). A reel is a list of scenes, each with a length, what it renders, and what the HUD says at each frame.
+
+```sh
+npx remotion render src/index.ts ReelHomeLandscape out/reel/Home-Landscape.mp4 --crf=16   # likewise the other five
+# the site: home 1600×900 (from Landscape) and 720×900 for phones (from Portrait); /agents 1280×720
+ffmpeg -i out/reel/Home-Landscape.mp4 -an -vf "scale=1600:900:flags=lanczos,fps=30,format=yuv420p" -c:v libx264 -preset slow -crf 26 -movflags +faststart ../site/public/demo.mp4
+```
+
+The site copies are 30 fps to keep them small; the social files stay at 60 fps (use the LinkedIn/X recipe above, with `-level 4.2` for 1080p60).

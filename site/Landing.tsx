@@ -140,7 +140,7 @@ export function Nav() {
   );
 }
 
-// ---------- demo: a real screen recording (usepylon.com), edited in Remotion (video/); the revealed email is swapped for a made-up one ----------
+// ---------- demo: the showreel cut (video/src/Reel.tsx) around a real screen recording of usepylon.com; the revealed email is swapped for a made-up one ----------
 
 function DemoVideo() {
   // Autoplay only when motion is welcome; otherwise show the poster with controls.
@@ -153,14 +153,14 @@ function DemoVideo() {
         src={phone ? '/demo-m.mp4' : '/demo.mp4'}
         poster={phone ? '/demo-m-poster.jpg' : '/demo-poster.jpg'}
         width={phone ? 720 : 1600}
-        height={phone ? 1280 : 1000}
+        height={900}
         muted
         loop
         playsInline
         autoPlay={!still}
         controls={still}
         preload="metadata"
-        aria-label="Clicking the Sift icon on usepylon.com: the side panel shows an 82% fit, reasons to reach out now, and the best contacts"
+        aria-label="Sift on usepylon.com: one click on the Sift icon, an 82% fit against the ICP, timing 75, and the best contact with a verified email"
       />
     </div>
   );

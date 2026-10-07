@@ -6,7 +6,8 @@
     "studio": "remotion studio src/index.ts",
     "render": "remotion render src/index.ts SiftDemo out/demo.mp4 --crf=24 && remotion render src/index.ts SiftDemoVertical out/demo-m.mp4 --crf=24",
     "render:treg": "remotion render src/index.ts TregLandscape out/treg-16x9.mp4 --crf=18 && remotion render src/index.ts TregPortrait out/treg-4x5.mp4 --crf=18 && remotion render src/index.ts TregSquare out/treg-1x1.mp4 --crf=18",
-    "render:social": "remotion render src/index.ts SiftSocialPortrait out/sift-social-4x5.mp4 --crf=18 && remotion render src/index.ts SiftSocialSquare out/sift-social-1x1.mp4 --crf=18 && remotion render src/index.ts SiftSocialLandscape out/sift-social-16x9.mp4 --crf=18"
+    "render:social": "remotion render src/index.ts SiftSocialPortrait out/sift-social-4x5.mp4 --crf=18 && remotion render src/index.ts SiftSocialSquare out/sift-social-1x1.mp4 --crf=18 && remotion render src/index.ts SiftSocialLandscape out/sift-social-16x9.mp4 --crf=18",
+    "render:reel": "remotion render src/index.ts ReelHomeLandscape out/reel/Home-Landscape.mp4 --crf=16 && remotion render src/index.ts ReelHomePortrait out/reel/Home-Portrait.mp4 --crf=16 && remotion render src/index.ts ReelHomeSquare out/reel/Home-Square.mp4 --crf=16 && remotion render src/index.ts ReelAgentsLandscape out/reel/Agents-Landscape.mp4 --crf=16 && remotion render src/index.ts ReelAgentsPortrait out/reel/Agents-Portrait.mp4 --crf=16 && remotion render src/index.ts ReelAgentsSquare out/reel/Agents-Square.mp4 --crf=16"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.530",

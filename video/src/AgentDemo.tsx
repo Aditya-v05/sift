@@ -25,21 +25,21 @@ const MINT = '#9ff2d6';
 const DIM = '#7f9a97';
 
 type Step = { tool: string; input: Record<string, unknown>; summary: string } | { say: string };
-const steps = (session.steps as Step[]).filter((s): s is Extract<Step, { tool: string }> => 'tool' in s);
+export const steps = (session.steps as Step[]).filter((s): s is Extract<Step, { tool: string }> => 'tool' in s);
 
 // The request, shortened for the screen (the full one is on the website).
-const REQUEST = 'Here are three accounts: gorgias.com, kustomer.com and helpscout.com. Which should I go after first, why now, and who should I email? Price it first, and don’t reveal any emails yet.';
+export const REQUEST = 'Here are three accounts: gorgias.com, kustomer.com and helpscout.com. Which should I go after first, why now, and who should I email? Price it first, and don’t reveal any emails yet.';
 // From the agent's real answer.
-const RANKING = ['Gorgias: fit 80, timing 52', 'Help Scout: fit 78, timing 57', 'Kustomer: fit 83, timing 44'];
-const WHY = '12 open roles, 8 posted in the last 30 days: its customer-facing team is growing now.';
-const WHO = 'Email Aleksandra P., Director of Support (rank 69).';
+export const RANKING = ['Gorgias: fit 80, timing 52', 'Help Scout: fit 78, timing 57', 'Kustomer: fit 83, timing 44'];
+export const WHY = '12 open roles, 8 posted in the last 30 days: its customer-facing team is growing now.';
+export const WHO = 'Email Aleksandra P., Director of Support (rank 69).';
 
-const toolLine = (s: Extract<Step, { tool: string }>) => {
+export const toolLine = (s: Extract<Step, { tool: string }>) => {
   if (s.tool === 'sift_company') return `sift_company("${s.input.domain as string}")`;
   if (s.tool === 'quote') return 'quote(3 domains)';
   return `${s.tool}()`;
 };
-const resultLine = (s: Extract<Step, { tool: string }>) => {
+export const resultLine = (s: Extract<Step, { tool: string }>) => {
   if (s.tool === 'sift_company') return s.summary.replace(/ · top contact.*/, '').replace(/ · cached, free/, '');
   if (s.tool === 'get_icp') return 'Series A–C SaaS, 50–500 people, US, large support teams';
   return s.summary;

@@ -4,6 +4,26 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-08 — Showreel videos: the site's demos re-cut as a motion-design reel around real footage
+
+- **What:** a new Remotion edit, `video/src/Reel.tsx`, with two reels:
+  - `home` (the extension, about 26 s) replaces `site/public/demo.mp4` (now 1600×900), `demo-m.mp4` (now 720×900) and their posters;
+  - `agents` (sift-gtm, about 22 s) replaces `agents-demo.mp4` and its poster.
+  - Each is also rendered for feeds at 16:9, 4:5 and 1:1 (60 fps), exported to the Desktop as `sift-reel-{home,agents}-{16x9,4x5,1x1}.mp4` with the LinkedIn/X recipe (yuv420p, tv range, BT.709, silent AAC, faststart, level 4.2).
+- **The look:**
+  - a HUD on every shot: corner labels, a timecode, a progress hairline, and a spec line with Sift's real numbers (fit 82%, timing 75, "quote · 3 companies · 0 credits", fit 80/78/83);
+  - spring-driven type in Archivo (variable weight and width) and hard-cut word beats ("FIT." "WHY NOW." "WHO." / "QUOTE." "SIFT." "RANK.");
+  - layered band wipes and a 3D tile grid that flips to show ICP fit;
+  - real footage in between: the usepylon.com recording through `Demo.tsx`'s camera and text patches, so the email is the made-up `dan@usepylon.example`, and the real agent session from `site/agent-session.json`.
+- **Why:** the user asked for videos in the style of a motion-design reel posted on X, to replace the site's videos and set the style for new ones. A Sift version keeps real product footage in it, so it shows the product working rather than motion alone.
+- **Verified:**
+  - type check of `video/`;
+  - looked at stills and contact sheets of every scene in all three shapes (legibility, nothing cut off or overflowing);
+  - checked the reveal window frame by frame at 6 fps: only `dan@usepylon.example` is visible, and the clips stay inside the checked ranges (1.0–3.85, 4.3–7.4, 7.9–14.0 s);
+  - ffprobe on the exports (h264 + aac, yuv420p, tv range, BT.709);
+  - site build and smoke.
+- **Kept:** the old compositions (`SiftDemo*`, `SiftSocial*`, `Treg*`, `Agent*`) still render; `Demo.tsx` and `AgentDemo.tsx` only gained exports.
+
 ## 2026-10-08 — /agents session: the short version first, the full transcript folded
 
 - **What:** the "A real session" section now shows the request in one line, the tool calls as one line (`quote · get_icp · sift_company ×3 · 0 credits`), the agent's ranking (fit and timing per company) and one sentence on the top account. The full, unedited prompt, every tool call and the agent's whole answer sit under "Read the full transcript" (a `<details>`).
