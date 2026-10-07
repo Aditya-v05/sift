@@ -4,6 +4,18 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-08 — Footer: contact cards instead of pill buttons
+
+> "these contact buttons can be made a bit good looking"
+
+- **What:** the maker strip's three pills (Portfolio, Email me, GitHub) and the separate email line are now three stacked cards. Each has an icon, a label, the real destination in mono (the portfolio domain, the address, @Aditya-v05) and an arrow. The portfolio card is lightly highlighted.
+- **Hover:** the border turns mint, the icon tilts, the arrow nudges.
+- **Copy:** the email card has a Copy button that pops to "Copied ✓".
+- **Phones:** the cards go full width with a smaller mono line so the whole address fits.
+- **Verified:** at 1440 and 390 px; copy puts `adityaspark05@gmail.com` on the clipboard; no overflow or page errors.
+
+---
+
 ## 2026-10-08 — Micro-interactions on both pages, and a full check
 
 > "can u verify and add micro reactions and animations wherever u can"

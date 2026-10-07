@@ -391,6 +391,48 @@ function Faq() {
 
 // ---------- the end: one night block, closing line on top, footer over a sea of slats ----------
 
+// ---------- contact: three small cards, each showing where it goes ----------
+
+const ICONS: Record<'web' | 'mail' | 'github', ReactNode> = {
+  web: <path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 0c2.5 2.4 3.8 5.4 3.8 9s-1.3 6.6-3.8 9m0-18c-2.5 2.4-3.8 5.4-3.8 9s1.3 6.6 3.8 9M3.5 9h17M3.5 15h17" />,
+  mail: <path d="M3.5 6.5h17v11h-17zM3.8 6.8 12 13l8.2-6.2" />,
+  github: <path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21" />,
+};
+
+function ContactLinks() {
+  const [copied, setCopied] = useState(false);
+  const cards: { icon: keyof typeof ICONS; label: string; detail: string; href: string; primary?: boolean }[] = [
+    { icon: 'web', label: 'Portfolio', detail: PORTFOLIO.replace(/^https:\/\/|\/$/g, ''), href: PORTFOLIO, primary: true },
+    { icon: 'mail', label: 'Email', detail: EMAIL, href: `mailto:${EMAIL}` },
+    { icon: 'github', label: 'GitHub', detail: '@' + MAKER.split('/').pop(), href: MAKER },
+  ];
+  return (
+    <div className="l-contact">
+      {cards.map((c) => (
+        <div key={c.label} className={`l-contact-card ${c.primary ? 'primary' : ''}`}>
+          <a className="l-contact-link" href={c.href} {...(c.href.startsWith('http') ? { target: '_blank', rel: 'noreferrer' } : {})}>
+            <svg className="l-contact-icon" viewBox="0 0 24 24" aria-hidden>{ICONS[c.icon]}</svg>
+            <span className="l-contact-text">
+              <span className="l-contact-label">{c.label}</span>
+              <span className="l-contact-detail">{c.detail}</span>
+            </span>
+            <span className="l-contact-arrow" aria-hidden>{c.href.startsWith('mailto') ? '→' : '↗'}</span>
+          </a>
+          {c.icon === 'mail' && (
+            <button
+              className={`l-contact-copy ${copied ? 'done' : ''}`}
+              aria-label="Copy email address"
+              onClick={() => navigator.clipboard?.writeText(EMAIL).then(() => (setCopied(true), setTimeout(() => setCopied(false), 1400)))}
+            >
+              {copied ? 'Copied ✓' : 'Copy'}
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function End() {
   return (
     <footer className="l-end">
@@ -407,13 +449,8 @@ export function End() {
           <span className="l-mono">Made by</span>
           <strong>Aditya Venkatesan</strong>
           <p>A GTM engineer building Sift in the open. Ideas, bugs, or just want to say hi? I read everything.</p>
-          <a className="l-maker-mail" href={`mailto:${EMAIL}`}>{EMAIL}</a>
         </div>
-        <div className="l-maker-links">
-          <a className="l-btn mint" href={PORTFOLIO}>Portfolio</a>
-          <a className="l-btn glass" href={`mailto:${EMAIL}`}>Email me</a>
-          <a className="l-btn glass" href={MAKER}>GitHub</a>
-        </div>
+        <ContactLinks />
       </div>
       <div className="l-wrap l-footer-top">
         <div className="l-footer-brand">
