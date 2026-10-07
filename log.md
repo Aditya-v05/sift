@@ -4,6 +4,12 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-08 — Footer email card: opening mail is the main action
+
+- **What:** the Email card's link now opens the visitor's mail app with the subject "Sift" prefilled (`mailto:…?subject=Sift`, tooltip "Opens your email app"). The Copy button is now an outlined, muted secondary control instead of a solid cream button.
+- **Why:** the solid Copy button drew the eye, so the card read as copy-only even though clicking it already opened mail.
+- **Verified:** site build; Playwright screenshot at 1440 px; the link's href is `mailto:adityaspark05@gmail.com?subject=Sift`; Copy still turns mint on success.
+
 ## 2026-10-08 — Micro-interactions, round two: nav scrollspy, setup stepper, arrows, copy morph, focus
 
 > "https://www.microinteractionsui.com/ - for more micro reactions"

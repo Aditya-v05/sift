@@ -264,10 +264,10 @@ main p { line-height: 1.6; }
 .l-contact-detail { font: 12.5px var(--mono); color: #93aca7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .l-contact-arrow { margin-left: auto; color: var(--mint); font-size: 16px; transition: transform 0.25s var(--ease-out); }
 .l-contact-card:hover .l-contact-arrow { transform: translate(3px, -1px); }
-.l-contact-copy { margin-right: 12px; font: 600 11.5px var(--mono); color: #071d1a; background: #efece4; border: none; border-radius: 7px; padding: 5px 10px; text-decoration: none; cursor: pointer; transition: transform 0.15s var(--ease-out), background 0.2s; }
-.l-contact-copy:hover { background: #fff; }
+.l-contact-copy { margin-right: 12px; font: 500 11.5px var(--mono); color: #93aca7; background: transparent; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 7px; padding: 5px 10px; text-decoration: none; cursor: pointer; transition: transform 0.15s var(--ease-out), background 0.2s; }
+.l-contact-copy:hover { color: #eef6f3; border-color: rgba(255, 255, 255, 0.32); }
 .l-contact-copy:active { transform: scale(0.95); }
-.l-contact-copy.done { background: var(--mint); animation: a-pop 0.35s var(--ease-out); }
+.l-contact-copy.done { color: #071d1a; border-color: var(--mint); background: var(--mint); animation: a-pop 0.35s var(--ease-out); }
 .l-footer-top { display: grid; grid-template-columns: 1.2fr 2fr; gap: 40px; padding-top: 44px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
 .l-end .l-brand { color: #eef6f3; }
 .l-footer-brand p { color: #93aca7; font-size: 15px; margin: 14px 0 0; max-width: 26em; }
@@ -457,7 +457,8 @@ main p { line-height: 1.6; }
 .l-nav.scrolled nav a:focus-visible { color: var(--ink); }
 .l-nav nav a:focus-visible::after { transform: scaleX(1); }
 .l-new:focus-visible { border-bottom-color: var(--mint); }
-.a-copy:focus-visible, .l-contact-copy:focus-visible { background: #fff; }
+.a-copy:focus-visible { background: #fff; }
+.l-contact-copy:focus-visible { color: #eef6f3; border-color: rgba(255, 255, 255, 0.32); }
 .a-tabs button:focus-visible { color: var(--ink); }
 .l-footer-cols a:focus-visible { color: var(--mint); transform: translateX(3px); }
 .l-contact-card:has(.l-contact-link:focus-visible) { border-color: color-mix(in srgb, var(--mint) 45%, transparent); background: rgba(159, 242, 214, 0.06); transform: translateY(-1px); }

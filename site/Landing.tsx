@@ -451,14 +451,14 @@ function ContactLinks() {
   const [copied, setCopied] = useState(false);
   const cards: { icon: keyof typeof ICONS; label: string; detail: string; href: string; primary?: boolean }[] = [
     { icon: 'web', label: 'Portfolio', detail: PORTFOLIO.replace(/^https:\/\/|\/$/g, ''), href: PORTFOLIO, primary: true },
-    { icon: 'mail', label: 'Email', detail: EMAIL, href: `mailto:${EMAIL}` },
+    { icon: 'mail', label: 'Email', detail: EMAIL, href: `mailto:${EMAIL}?subject=${encodeURIComponent('Sift')}` },
     { icon: 'github', label: 'GitHub', detail: '@' + MAKER.split('/').pop(), href: MAKER },
   ];
   return (
     <div className="l-contact">
       {cards.map((c) => (
         <div key={c.label} className={`l-contact-card ${c.primary ? 'primary' : ''}`}>
-          <a className="l-contact-link" href={c.href} {...(c.href.startsWith('http') ? { target: '_blank', rel: 'noreferrer' } : {})}>
+          <a className="l-contact-link" href={c.href} title={c.icon === 'mail' ? 'Opens your email app' : undefined} {...(c.href.startsWith('http') ? { target: '_blank', rel: 'noreferrer' } : {})}>
             <svg className="l-contact-icon" viewBox="0 0 24 24" aria-hidden>{ICONS[c.icon]}</svg>
             <span className="l-contact-text">
               <span className="l-contact-label">{c.label}</span>
