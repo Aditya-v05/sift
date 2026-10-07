@@ -37,6 +37,20 @@ Add the server to your client's config:
 }
 ```
 
+It works in any MCP client. Quick setup for the common ones (verified with each tool's own `mcp add` where it has one):
+
+```sh
+claude mcp add sift -e TYPESAFE_KEY=… -e TREG_KEY=… -- npx -y sift-gtm mcp              # Claude Code
+codex mcp add sift --env TYPESAFE_KEY=… --env TREG_KEY=… -- npx -y sift-gtm mcp          # OpenAI Codex
+gemini mcp add -s user -e TYPESAFE_KEY=… -e TREG_KEY=… sift npx -y sift-gtm mcp          # Gemini CLI
+```
+
+- **Cursor** (`~/.cursor/mcp.json`), **Claude Desktop** (`claude_desktop_config.json`) and **Windsurf** (`~/.codeium/windsurf/mcp_config.json`) use the `mcpServers` JSON above.
+- **VS Code** (`.vscode/mcp.json`) uses `"servers": { "sift": { "type": "stdio", "command": "npx", "args": [...], "env": {...} } }`.
+- **opencode** (`opencode.json`) uses `"mcp": { "sift": { "type": "local", "command": ["npx", "-y", "sift-gtm", "mcp"], "environment": {...} } }`.
+
+There's a copy-paste version of each at [sift-through.vercel.app/agents](https://sift-through.vercel.app/agents#setup).
+
 | Tool | Returns | Cost |
 |---|---|---|
 | `sift_company` | Fit score with each requirement (met / near / unsure / not met), why-now signals with evidence, the best persona, and the top contacts (no emails) | 2 credits if new; free for 7 days |

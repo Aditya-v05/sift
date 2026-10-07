@@ -307,7 +307,7 @@ main p { line-height: 1.6; }
 .a-card p { margin: 0; font-size: 15px; color: var(--ink-2); }
 
 .a-code-wrap, .a-term { max-width: 860px; margin: 0 auto; }
-.a-tabs { display: flex; gap: 22px; border-bottom: 1px solid var(--hair); margin-bottom: 14px; }
+.a-tabs { display: flex; flex-wrap: wrap; column-gap: 22px; row-gap: 2px; border-bottom: 1px solid var(--hair); margin-bottom: 14px; }
 .a-tabs button { background: none; border: none; padding: 10px 0; font: 600 14.5px inherit; color: var(--ink-3); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer; }
 .a-tabs button.on { color: var(--ink); border-bottom-color: var(--pine); }
 .a-where { font-size: 14.5px; color: var(--ink-2); margin: 12px 0; }

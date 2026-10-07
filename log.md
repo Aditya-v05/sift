@@ -4,6 +4,22 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-08 — /agents: setup for every common agent, not just Claude
+
+> "can we do this for multiple ai agents not just this?"
+
+- **Setup tabs:** Claude Code, Codex, Gemini CLI, Cursor, Claude Desktop, VS Code (Copilot agent mode), Windsurf, opencode, and "Any MCP client" (the stdio command and env vars). Each has its exact config or command and a copy button. The hero's fine print names them. `agent/README.md` gains the same setups.
+- **How the formats were checked:**
+  - **Claude Code, Codex and Gemini CLI:** I ran each tool's own `mcp add` in a throwaway config and used the config it wrote. Codex: `[mcp_servers.sift]` TOML, and `codex mcp list` shows it enabled. Gemini: `mcpServers` in `~/.gemini/settings.json`.
+  - **opencode:** connected live ("✓ sift connected") with `"mcp": {"sift": {"type": "local", "command": [...], "environment": {...}}}`.
+  - **Cursor, Claude Desktop, VS Code and Windsurf** aren't installed here; they use their documented formats.
+- **Real sessions in other agents:** not possible yet without logins.
+  - opencode's free models refuse headless runs ("OpenCode's free tier can only be used from within OpenCode");
+  - Codex reports "Not logged in";
+  - Gemini CLI isn't installed and needs a Google sign-in.
+
+---
+
 ## 2026-10-08 — Launch prep for sift-gtm: a real agent session, the /agents page, and a video (branch `agents-launch`)
 
 > "before we publish we need to make sure there is a video for posting and also i need a website tab or something talking about sift for agents"

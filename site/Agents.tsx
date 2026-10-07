@@ -61,7 +61,7 @@ function Hero() {
           <a className="l-btn cream" href="#setup">Set it up</a>
           <a className="l-btn glass" href="#session">See a real session</a>
         </div>
-        <p className="l-fine">Works with Claude Desktop, Claude Code, Cursor and any MCP client · MIT</p>
+        <p className="l-fine">Works with Claude Code, Codex, Gemini CLI, Cursor, Claude Desktop, VS Code, Windsurf, opencode and any MCP client · MIT</p>
       </div>
     </section>
   );
@@ -195,27 +195,92 @@ function Guardrails() {
 
 // ---------- setup ----------
 
-const CONFIG = `{
+// Each verified on 2026-10-08 with the tool's own `mcp add` (Claude Code, Codex, Gemini CLI) or a live
+// connection (opencode); the editors use their documented formats.
+const ENV = `"TYPESAFE_KEY": "…",
+        "TREG_KEY": "…",
+        "SIFT_BUDGET_USD": "5"`;
+const MCP_SERVERS = `{
   "mcpServers": {
     "sift": {
       "command": "npx",
       "args": ["-y", "sift-gtm", "mcp"],
       "env": {
-        "TYPESAFE_KEY": "…",
-        "TREG_KEY": "…",
-        "SIFT_BUDGET_USD": "5"
+        ${ENV}
       }
     }
   }
 }`;
 
-const CLAUDE_CODE = `claude mcp add sift \\
-  -e TYPESAFE_KEY=… -e TREG_KEY=… -e SIFT_BUDGET_USD=5 \\
-  -- npx -y sift-gtm mcp`;
-
 const SETUPS: { id: string; label: string; where: string; code: string }[] = [
-  { id: 'desktop', label: 'Claude Desktop · Cursor', where: 'Add to the MCP config (Claude Desktop: Settings → Developer → Edit Config; Cursor: ~/.cursor/mcp.json).', code: CONFIG },
-  { id: 'code', label: 'Claude Code', where: 'One command in your terminal.', code: CLAUDE_CODE },
+  {
+    id: 'claude-code', label: 'Claude Code', where: 'One command in your terminal.',
+    code: `claude mcp add sift \\
+  -e TYPESAFE_KEY=… -e TREG_KEY=… -e SIFT_BUDGET_USD=5 \\
+  -- npx -y sift-gtm mcp`,
+  },
+  {
+    id: 'codex', label: 'Codex', where: 'One command (OpenAI Codex CLI). It writes the block below to ~/.codex/config.toml.',
+    code: `codex mcp add sift \\
+  --env TYPESAFE_KEY=… --env TREG_KEY=… --env SIFT_BUDGET_USD=5 \\
+  -- npx -y sift-gtm mcp
+
+# ~/.codex/config.toml
+[mcp_servers.sift]
+command = "npx"
+args = ["-y", "sift-gtm", "mcp"]
+
+[mcp_servers.sift.env]
+TYPESAFE_KEY = "…"
+TREG_KEY = "…"
+SIFT_BUDGET_USD = "5"`,
+  },
+  {
+    id: 'gemini', label: 'Gemini CLI', where: 'One command. It writes ~/.gemini/settings.json.',
+    code: `gemini mcp add -s user \\
+  -e TYPESAFE_KEY=… -e TREG_KEY=… -e SIFT_BUDGET_USD=5 \\
+  sift npx -y sift-gtm mcp`,
+  },
+  { id: 'cursor', label: 'Cursor', where: 'Add to ~/.cursor/mcp.json (or .cursor/mcp.json in a project).', code: MCP_SERVERS },
+  { id: 'desktop', label: 'Claude Desktop', where: 'Settings → Developer → Edit Config (claude_desktop_config.json), then restart Claude.', code: MCP_SERVERS },
+  {
+    id: 'vscode', label: 'VS Code', where: 'Copilot agent mode: add to .vscode/mcp.json in your workspace (or run “MCP: Add Server”).',
+    code: `{
+  "servers": {
+    "sift": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "sift-gtm", "mcp"],
+      "env": {
+        ${ENV}
+      }
+    }
+  }
+}`,
+  },
+  { id: 'windsurf', label: 'Windsurf', where: 'Add to ~/.codeium/windsurf/mcp_config.json.', code: MCP_SERVERS },
+  {
+    id: 'opencode', label: 'opencode', where: 'Add to opencode.json in your project (or ~/.config/opencode/opencode.json).',
+    code: `{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "sift": {
+      "type": "local",
+      "command": ["npx", "-y", "sift-gtm", "mcp"],
+      "environment": {
+        ${ENV}
+      }
+    }
+  }
+}`,
+  },
+  {
+    id: 'other', label: 'Any MCP client', where: 'Sift is a standard stdio MCP server. Point your client at this command, with the keys in its environment.',
+    code: `command:  npx -y sift-gtm mcp        (stdio)
+env:      TYPESAFE_KEY   Jev, from typesafe.ai
+          TREG_KEY       or APOLLO_KEY
+          SIFT_BUDGET_USD  optional monthly cap, e.g. 5`,
+  },
 ];
 
 function Setup() {
@@ -225,7 +290,7 @@ function Setup() {
     <section id="setup" className="l-wrap a-setup">
       <div className="l-section-head" data-reveal>
         <Eyebrow label="Setup" />
-        <h2>Two keys, <em>one line.</em></h2>
+        <h2>Any agent. <em>Two keys.</em></h2>
         <p>
           <strong>TYPESAFE_KEY</strong> for Jev, from typesafe.ai, and either <strong>TREG_KEY</strong> (pay per call, no
           Apollo plan) or <strong>APOLLO_KEY</strong>. The budget defaults to 40 credits a month.
