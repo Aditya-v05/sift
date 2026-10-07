@@ -12,7 +12,7 @@ const PRIVACY = `${REPO}/blob/main/PRIVACY.md`;
 const LOG = `${REPO}/blob/main/log.md`;
 const MAKER = 'https://github.com/Aditya-v05';
 const PORTFOLIO = 'https://aditya-venkatesan-gtm.vercel.app/';
-const EMAIL = 'adityspark05@gmail.com';
+const EMAIL = 'adityaspark05@gmail.com';
 const ISSUES = `${REPO}/issues`;
 
 // three.js is most of the page's script; load it after the text has painted.

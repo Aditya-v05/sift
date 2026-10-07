@@ -4,6 +4,12 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-07 — Fix: contact email on the website
+
+- **What:** the maker strip's email had a missing letter. It now reads `adityaspark05@gmail.com` (`EMAIL` in `site/Landing.tsx`, used for the address and the Email me button).
+
+---
+
 ## 2026-10-07 — treg demo video for the co-marketing post
 
 > Jason Zhou (treg): "feel free to make a demo post showing Treg in your app and I will repost!"
