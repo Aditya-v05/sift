@@ -4,6 +4,12 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-08 — Monid end to end: sift-gtm with Jev, a real lookup and a reveal
+
+- **What:** ran the built `sift-gtm` CLI with `SIFT_PROVIDER=monid`, a fresh `SIFT_HOME` and a real Jev key: set an ICP, looked up intercom.com (not cached), revealed one email, then looked it up again.
+- **Why:** the live test covers Sift's Apollo calls through Monid; this covers the whole product path, Jev's judgments included.
+- **Verified:** the lookup returned company facts, a fit score with every check, five why-now signals and 27 ranked people in 17 s, for $0.052 (enrich + jobs). The reveal (Monid answers 202, Sift polls) returned a verified email for $0.026. The repeat lookup was cached and free. Sift's ledger said $0.078; the Monid wallet went from $0.532 to $0.454 ($0.078) once it caught up (it lagged one call for about 20 s).
+
 ## 2026-10-08 — Monid live test, rerun three times
 
 - **What:** reran `src/lib/monid.live.test.ts` three times in a row (key check, wallet, enrich, people search, job postings, one people/match polled after a 202).
