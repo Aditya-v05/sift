@@ -4,6 +4,39 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-08 — Monid as a third data source (dev-sift)
+
+> "monid ... i think i have the ok since their integration docs allow it lets test - this is all in the dev-sift repo"
+
+- **What:** Settings has a third source in the dropdown, "Monid, pay per call (no Apollo plan needed)", next to your Apollo key and treg. Lookups, people search, job postings and email reveals all work through Monid. The credit bar shows the Monid wallet, and prices and the budget read in dollars.
+- **Why:** Monid (monid.ai) is a pay-per-call gateway like treg, with one wallet for many APIs. A live test showed its Apollo prices match treg's ($0.026 per paid call, people search free), so it's a real alternative for people without an Apollo plan.
+- **Live test (2026-10-08, usepylon.com):**
+
+  | Sift call | Monid endpoint | Input | Answer | Charged |
+  |---|---|---|---|---|
+  | Company | `/organizations/enrich` | `queryParams.domain` | 200, sync; Apollo's `{organization}` unchanged in `output` | $0.026 (`billing.reportedCost` 26000 micro-USD) |
+  | Job postings | `/organizations/{organization_id}/job_postings` | `pathParams.organization_id`, `queryParams.per_page` | 200, sync; Apollo's `{organization_job_postings, pagination}` | $0.026 per call (21 postings, `billedUnits` 21, one charge) |
+  | Find people | `/mixed_people/api_search` | `queryParams` with `organization_ids[]`, `person_titles[]` | 200, sync; Apollo's `{people, total_entries}` | free |
+  | Reveal email | `/people/match` | `queryParams.id`, `reveal_phone_number: false` | **202 RUNNING**, then COMPLETED on the first poll of `/v1/runs/:id`; Apollo's `{person}` | $0.026 (`cost.value` on the polled run) |
+  | Unknown domain | `/organizations/enrich` | | 200, `output: {}` | free |
+  | Lookalikes | `/mixed_companies/search` | `lookalike_organization_ids[]` | **400**: unrecognized key | none |
+
+  The wallet went from $1.000 to $0.922 after the three paid calls. It lags a call or two behind the runs, but every run's reported cost matched it. A bad key gets 401 from `/v1/auth/whoami`.
+- **How:**
+  - `access.ts` gains `Source`, `Gateway`, `GATEWAYS`, `isGateway` and `sourceKey`.
+  - In `apollo.ts`, `route()` sends Monid calls to `POST /v1/run`. `monidRun()` turns Apollo's query and JSON body into `input.queryParams` (arrays as `key[]`, numbers and booleans typed) and the job-postings org id into `pathParams`.
+  - `monidResult()` polls 202 runs (every 1 s, up to 30 s), returns `output`, and turns a failed run or an Apollo error status into an `ApiError('monid', …)`. It records the charge from `billing.reportedCost`, else `cost`, else the listed price per billed call (one live run finished before its cost was filled in).
+  - Key check: `/v1/auth/whoami`. Balance: `/v1/wallet/balance`, parsed as a dollar balance tagged `gateway: 'monid'`. `balanceIsFor()` keeps a treg balance from showing as Monid's.
+  - `onTregCost` is now `onGatewayCost` (the old name is kept), and `viaTreg` is `viaGateway` plus `gateway` in `useCredits`, so labels name the right gateway.
+  - Discover shows a note through Monid instead of a failing search, and `searchOrganizations` refuses lookalikes before spending anything.
+  - Host permission `https://api.monid.ai/*`. A 402 from Monid says the wallet is low.
+- **Verified:**
+  - `npm run compile`; 141 unit tests (10 new in `monid.test.ts`, with fetch mocked using the live response shapes);
+  - `monid.live.test.ts` passes against the real API (about $0.08; skipped without `MONID_KEY`);
+  - `npm run build` (the manifest lists `api.monid.ai`) and `npm run site:build`;
+  - `npm run smoke`, 40 checks: 3 new Monid checks for the key field, the wallet on the credit bar, and dollar prices.
+  - Total Monid spend for testing: $0.234 of the $1 free credit.
+- **Not done:** the agent package (`sift-gtm`) lives in the public repo, not here, so `MONID_KEY` for agents comes when this merges. Monid's terms page is generic boilerplate; their integration docs describe bring-your-own-key use.
 ## 2026-10-08 — Announcement bar: "Sift now runs on treg"
 
 - **What:** a mint bar over the nav on both pages ("New · No Apollo plan? Sift now runs on treg, at $0.026 a call. See costs →"). It folds away once the nav turns white on scroll, and closes with ×, remembered per message in localStorage (`ANNOUNCE.id`; a new id shows the new message to people who closed the old one). While it shows, the hero starts below it. The text, link and id live in one `ANNOUNCE` constant in `site/Landing.tsx`.

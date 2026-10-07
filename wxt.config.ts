@@ -10,7 +10,7 @@ export default defineConfig({
     permissions: ['activeTab', 'scripting', 'sidePanel', 'storage'],
     // Asked for only when "Sift this page" is first pressed in the panel, to read that tab's address.
     optional_permissions: ['tabs'],
-    host_permissions: ['https://api.apollo.io/*', 'https://api.typesafe.ai/*', 'https://treg.to/*'],
+    host_permissions: ['https://api.apollo.io/*', 'https://api.typesafe.ai/*', 'https://treg.to/*', 'https://api.monid.ai/*'],
     action: { default_title: 'Sift this company' },
     // Same as clicking the icon (and grants the same one-tab access). Changeable at chrome://extensions/shortcuts.
     commands: {

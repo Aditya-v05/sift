@@ -51,9 +51,11 @@ icon is clicked. You can remove the permission any time at chrome://extensions.
 - `tabs` (optional, asked for on first use of Sift this page): read the active tab's address when you press that button.
 - `sidePanel`: show results next to the page.
 - `storage`: keep the data listed above in your browser.
-- Host access to `api.apollo.io`, `api.typesafe.ai` and, if you choose treg as the data source, `treg.to` only.
+- Host access to `api.apollo.io`, `api.typesafe.ai` and, if you choose treg or Monid as the data source, `treg.to` or `api.monid.ai` only.
 
 **If you choose treg:** your lookups go to treg.to, which forwards them to Apollo and returns Apollo's answer. treg sees the same requests Apollo would (company domains, people searches, the people you reveal) and bills your treg account. Your treg key is kept in this browser like the other keys.
+
+**If you choose Monid:** your lookups go to api.monid.ai, which runs them against Apollo and returns Apollo's answer. Monid sees the same requests Apollo would (company domains, people searches, the people you reveal) and bills your Monid wallet. Your Monid key is kept in this browser like the other keys.
 
 ## The website
 

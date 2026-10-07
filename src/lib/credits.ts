@@ -3,6 +3,7 @@
  * job postings = 1 credit per page, people enrichment = 1 credit when it returns data,
  * organization search (Discover) = 1 credit per page. People API search is free.
  */
+import type { Gateway } from './access';
 
 export type SpendKind = 'company' | 'jobs' | 'reveal' | 'search';
 
@@ -14,14 +15,14 @@ export interface Ledger {
   reveal: number;
   /** Discover searches; missing on ledgers written before Discover existed. */
   search?: number;
-  /** Dollars spent through treg this month, in micro-USD (exact, from treg's cost header). */
+  /** Dollars spent through a gateway (treg, Monid) this month, in micro-USD (exact, as the gateway reports it). */
   usdMicro?: number;
 }
 
 export interface Settings {
   /** Monthly cap on credits (paid calls) Sift may spend; null = no cap. */
   monthlyBudget: number | null;
-  /** The cap as the user typed it in dollars (treg mode); monthlyBudget holds it in paid calls at $0.026. */
+  /** The cap as the user typed it in dollars (gateway mode); monthlyBudget holds it in paid calls at $0.026. */
   budgetUsd?: number | null;
   /** Fetch job postings for "why now" (1 extra credit per lookup). */
   fetchJobs: boolean;
@@ -29,14 +30,19 @@ export interface Settings {
   scanSite: boolean;
 }
 
-/** Apollo's own balance (readable only with a master API key), or the treg prepaid balance in dollars. */
+/** Apollo's own balance (readable only with a master API key), or a gateway's prepaid balance in dollars. */
 export type Balance =
   | { available: true; limit: number; consumed: number; leftOver: number; cycleEnd: string | null; checkedAt: number }
-  | { available: true; usd: number; checkedAt: number }
+  | { available: true; usd: number; checkedAt: number; gateway?: Gateway }
   | { available: false; checkedAt: number };
 
-export const isTregBalance = (b: Balance | undefined): b is { available: true; usd: number; checkedAt: number } =>
+/** A gateway's dollar balance (treg or Monid; `gateway` is missing on balances saved before Monid). */
+export const isTregBalance = (b: Balance | undefined): b is { available: true; usd: number; checkedAt: number; gateway?: Gateway } =>
   !!b && b.available && 'usd' in b;
+
+/** True when a dollar balance belongs to this gateway. */
+export const balanceIsFor = (b: Balance | undefined, gateway: Gateway | null): boolean =>
+  gateway === null ? !isTregBalance(b) : isTregBalance(b) && (b.gateway ?? 'treg') === gateway;
 
 export const DEFAULT_SETTINGS: Settings = { monthlyBudget: null, fetchJobs: true, scanSite: true };
 
@@ -76,24 +82,29 @@ export function overBudget(ledger: Ledger, settings: Settings, upcoming: number)
 export const usdFor = (credits: number) => credits * 0.026;
 
 /** The monthly budget as it should read: '$5.00' through treg (as typed), '200 credits' directly. */
-export function budgetLabel(settings: Settings, viaTreg: boolean): string {
+export function budgetLabel(settings: Settings, viaGateway: boolean): string {
   if (settings.monthlyBudget === null) return 'no limit';
-  return viaTreg ? `$${(settings.budgetUsd ?? usdFor(settings.monthlyBudget)).toFixed(2)}` : `${settings.monthlyBudget} credits`;
+  return viaGateway ? `$${(settings.budgetUsd ?? usdFor(settings.monthlyBudget)).toFixed(2)}` : `${settings.monthlyBudget} credits`;
 }
 
 /** What's been spent this month against the budget, in the budget's own unit. */
-export const spentLabel = (spent: number, viaTreg: boolean) => (viaTreg ? `$${usdFor(spent).toFixed(2)}` : `${spent}`);
+export const spentLabel = (spent: number, viaGateway: boolean) => (viaGateway ? `$${usdFor(spent).toFixed(2)}` : `${spent}`);
 
 /** How a number of Apollo credits reads on a button: '2 cr' directly, '$0.05' through treg ($0.026 a credit). */
-export function priceLabel(credits: number, viaTreg: boolean, long = false): string {
-  if (viaTreg) return `$${(credits * 0.026).toFixed(credits * 0.026 < 0.1 ? 3 : 2)}`;
+export function priceLabel(credits: number, viaGateway: boolean, long = false): string {
+  if (viaGateway) return `$${(credits * 0.026).toFixed(credits * 0.026 < 0.1 ? 3 : 2)}`;
   return long ? `${credits} credit${credits === 1 ? '' : 's'}` : `${credits} cr`;
 }
 
-/** Parse Apollo's credit_usage_stats response (lead credits are what enrichment draws on), or treg's balance. */
+/** Parse Apollo's credit_usage_stats response (lead credits are what enrichment draws on), or a gateway's balance. */
 export function parseBalance(body: any, now = Date.now()): Balance {
   const treg = body?.treg;
-  if (treg) return typeof treg.balance_usd === 'number' ? { available: true, usd: treg.balance_usd, checkedAt: now } : { available: false, checkedAt: now };
+  if (treg) return typeof treg.balance_usd === 'number' ? { available: true, usd: treg.balance_usd, checkedAt: now, gateway: 'treg' } : { available: false, checkedAt: now };
+  const monid = body?.monid;
+  if (monid) {
+    const usd = monid.balance?.value;
+    return typeof usd === 'number' ? { available: true, usd, checkedAt: now, gateway: 'monid' } : { available: false, checkedAt: now };
+  }
   const lead = body?.credit_usage_stats?.lead_credit;
   if (!lead || typeof lead.limit !== 'number') return { available: false, checkedAt: now };
   return {

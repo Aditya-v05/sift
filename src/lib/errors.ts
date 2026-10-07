@@ -27,12 +27,13 @@ export function toLookupError(err: unknown): LookupError {
   };
 }
 
-const SERVICE_NAME: Record<Service, string> = { apollo: 'Apollo', jev: 'Jev (TypeSafe)', treg: 'treg' };
+const SERVICE_NAME: Record<Service, string> = { apollo: 'Apollo', jev: 'Jev (TypeSafe)', treg: 'treg', monid: 'Monid' };
 
 export function describeError(e: LookupError): string {
   const name = SERVICE_NAME[e.service];
   if (e.invalidKey) return `${name} rejected the API key (${e.status}). Check it in Settings.`;
   if (e.service === 'treg' && e.status === 402) return 'Your treg balance is too low for this call. Top up at treg.to, then retry.';
+  if (e.service === 'monid' && e.status === 402) return 'Your Monid balance is too low for this call. Top up at app.monid.ai, then retry.';
   if (e.status === 429) return `${name} rate limit hit. Wait a moment and retry.`;
   if (e.status === 529 || (e.status && e.status >= 500)) return `${name} is having trouble (${e.status}). Retry shortly.`;
   if (e.status === null) return `Couldn't reach ${name}: ${e.message}`;

@@ -75,7 +75,7 @@ describe('treg money', () => {
   });
 
   it("reads treg's balance", () => {
-    expect(parseBalance({ treg: { balance_usd: 0.6946 } }, 5)).toEqual({ available: true, usd: 0.6946, checkedAt: 5 });
+    expect(parseBalance({ treg: { balance_usd: 0.6946 } }, 5)).toEqual({ available: true, usd: 0.6946, checkedAt: 5, gateway: 'treg' });
     expect(parseBalance({ treg: {} }, 5)).toEqual({ available: false, checkedAt: 5 });
   });
 });
