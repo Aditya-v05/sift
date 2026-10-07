@@ -4,6 +4,12 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-08 — Costs receipt: Apollo, treg or Monid
+
+- **What:** the receipt in Costs has a switch at the top: Apollo (credits, as before), treg or Monid (dollars at $0.026 a credit: $0.052 a new company, $0 to find people, $0.026 an email, $0.026 a LinkedIn lookup, Sift's fee $0). The notes follow the source ("free through treg too", "$0.026 for the company, $0.026 for its job postings"), and Monid adds that Discover isn't available through it yet. The prices swap with a short rise; Apollo keeps its count-up.
+- **Why:** the receipt showed only Apollo credits, though the page now offers treg and Monid.
+- **Verified:** compile, site build, smoke 40/40; Playwright at 1440 and 390 px: each source shows the right prices (Apollo 2 0 1 1; treg and Monid $0.052 $0 $0.026 $0.026), no overflow, no page errors; screenshots checked. Local branch `monid`, not pushed.
+
 ## 2026-10-08 — v0.4.0: Monid in public Sift (local branch `monid`, not pushed)
 
 - **What:** brought the Monid work over from dev-sift (cherry-picked 697b52b, 6395b9b and the two test-log commits onto `agents-launch`). The extension and `sift-gtm` both take a Monid key. Version 0.4.0. Site copy names Monid wherever treg is offered:

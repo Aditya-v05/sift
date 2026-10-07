@@ -228,6 +228,17 @@ main p { line-height: 1.6; }
 .l-receipt-line p { font-family: 'Schibsted Grotesk Variable', system-ui, sans-serif; font-size: 14px; color: var(--ink-2); margin: 6px 0 0; line-height: 1.5; }
 .l-receipt-n { font-family: var(--serif); font-size: 64px; line-height: 0.8; color: var(--pine); min-width: 1ch; text-align: right; font-variant-numeric: tabular-nums; }
 .l-receipt-foot { padding-top: 16px; align-items: center; }
+/* Source switch on the receipt: Apollo credits, or treg / Monid dollars. */
+.l-receipt-top { align-items: center; }
+.l-receipt-src { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid var(--hair); border-radius: 8px; }
+.l-receipt-src button { font: 500 11.5px var(--mono); text-decoration: none; text-transform: none; letter-spacing: 0.02em; color: var(--ink-3); background: transparent; border: none; border-radius: 6px; padding: 5px 11px; cursor: pointer; transition: color 0.2s, background 0.25s var(--ease-out), transform 0.15s var(--ease-out); }
+.l-receipt-src button:hover, .l-receipt-src button:focus-visible { color: var(--ink); }
+.l-receipt-src button:active { transform: scale(0.95); }
+.l-receipt-src button[aria-checked='true'] { background: var(--pine); color: var(--mint); }
+.l-receipt-unit { font-size: 11.5px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; padding-top: 12px; animation: l-fade 0.3s var(--ease-out); }
+.l-receipt-n.usd { font-size: 38px; line-height: 1; }
+.l-receipt-note { font-family: 'Schibsted Grotesk Variable', system-ui, sans-serif; font-size: 13.5px; color: var(--ink-2); margin: 14px 0 0; padding-bottom: 14px; border-bottom: 1px dashed var(--hair); }
+@media (max-width: 720px) { .l-receipt-n.usd { font-size: 28px; } .l-receipt-src button { padding: 5px 8px; } }
 .l-receipt-foot b { font-family: var(--serif); font-size: 34px; font-weight: 400; color: var(--mint-deep); text-transform: none; letter-spacing: 0; }
 
 /* ---------- privacy: a night band behind closed blinds ---------- */

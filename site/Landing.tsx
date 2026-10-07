@@ -376,10 +376,23 @@ function CountUp({ to }: { to: number }) {
   return <span ref={el}>{n}</span>;
 }
 
+// What each action costs, by data source: Apollo bills credits; treg and Monid bill dollars ($0.026 a credit).
+const SOURCES = [
+  { id: 'apollo', label: 'Apollo', unit: 'Apollo credits' },
+  { id: 'treg', label: 'treg', unit: 'treg, in dollars' },
+  { id: 'monid', label: 'Monid', unit: 'Monid, in dollars' },
+] as const;
+type SourceId = (typeof SOURCES)[number]['id'];
+const USD_PER_CREDIT = 0.026;
+const usd = (credits: number) => (credits === 0 ? '$0' : `$${(credits * USD_PER_CREDIT).toFixed(3)}`);
+
 function Costs() {
+  const [source, setSource] = useState<SourceId>('apollo');
+  const via = SOURCES.find((x) => x.id === source)!;
+  const gateway = source !== 'apollo';
   const lines = [
-    { n: 2, what: 'Look up a new company', note: '1 for the company, 1 for its job postings. Free again for 7 days.' },
-    { n: 0, what: 'Find the people', note: "Apollo's people search costs nothing." },
+    { n: 2, what: 'Look up a new company', note: `${gateway ? '$0.026' : '1'} for the company, ${gateway ? '$0.026' : '1'} for its job postings. Free again for 7 days.` },
+    { n: 0, what: 'Find the people', note: gateway ? `Apollo's people search is free through ${via.label} too.` : "Apollo's people search costs nothing." },
     { n: 1, what: 'Reveal an email', note: 'Only charged when Apollo finds the person.' },
     { n: 1, what: 'Look up a LinkedIn profile', note: 'Email included. Free again for 30 days.' },
   ];
@@ -391,17 +404,28 @@ function Costs() {
         <p>Sift spends your Apollo credits (or treg or Monid dollars, at $0.026 a credit) and puts the price on every button. Set a monthly budget and it asks before going over.</p>
       </div>
       <div className="l-receipt" data-reveal>
-        <div className="l-receipt-top"><span>Apollo credits</span><span>per action</span></div>
-        {lines.map((l) => (
-          <div key={l.what} className="l-receipt-line" style={{ '--i': lines.indexOf(l) } as React.CSSProperties}>
+        <div className="l-receipt-top">
+          <div className="l-receipt-src" role="radiogroup" aria-label="Data source">
+            {SOURCES.map((x) => (
+              <button key={x.id} type="button" role="radio" aria-checked={source === x.id} onClick={() => setSource(x.id)}>{x.label}</button>
+            ))}
+          </div>
+          <span>per action</span>
+        </div>
+        <div className="l-receipt-unit" key={source}>{via.unit}</div>
+        {lines.map((l, i) => (
+          <div key={l.what} className="l-receipt-line" style={{ '--i': i } as React.CSSProperties}>
             <div>
               <div className="l-receipt-what">{l.what}<i aria-hidden /></div>
               <p>{l.note}</p>
             </div>
-            <div className="l-receipt-n"><CountUp to={l.n} /></div>
+            <div className={`l-receipt-n ${gateway ? 'usd' : ''}`}>
+              {gateway ? <span className="a-swap" key={source}>{usd(l.n)}</span> : <CountUp to={l.n} />}
+            </div>
           </div>
         ))}
-        <div className="l-receipt-foot"><span>Sift's own fee</span><b>0</b></div>
+        {source === 'monid' && <p className="l-receipt-note a-swap">Finding similar companies (Discover) isn’t available through Monid yet.</p>}
+        <div className="l-receipt-foot"><span>Sift's own fee</span><b>{gateway ? '$0' : '0'}</b></div>
       </div>
     </section>
   );
