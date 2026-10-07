@@ -1,0 +1,286 @@
+import { useRef, useState, type ReactNode } from 'react';
+import session from './agent-session.json';
+import { End, Eyebrow, Nav, useReveal } from './Landing';
+import { SlatWord } from './SlatWord';
+
+const NPM = 'https://www.npmjs.com/package/sift-gtm';
+const AGENT_DIR = 'https://github.com/Aditya-v05/sift/tree/main/agent';
+const SKILL = 'https://github.com/Aditya-v05/sift/blob/main/agent/SKILL.md';
+
+export default function Agents() {
+  useReveal();
+  return (
+    <div className="l-page">
+      <Nav />
+      <main id="top">
+        <Hero />
+        <Session />
+        <Tools />
+        <Guardrails />
+        <Setup />
+        <People />
+      </main>
+      <End />
+    </div>
+  );
+}
+
+// ---------- hero ----------
+
+function Copy({ text, label = 'Copy' }: { text: string; label?: string }) {
+  const [done, setDone] = useState(false);
+  return (
+    <button
+      className="a-copy"
+      onClick={() => navigator.clipboard?.writeText(text).then(() => (setDone(true), setTimeout(() => setDone(false), 1400)))}
+    >
+      {done ? 'Copied' : label}
+    </button>
+  );
+}
+
+function Hero() {
+  const copy = useRef<HTMLDivElement>(null);
+  return (
+    <section className="l-hero a-hero">
+      <SlatWord word="MCP" quiet={copy} />
+      <div className="l-hero-copy" ref={copy}>
+        <p className="l-eyebrow dark a-kicker"><i className="l-glyph" aria-hidden /> sift-gtm · MCP server + CLI</p>
+        <h1>
+          Sift, for your<br /><em>agents.</em>
+        </h1>
+        <p className="l-lede">
+          The side panel's three answers as tools any agent can call: does the company fit, why now, who to email. Same
+          engine, your own keys, and a budget the agent can't raise.
+        </p>
+        <div className="a-cmd">
+          <code>npx sift-gtm mcp</code>
+          <Copy text="npx sift-gtm mcp" />
+        </div>
+        <div className="l-ctas">
+          <a className="l-btn cream" href="#setup">Set it up</a>
+          <a className="l-btn glass" href="#session">See a real session</a>
+        </div>
+        <p className="l-fine">Works with Claude Desktop, Claude Code, Cursor and any MCP client · MIT</p>
+      </div>
+    </section>
+  );
+}
+
+// ---------- a real session ----------
+
+/** Bold, numbered lists and paragraphs: enough markdown for an agent's answer. */
+function Md({ text }: { text: string }) {
+  const inline = (s: string): ReactNode[] =>
+    s.split(/(\*\*[^*]+\*\*)/).map((p, i) => (p.startsWith('**') ? <strong key={i}>{p.slice(2, -2)}</strong> : p));
+  const blocks = text.trim().split(/\n\s*\n/);
+  return (
+    <>
+      {blocks.map((b, i) => {
+        const lines = b.split('\n');
+        if (lines.every((l) => /^\d+\.\s/.test(l.trim()))) {
+          return <ol key={i}>{lines.map((l, j) => <li key={j}>{inline(l.trim().replace(/^\d+\.\s/, ''))}</li>)}</ol>;
+        }
+        return <p key={i}>{lines.map((l, j) => <span key={j}>{inline(l)}{j < lines.length - 1 && <br />}</span>)}</p>;
+      })}
+    </>
+  );
+}
+
+type Step = { tool: string; input: Record<string, unknown>; summary: string } | { say: string };
+
+function Session() {
+  const steps = session.steps as Step[];
+  return (
+    <section id="session" className="l-wrap a-session">
+      <div className="l-section-head" data-reveal>
+        <Eyebrow label="A real session" />
+        <h2>Price it, run it, <em>explain it.</em></h2>
+        <p>
+          Claude Code with only Sift's MCP server connected, asked to rank three accounts. Nothing below is edited
+          except for length. The three companies were already cached, so Sift spent nothing.
+        </p>
+      </div>
+      <div className="a-video" data-reveal>
+        <video src="/agents-demo.mp4" poster="/agents-demo-poster.jpg" width={1280} height={720} muted loop playsInline autoPlay controls={false}
+          aria-label="Claude Code using Sift's MCP tools: it prices three accounts, looks them up for free from the cache, and ranks them with evidence" />
+      </div>
+      <div className="a-chat" data-reveal>
+        <div className="a-msg user">
+          <span className="a-who">You</span>
+          <p>{session.prompt}</p>
+        </div>
+        <div className="a-steps">
+          {steps.map((s, i) =>
+            'tool' in s ? (
+              <div className="a-step" key={i}>
+                <code className="a-tool">{s.tool}<span>({Object.entries(s.input).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(', ')})</span></code>
+                <span className="a-res">{s.summary}</span>
+              </div>
+            ) : (
+              <p className="a-say" key={i}>{s.say}</p>
+            ),
+          )}
+        </div>
+        <div className="a-msg agent">
+          <span className="a-who">Agent</span>
+          <div className="a-answer"><Md text={session.answer} /></div>
+        </div>
+        <p className="a-meta">
+          Recorded {session.recorded} · {session.client} · Sift spent {session.sift_spent_credits} credits
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// ---------- tools ----------
+
+const TOOLS: [string, string, string][] = [
+  ['sift_company', 'Fit score with every requirement (met, near, unsure, not met), why-now signals with their evidence, the best persona, and the top ranked contacts. Never reveals emails.', '2 credits if new · free for 7 days'],
+  ['list_contacts', 'Every ranked person Sift found at a company it already looked up.', 'free'],
+  ['reveal_email', 'Verified emails for the people the agent chooses.', '1 credit per person found'],
+  ['quote', 'What a batch would cost, and whether it fits the budget. Agents call it first.', 'free'],
+  ['budget', 'This month’s spend, the limit, and the Apollo or treg balance.', 'free'],
+  ['get_icp / set_icp', 'The ideal customer profile everything is judged against.', 'free'],
+];
+
+function Tools() {
+  return (
+    <section id="tools" className="l-wrap a-tools">
+      <div className="l-section-head" data-reveal>
+        <Eyebrow label="The tools" />
+        <h2>Cheap first. <em>Spending explicit.</em></h2>
+        <p>Through treg a credit is $0.026: about $0.05 for a new company and $0.026 per email. Finding people is free.</p>
+      </div>
+      <div className="a-table" data-reveal>
+        {TOOLS.map(([name, what, cost]) => (
+          <div className="a-row" key={name}>
+            <code>{name}</code>
+            <p>{what}</p>
+            <span>{cost}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ---------- guardrails ----------
+
+function Guardrails() {
+  const items: [string, string][] = [
+    ['A budget it can’t raise', 'The monthly cap is enforced inside Sift before anything is charged, and there is no tool to change it. Only you can, from the environment or the CLI.'],
+    ['Reveals are deliberate', 'Looking a company up never reveals an email. The agent asks for specific people, and pays only for those.'],
+    ['Reasons, not prose', 'Every score carries its checks and every signal its source, so the agent explains with evidence instead of inventing why.'],
+    ['Your keys, no server', 'Keys stay in the environment and are never written to disk. Calls go from your machine to Apollo or treg, and Jev.'],
+  ];
+  return (
+    <section className="l-wrap a-guard">
+      <div className="l-section-head" data-reveal>
+        <Eyebrow label="Guardrails" />
+        <h2>Built to be <em>left alone with.</em></h2>
+      </div>
+      <div className="a-cards" data-reveal>
+        {items.map(([t, d]) => (
+          <div className="a-card" key={t}>
+            <h3>{t}</h3>
+            <p>{d}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ---------- setup ----------
+
+const CONFIG = `{
+  "mcpServers": {
+    "sift": {
+      "command": "npx",
+      "args": ["-y", "sift-gtm", "mcp"],
+      "env": {
+        "TYPESAFE_KEY": "…",
+        "TREG_KEY": "…",
+        "SIFT_BUDGET_USD": "5"
+      }
+    }
+  }
+}`;
+
+const CLAUDE_CODE = `claude mcp add sift \\
+  -e TYPESAFE_KEY=… -e TREG_KEY=… -e SIFT_BUDGET_USD=5 \\
+  -- npx -y sift-gtm mcp`;
+
+const SETUPS: { id: string; label: string; where: string; code: string }[] = [
+  { id: 'desktop', label: 'Claude Desktop · Cursor', where: 'Add to the MCP config (Claude Desktop: Settings → Developer → Edit Config; Cursor: ~/.cursor/mcp.json).', code: CONFIG },
+  { id: 'code', label: 'Claude Code', where: 'One command in your terminal.', code: CLAUDE_CODE },
+];
+
+function Setup() {
+  const [tab, setTab] = useState(SETUPS[0]!.id);
+  const s = SETUPS.find((x) => x.id === tab)!;
+  return (
+    <section id="setup" className="l-wrap a-setup">
+      <div className="l-section-head" data-reveal>
+        <Eyebrow label="Setup" />
+        <h2>Two keys, <em>one line.</em></h2>
+        <p>
+          <strong>TYPESAFE_KEY</strong> for Jev, from typesafe.ai, and either <strong>TREG_KEY</strong> (pay per call, no
+          Apollo plan) or <strong>APOLLO_KEY</strong>. The budget defaults to 40 credits a month.
+        </p>
+      </div>
+      <div className="a-code-wrap" data-reveal>
+        <div className="a-tabs" role="tablist">
+          {SETUPS.map((x) => (
+            <button key={x.id} role="tab" aria-selected={tab === x.id} className={tab === x.id ? 'on' : ''} onClick={() => setTab(x.id)}>{x.label}</button>
+          ))}
+        </div>
+        <p className="a-where">{s.where}</p>
+        <pre className="a-code"><code>{s.code}</code><Copy text={s.code} /></pre>
+        <p className="a-where">
+          Agents that load skills can also use the playbook, <a href={SKILL}>SKILL.md</a>: when to price, when to reveal, and
+          how to explain results. Package: <a href={NPM}>npm</a> · <a href={AGENT_DIR}>source</a>.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// ---------- for people ----------
+
+const CLI = `$ npx sift-gtm --from accounts.csv --out ranked.csv
+3 companies · 1 cached · up to 4 credits · 38 credits left this month
+  gorgias.com: 80% fit, timing 52
+  kustomer.com: 83% fit, timing 44
+  helpscout.com: 78% fit, timing 57
+Wrote 3 rows to ranked.csv, best first.`;
+
+const CSV: string[][] = [
+  ['Help Scout', '70', '78', '57', '11 open roles', 'Shawna F., COO'],
+  ['Gorgias', '69', '80', '52', 'Hiring 5 relevant roles', 'Aleksandra P., Director of Support'],
+  ['Kustomer', '67', '83', '44', 'Raised $30M Series B', 'Robert R., Head of Support Engineering'],
+];
+
+function People() {
+  return (
+    <section className="l-wrap a-people">
+      <div className="l-section-head" data-reveal>
+        <Eyebrow label="For people too" />
+        <h2>A whole list, <em>ranked.</em></h2>
+        <p>The same engine in your terminal. Price a CSV first with <code>--dry-run</code>, then get it back ranked by priority (60% fit, 40% timing), with each company’s top signal and best contact.</p>
+      </div>
+      <div className="a-term" data-reveal>
+        <pre className="a-code dark"><code>{CLI}</code></pre>
+        <div className="a-csv">
+          <div className="a-csv-row head"><span>Company</span><span>Priority</span><span>Fit</span><span>Timing</span><span>Top signal</span><span>Best contact</span></div>
+          {CSV.map((r) => (
+            <div className="a-csv-row" key={r[0]}>{r.map((c, i) => <span key={i}>{c}</span>)}</div>
+          ))}
+        </div>
+        <p className="a-where">A real run, 3 accounts for 4 Apollo credits. Add <code>--reveal-top 1 --min-fit 70</code> for emails at strong fits.</p>
+      </div>
+    </section>
+  );
+}

@@ -21,7 +21,7 @@ const LazyBlinds = lazy(() => fx().then((m) => ({ default: m.Blinds })));
 const LazySlats = lazy(() => fx().then((m) => ({ default: m.Slats })));
 
 /** Sections fade up as they enter the viewport, once. */
-function useReveal() {
+export function useReveal() {
   useEffect(() => {
     const els = document.querySelectorAll('[data-reveal]');
     const io = new IntersectionObserver(
@@ -57,7 +57,7 @@ export default function Landing() {
 }
 
 /** Section label: the sieve glyph, the question, and (for the answers) the score the card below shows. */
-function Eyebrow({ label, score, dark }: { label: string; score?: string; dark?: boolean }) {
+export function Eyebrow({ label, score, dark }: { label: string; score?: string; dark?: boolean }) {
   return (
     <p className={`l-eyebrow ${dark ? 'dark' : ''}`}>
       <i className="l-glyph" aria-hidden /> {label}
@@ -68,7 +68,8 @@ function Eyebrow({ label, score, dark }: { label: string; score?: string; dark?:
 
 // ---------- nav: a full-width bar; a mint line reads how far down the page you are ----------
 
-function Nav() {
+/** Shared with /agents: section links point at the home page (`/#…`), which scrolls in place when already there. */
+export function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const line = useRef<HTMLSpanElement>(null);
   useEffect(() => {
@@ -84,13 +85,14 @@ function Nav() {
   return (
     <header className={`l-nav ${scrolled ? 'scrolled' : ''}`}>
       <div className="l-nav-in">
-        <a className="l-brand" href="#top">
+        <a className="l-brand" href="/#top">
           <img src={icon48} alt="" width="24" height="24" />
           Sift
         </a>
         <nav>
-          <a href="#answers">How it works</a>
-          <a href="#costs">Costs</a>
+          <a href="/#answers">How it works</a>
+          <a href="/#costs">Costs</a>
+          <a href="/agents">Agents</a>
           <a href={REPO}>GitHub</a>
         </nav>
         <a className="l-pill" href={INSTALL}>Install</a>
@@ -144,7 +146,7 @@ function Hero() {
         <div className="l-ctas">
           <a className="l-btn cream" href={INSTALL}>Install Sift</a>
         </div>
-        <p className="l-fine">Free and open source</p>
+        <p className="l-fine">Free and open source · <a className="l-new" href="/agents">New: Sift for AI agents (MCP) →</a></p>
       </div>
     </section>
   );
@@ -389,7 +391,7 @@ function Faq() {
 
 // ---------- the end: one night block, closing line on top, footer over a sea of slats ----------
 
-function End() {
+export function End() {
   return (
     <footer className="l-end">
       <div className="l-end-copy l-wrap" data-reveal>
@@ -415,14 +417,15 @@ function End() {
       </div>
       <div className="l-wrap l-footer-top">
         <div className="l-footer-brand">
-          <a className="l-brand" href="#top"><img src={icon48} alt="" width="26" height="26" /> Sift</a>
+          <a className="l-brand" href="/#top"><img src={icon48} alt="" width="26" height="26" /> Sift</a>
           <p>Know who's worth talking to. Open source, on your own keys.</p>
         </div>
         <div className="l-footer-cols">
           <div>
             <h4>Product</h4>
-            <a href="#answers">How it works</a>
-            <a href="#costs">Costs</a>
+            <a href="/#answers">How it works</a>
+            <a href="/#costs">Costs</a>
+            <a href="/agents">For agents (MCP)</a>
             <a href={INSTALL}>Install</a>
           </div>
           <div>
@@ -435,7 +438,7 @@ function End() {
           <div>
             <h4>Trust</h4>
             <a href={PRIVACY}>Privacy policy</a>
-            <a href="#privacy">No server</a>
+            <a href="/#privacy">No server</a>
           </div>
         </div>
       </div>

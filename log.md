@@ -4,6 +4,39 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-08 — Launch prep for sift-gtm: a real agent session, the /agents page, and a video (branch `agents-launch`)
+
+> "before we publish we need to make sure there is a video for posting and also i need a website tab or something talking about sift for agents"
+
+- **A real agent session:** `claude -p` (Claude Code 2.1) with only Sift's MCP server connected was asked to rank gorgias.com, kustomer.com and helpscout.com. It:
+  - priced first (`quote`: 3 cached, 0 credits) and read the ICP;
+  - ran `sift_company` three times with `max_credits: 0`;
+  - answered with a ranking and evidence ("12 open roles, 8 posted in the last 30 days"), naming the top contact without revealing any email, and flagging its own caveats.
+
+  Sift spent 0 credits; the Claude run cost about $0.10. The transcript is saved as `site/agent-session.json` (no emails in it).
+- **The /agents page** (`site/agents.html`, `site/Agents.tsx`; Vite now builds two pages, and `vercel.json` sets `cleanUrls` so it serves at `/agents`):
+  - a hero with an "MCP" slat wall, `npx sift-gtm mcp` with a copy button, and links to setup and the session;
+  - the video and the real session (request, tool calls with results, the agent's answer);
+  - the tools with their costs; four guardrails;
+  - setup tabs (Claude Desktop / Cursor JSON, a Claude Code one-liner) plus SKILL.md;
+  - "for people too": the real 3-company CSV run.
+
+  The nav, footer, eyebrow and reveal are shared with the home page; section links became `/#…`. The nav gains "Agents", the footer "For agents (MCP)", and the home hero's fine print "New: Sift for AI agents (MCP) →". It has its own `og-agents.png`.
+- **The video** (`video/src/AgentDemo.tsx`, compositions `AgentLandscape` / `AgentPortrait` / `AgentSquare`, 18.9 s):
+  1. hook card: "Give your agent Sift.";
+  2. the request typed in;
+  3. the five real tool calls with their results ("It prices first. Cached, so $0.");
+  4. the answer, folded to the ranking and the Gorgias line ("It answers with evidence, not vibes.");
+  5. end card: `npx sift-gtm mcp`.
+
+  It's exported for X and LinkedIn as `~/Desktop/sift-agents-{16x9,4x5,1x1}.mp4`, with thumbnails; a 1280-px web cut is on the page.
+- **Verified:**
+  - /agents at 1440 and 390 px: no overflow or page errors, video playing;
+  - compile, 133 tests, 11 agent tests and the site build pass.
+- **Still pending:** releasing 0.1.0 from npm's staged packages (the user's step), so `npx sift-gtm` works.
+
+---
+
 ## 2026-10-07 — sift-gtm: Sift for agents (MCP server + CLI), built
 
 > "lets start building this shall we"

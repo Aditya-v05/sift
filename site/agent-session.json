@@ -1,0 +1,55 @@
+{
+  "prompt": "I sell AI support QA software to SaaS companies. Here are three accounts: gorgias.com, kustomer.com and helpscout.com. Which one should I go after first, why now, and who should I email there? Use Sift. Price it before running anything, and don't reveal any emails yet. Keep your final answer short: a ranked list, then 3-4 sentences on the top account.",
+  "recorded": "2026-10-08",
+  "client": "Claude Code (claude -p, Sift MCP server only)",
+  "sift_spent_credits": 0,
+  "claude_cost_usd": 0.0963384,
+  "ms": 199795,
+  "steps": [
+    {
+      "tool": "quote",
+      "input": {
+        "domains": [
+          "gorgias.com",
+          "kustomer.com",
+          "helpscout.com"
+        ],
+        "reveals_per_company": 0
+      },
+      "summary": "3 companies · 3 cached · 0 credits"
+    },
+    {
+      "tool": "get_icp",
+      "input": {},
+      "summary": "ICP: Series A–C SaaS companies, 50–500 employees, based in the US, with large customer support teams."
+    },
+    {
+      "say": "All three are cached — 0 credits. Running them."
+    },
+    {
+      "tool": "sift_company",
+      "input": {
+        "domain": "gorgias.com",
+        "max_credits": 0
+      },
+      "summary": "Gorgias · fit 80 strong · timing 52 · top contact Aleksandra P., Director of Support (69) · cached, free"
+    },
+    {
+      "tool": "sift_company",
+      "input": {
+        "domain": "kustomer.com",
+        "max_credits": 0
+      },
+      "summary": "Kustomer · fit 83 strong · timing 44 · top contact Robert R., Head of Support Engineering (57) · cached, free"
+    },
+    {
+      "tool": "sift_company",
+      "input": {
+        "domain": "helpscout.com",
+        "max_credits": 0
+      },
+      "summary": "Help Scout · fit 78 strong · timing 57 · top contact Shawna F., COO (58) · cached, free"
+    }
+  ],
+  "answer": "Pricing came first: all three companies were already cached, so the quote was **0 credits** and I spent nothing (34 of 40 credits left this month). I revealed no emails.\n\n**Ranking**\n1. **Gorgias**: fit 80, timing 52, priority 69\n2. **Help Scout**: fit 78, timing 57, priority 70\n3. **Kustomer**: fit 83, timing 44, priority 67\n\n**Why Gorgias first:** Sift scores Help Scout one point higher, but I'm putting Gorgias first because its \"why now\" evidence is stronger. Gorgias is a 430-person, US-based Series C company. It has 12 open roles, 8 of them posted in the last 30 days, and several are dated customer success and implementation postings from September 2026. That means its customer-facing team is growing now. Help Scout's timing score comes from undated pricing-page features (SSO, SLA policies, HIPAA). Gorgias also has a better contact: email **Aleksandra P., Director of Support** (Sift's top-ranked person, rank 69), with **Felix L., COO** as your second choice. At Help Scout, the best match is the COO at rank 58.\n\nTwo caveats. Sift couldn't confirm that any of the three has a \"large customer support team\" (it marked all three unsure). Also, all three sell helpdesk software, so they may have built their own QA features. That last point is from my own knowledge, not from Sift, so check it before you email. When you want Aleksandra's email, it costs 1 credit."
+}

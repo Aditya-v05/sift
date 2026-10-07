@@ -115,6 +115,8 @@ main p { line-height: 1.6; }
 .l-ctas { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 30px; animation: l-rise 0.6s var(--ease-out) 0.4s both; }
 .l-fine { font-family: var(--mono); font-size: 12px; color: #6b807c; margin: 14px 0 0; animation: l-rise 0.6s var(--ease-out) 0.5s both; }
 .l-btn.cream { background: #efece4; color: #071d1a; }
+.l-new { color: var(--mint); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--mint) 40%, transparent); }
+.l-new:hover { border-bottom-color: var(--mint); }
 .l-btn.cream:hover { background: #fff; }
 
 /* SIFT in slats: the wall runs edge to edge along the bottom of the hero. */
@@ -259,6 +261,76 @@ main p { line-height: 1.6; }
 .l-footer-cols a:hover { color: var(--mint); transform: translateX(3px); }
 .l-sea { position: relative; height: 340px; margin-top: 30px; -webkit-mask: linear-gradient(180deg, transparent, #000 45%); mask: linear-gradient(180deg, transparent, #000 45%); }
 .l-footer-base { position: relative; display: flex; justify-content: space-between; gap: 16px; margin-top: -54px; padding-top: 16px; padding-bottom: 26px; font-size: 13px; color: #93aca7; }
+
+/* ---------- /agents: Sift for agents ---------- */
+.a-kicker { justify-content: center; }
+.a-cmd {
+  display: inline-flex; align-items: center; gap: 14px; margin-top: 28px; padding: 10px 10px 10px 18px; border-radius: 12px;
+  background: rgba(239, 236, 228, 0.06); border: 1px solid rgba(239, 236, 228, 0.14); animation: l-rise 0.6s var(--ease-out) 0.35s both;
+}
+.a-cmd code { font-family: var(--mono); font-size: 16px; color: #efece4; }
+.a-cmd code::before { content: '$ '; color: #6b807c; }
+.a-copy {
+  font: 600 12.5px var(--mono); color: #071d1a; background: #efece4; border: none; border-radius: 8px; padding: 6px 12px;
+  text-decoration: none; cursor: pointer;
+}
+.a-copy:hover { background: #fff; }
+
+.a-session, .a-tools, .a-guard, .a-setup, .a-people { padding-top: 120px; }
+.a-session .l-section-head, .a-tools .l-section-head, .a-guard .l-section-head, .a-setup .l-section-head, .a-people .l-section-head { margin-bottom: 40px; }
+.a-video { max-width: 960px; margin: 0 auto 48px; border-radius: 16px; overflow: hidden; line-height: 0; background: #071d1a; }
+.a-video video { width: 100%; height: auto; }
+.a-chat { max-width: 860px; margin: 0 auto; border-top: 1px solid var(--hair); }
+.a-msg { display: grid; grid-template-columns: 70px 1fr; gap: 16px; padding: 22px 0; border-bottom: 1px solid var(--hair); }
+.a-who { font: 500 12px var(--mono); color: var(--ink-3); padding-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+.a-msg.user p { margin: 0; font-size: 17px; color: var(--ink); }
+.a-steps { padding: 16px 0 16px 86px; display: grid; gap: 10px; border-bottom: 1px solid var(--hair); }
+.a-step { display: grid; gap: 3px; }
+.a-tool { font: 13px var(--mono); color: var(--pine-2); word-break: break-word; }
+.a-tool span { color: var(--ink-3); }
+.a-res { font: 12.5px var(--mono); color: var(--ink-2); padding-left: 14px; border-left: 2px solid var(--mint-deep); }
+.a-say { margin: 4px 0; font-size: 15px; color: var(--ink-2); font-style: italic; }
+.a-answer { font-size: 16.5px; color: var(--ink); line-height: 1.6; }
+.a-answer p { margin: 0 0 12px; }
+.a-answer ol { margin: 0 0 12px; padding-left: 22px; }
+.a-meta { font: 12px var(--mono); color: var(--ink-3); margin: 14px 0 0; text-align: right; }
+
+.a-table { max-width: 980px; margin: 0 auto; border-top: 1px solid var(--hair); }
+.a-row { display: grid; grid-template-columns: 200px 1fr 210px; gap: 24px; align-items: baseline; padding: 18px 0; border-bottom: 1px solid var(--hair); }
+.a-row code { font: 600 14px var(--mono); color: var(--pine); }
+.a-row p { margin: 0; color: var(--ink-2); font-size: 15.5px; }
+.a-row span { font: 12.5px var(--mono); color: var(--ink-3); text-align: right; }
+
+.a-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; max-width: 1100px; margin: 0 auto; }
+.a-card { padding: 22px 0 0; border-top: 2px solid var(--pine); }
+.a-card h3 { font-size: 18px; margin: 0 0 10px; }
+.a-card p { margin: 0; font-size: 15px; color: var(--ink-2); }
+
+.a-code-wrap, .a-term { max-width: 860px; margin: 0 auto; }
+.a-tabs { display: flex; gap: 22px; border-bottom: 1px solid var(--hair); margin-bottom: 14px; }
+.a-tabs button { background: none; border: none; padding: 10px 0; font: 600 14.5px inherit; color: var(--ink-3); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer; }
+.a-tabs button.on { color: var(--ink); border-bottom-color: var(--pine); }
+.a-where { font-size: 14.5px; color: var(--ink-2); margin: 12px 0; }
+.a-code { position: relative; margin: 0; padding: 20px 22px; border-radius: 12px; background: #0b1c1e; color: #dfe9e6; font: 13.5px/1.6 var(--mono); overflow-x: auto; }
+.a-code code { font: inherit; color: inherit; background: none; padding: 0; white-space: pre; }
+.a-code .a-copy { position: absolute; top: 12px; right: 12px; }
+.a-code.dark { white-space: pre; }
+.a-people code, .a-setup .l-section-head code { font: 0.92em var(--mono); background: var(--tint-mint); padding: 1px 6px; border-radius: 5px; color: var(--pine); }
+.a-csv { margin-top: 18px; border-top: 1px solid var(--hair); font-size: 14px; }
+.a-csv-row { display: grid; grid-template-columns: 1.1fr 0.6fr 0.4fr 0.5fr 1.5fr 2fr; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--hair); color: var(--ink); }
+.a-csv-row.head { font: 500 11.5px var(--mono); color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.05em; }
+
+@media (max-width: 900px) {
+  .a-cmd code { font-size: 14px; }
+  .a-msg { grid-template-columns: 1fr; gap: 6px; }
+  .a-steps { padding-left: 0; }
+  .a-row { grid-template-columns: 1fr; gap: 6px; }
+  .a-row span { text-align: left; }
+  .a-cards { grid-template-columns: 1fr 1fr; }
+  .a-csv-row { grid-template-columns: 1fr 0.6fr 0.5fr; }
+  .a-csv-row span:nth-child(n + 4) { display: none; }
+}
+@media (max-width: 520px) { .a-cards { grid-template-columns: 1fr; } }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

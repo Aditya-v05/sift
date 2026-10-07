@@ -2,6 +2,7 @@ import React from 'react';
 import { Composition, Still } from 'remotion';
 import { Demo, FORMATS, TREG, timeline } from './Demo';
 import { Thumb } from './Thumb';
+import { AgentDemo, agentTotal } from './AgentDemo';
 
 export const Root = () => (
   <>
@@ -16,6 +17,10 @@ export const Root = () => (
         height={f.height}
         defaultProps={{ format: f.id }}
       />
+    ))}
+    {/* The sift-gtm launch (a real agent session): the three feed formats. */}
+    {FORMATS.filter((f) => f.social).map((f) => (
+      <Composition key={`Agent${f.id}`} id={`Agent${f.id.replace('SiftSocial', '')}`} component={AgentDemo} durationInFrames={agentTotal} fps={30} width={f.width} height={f.height} defaultProps={{ format: f.id }} />
     ))}
     {/* The treg co-marketing post: the three feed formats. */}
     {FORMATS.filter((f) => f.social).map((f) => (

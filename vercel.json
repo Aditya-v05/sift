@@ -3,5 +3,6 @@
   "framework": null,
   "installCommand": "npm ci",
   "buildCommand": "npm run site:build",
-  "outputDirectory": "site/dist"
+  "outputDirectory": "site/dist",
+  "cleanUrls": true
 }

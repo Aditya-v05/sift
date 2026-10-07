@@ -20,6 +20,8 @@ export default defineConfig({
   build: {
     outDir: here('./dist'),
     emptyOutDir: true,
+    // Two pages: the home page and /agents (Vercel serves agents.html at /agents; see cleanUrls in vercel.json).
+    rollupOptions: { input: { main: here('./index.html'), agents: here('./agents.html') } },
 
   },
 });
