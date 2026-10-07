@@ -20,8 +20,12 @@ jobs:
       - name: Unit tests
         # The live tests skip themselves without API keys, so CI spends no credits.
         run: npm test
+      - name: Agent package (MCP server + CLI) tests, with Apollo and Jev faked
+        run: npm run agent:test
       - name: Build
         run: npm run build
+      - name: Build the agent package and check the CLI runs
+        run: npm run agent:build && node agent/dist/cli.js --version
       - name: Build the landing page
         run: npm run site:build
       - name: Install Chromium for the smoke test

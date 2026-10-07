@@ -40,6 +40,8 @@ export interface LookupOptions {
   tabId?: number;
   /** The lookup started from a LinkedIn profile: this person is ranked with the others and highlighted. */
   focus?: { person: Contact; url: string };
+  /** Reads the company's website outside a browser tab (the agent package fetches it); overrides tabId. */
+  site?: (domain: string) => Promise<SiteScan | null>;
 }
 
 /**
@@ -47,7 +49,7 @@ export interface LookupOptions {
  * (My Accounts refresh) it runs headless. Returns the final state either way.
  */
 export async function runLookup(windowId: number | null, domain: string, opts: LookupOptions = {}): Promise<ViewState> {
-  const { force = false, allowOverBudget = false, tabId, focus } = opts;
+  const { force = false, allowOverBudget = false, tabId, focus, site: readSite } = opts;
   const token = Symbol(domain);
   if (windowId !== null) runs.set(windowId, token);
   const show = async (v: ViewState): Promise<ViewState> => {
@@ -88,8 +90,11 @@ export async function runLookup(windowId: number | null, domain: string, opts: L
   try {
     await show({ status: 'loading', domain, stage: 'company', partial: null });
     // Reading the site is free and independent of Apollo, so it starts right away.
-    const site: Promise<SiteScan | null> =
-      settings.scanSite && tabId !== undefined ? scanTab(tabId, domain) : Promise.resolve(null);
+    const site: Promise<SiteScan | null> = !settings.scanSite
+      ? Promise.resolve(null)
+      : readSite
+        ? readSite(domain).catch(() => null)
+        : tabId !== undefined ? scanTab(tabId, domain) : Promise.resolve(null);
     partial = await lookup(keys!, profile!, settings, domain, site, focus?.person, async (stage, p) => {
       partial = p;
       await show({ status: 'loading', domain, stage, partial: p });

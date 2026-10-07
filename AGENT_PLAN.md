@@ -2,7 +2,7 @@
 
 **Goal:** the same engine as the Chrome extension, usable by AI agents first and people second. Agents get an MCP server and a skill; people get a CLI with batch CSV. It stays bring-your-own-keys (Apollo or treg, plus Jev) with no Sift server.
 
-**Status:** plan, agreed 2026-10-07. Nothing built yet.
+**Status (2026-10-07):** steps 1–4 are built in [`agent/`](agent/) as the npm package `sift-gtm` (MCP server, CLI with batch CSV, `SKILL.md`), tested and in CI. It isn't published to npm yet. Step 5 (distribution, the treg hub) is next.
 
 ```
 npx <pkg> mcp              ← agents: an MCP server with typed tools (the priority)
@@ -41,6 +41,10 @@ SKILL.md                   ← the playbook that teaches agents the workflows
 
 ## How it's built
 
+### How it was built
+
+Rather than moving files, the agent package bundles `src/lib` as it is. esbuild points `wxt/browser` at a Node stand-in (`agent/src/node-browser.ts`): storage goes to `~/.sift/store.json`, and keys stay in memory only. The one change to the shared code is an optional `site` hook on `runLookup`, so the website can be read outside a tab (`agent/src/site-node.ts` runs the same `scanSite` in a happy-dom page). The extension and its tests are unchanged. The original step-by-step plan follows for reference.
+
 ### Step 1: extract the core (no behaviour change to the extension)
 
 Today `src/lib` is almost all plain TypeScript. Four files touch the browser:
@@ -77,7 +81,7 @@ Two or three workflows to start:
 
 ## Decisions
 
-- **Package name:** `sift` and `sift-mcp` are taken on npm. Free as of 2026-10-07: `sift-gtm`, `getsift`, `sift-outbound`, `siftgtm`, `@aditya-v05/sift`. Leaning **`sift-gtm`** (short, says what it's for). Usage would be `npx sift-gtm mcp`.
+- **Package name:** `sift-gtm` (decided). `sift` and `sift-mcp` were taken on npm.
 - **Website signals outside the browser:** fetch the site's public pricing, blog, changelog and security pages directly. It's simpler than the extension's in-tab reading, but some sites block plain requests; when they do, the result says "website not read", as the extension already can. Ship it, behind a flag if it proves flaky.
 - **Repo layout:** keep it in this repo as an npm workspace (`packages/core`, `packages/mcp-cli`, the extension where it is), so the core stays shared and tested together.
 

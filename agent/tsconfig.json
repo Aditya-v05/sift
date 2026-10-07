@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["node"],
+    "paths": { "wxt/browser": ["./src/node-browser.ts"] }
+  },
+  "include": ["src", "test", "../src/lib/**/*.ts"],
+  "exclude": ["../src/lib/**/*.test.ts"]
+}
