@@ -4,6 +4,17 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-08 — Reels, second pass: hooks with impact, the panel up close, a bigger answer
+
+- **What:**
+  - New openings for both reels (`video/src/Reel.tsx`), about 3.5 s, cut on a 120 BPM beat with big type from frame 1. Home: a full-bleed wall of about 200 account tiles under "200 accounts." sifts away while three fly forward as cards with real scores (Pylon 82/75, Gorgias 80/52, Help Scout 78/57): "3 worth an email.". Agents: "Which account first?" typed huge, the real tool calls in big mono, then "Gorgias. Hiring now." on mint.
+  - Home fit, why now and who: no more half-frame of the cropped Pylon site. A tight crop of the real panel sits beside (16:9) or under (4:5, 1:1) the key fact in big type: "82%" with the four checks ticking in, "Hiring now." with three signals, "Dan G." with the made-up email landing at the reveal.
+  - The answer list fills the frame (Fit 82%, Why now timing 75, Who Dan G. verified, Cost 3 credits); the agents list is bigger too.
+  - After the reveal the recording shows the contact's full surname; the reel now paints it back to "Dan G.".
+  - Site videos, posters and the six Desktop cuts (`sift-reel-{home,agents}-{16x9,4x5,1x1}.mp4`) re-exported.
+- **Why:** the user found the openings bland and the why/who part of the home video weak: small type, and half the frame was a cropped page with cut-off text.
+- **Verified:** type check of `video/`; stills of the hooks and of every split scene in 16:9, 4:5 and 1:1 looked at before rendering; 1 fps contact sheets of the finals; the Who scene stepped at 6 fps: only "Dan G." and `dan@usepylon.example` ever appear; ffprobe on exports (h264, yuv420p, tv range, BT.709; 60 fps social, 30 fps site); site build and smoke.
+
 ## 2026-10-08 — Showreel videos: the site's demos re-cut as a motion-design reel around real footage
 
 - **What:** a new Remotion edit, `video/src/Reel.tsx`, with two reels:
