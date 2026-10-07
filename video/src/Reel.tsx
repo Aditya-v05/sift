@@ -662,36 +662,59 @@ function Accounts() {
 const TYPE_END = 140;
 const TOOLS_AT = 152;
 const TOOL_GAP = 34;
+/** Shorter result lines for the reel (same facts as the session's summaries), so the calls can be set large. */
+const reelResult = (s: (typeof steps)[number]) =>
+  s.tool === 'get_icp' ? 'Series A–C SaaS · US · 50–500 people' : resultLine(s).replace(/ strong| partial| weak/g, '');
+
 function Terminal() {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { u, area, width } = useLayout();
+  const { u, area, width, height } = useLayout();
   const wide = width > 1200;
+  const tall = height > width;
   const typed = REQUEST.slice(0, Math.floor(interpolate(frame, [6, TYPE_END], [0, REQUEST.length], clamp)));
   const k = sp(frame, fps, 0, { stiffness: 140, damping: 20 });
+  // The camera: the request fills the panel while it is typed, then folds to one dim line and the calls take the room.
+  const fold = sp(frame, fps, TOOLS_AT - 14, { stiffness: 120, damping: 22 });
+  const askSize = (wide ? 74 : tall ? 64 : 56) * u;
+  const callSize = (wide ? 45 : tall ? 42 : 36) * u;
+  const inner = area.width - 64 * u;
   return (
     <div style={{ position: 'absolute', ...areaStyle(area), background: PANEL, borderRadius: 14 * u, border: '1px solid rgba(159,242,214,0.16)', padding: `${26 * u}px ${32 * u}px`, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 18 * u, overflow: 'hidden', transform: `scale(${0.965 + 0.035 * k})`, opacity: Math.min(1, k * 1.6) }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: mono, fontSize: 18 * u, color: DIM }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: mono, fontSize: 20 * u, color: DIM }}>
         <span>claude code · mcp: sift</span>
         <span style={{ color: MINT }}>● connected</span>
       </div>
-      <div style={{ fontFamily: archivo, fontVariationSettings: `'wght' 400, 'wdth' 100`, fontSize: (wide ? 40 : area.height > area.width ? 40 : 34) * u, color: CREAM, lineHeight: 1.4 }}>
-        <span style={{ fontFamily: mono, color: MINT }}>&gt; </span>
-        {typed}
-        {frame < TYPE_END + 8 && <span style={{ opacity: Math.floor(frame / 16) % 2 ? 0 : 1 }}>▍</span>}
-      </div>
-      <div style={{ display: 'grid', gap: 12 * u }}>
-        {steps.map((s, i) => {
-          const at = TOOLS_AT + i * TOOL_GAP;
-          if (frame < at) return null;
-          const t = sp(frame, fps, at);
-          return (
-            <div key={i} style={{ opacity: Math.min(1, t * 1.4), transform: `translateX(${(1 - t) * 24}px)`, fontFamily: mono, fontSize: (wide ? 28 : area.height > area.width ? 24 : 23) * u, lineHeight: 1.38 }}>
-              <span style={{ color: MINT }}>⏺ {toolLine(s)}</span>
-              <div style={{ color: DIM, paddingLeft: 24 * u }}>⎿ {resultLine(s)}</div>
+      <div style={{ position: 'relative', flex: 1 }}>
+        {/* the ask, large */}
+        {fold < 0.99 && (
+          <div style={{ position: 'absolute', inset: 0, fontFamily: archivo, fontVariationSettings: `'wght' 450, 'wdth' 100`, fontSize: askSize, color: CREAM, lineHeight: 1.3, letterSpacing: '-0.01em', opacity: 1 - fold, transform: `translateY(${-fold * 40 * u}px) scale(${1 - fold * 0.06})`, transformOrigin: 'top left' }}>
+            <span style={{ fontFamily: mono, color: MINT }}>&gt; </span>
+            {typed}
+            {frame < TYPE_END + 8 && <span style={{ opacity: Math.floor(frame / 16) % 2 ? 0 : 1 }}>▍</span>}
+          </div>
+        )}
+        {/* the ask, folded, and the calls, large */}
+        {fold > 0.01 && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', gap: 22 * u, opacity: fold }}>
+            <div style={{ flexShrink: 0, fontFamily: mono, fontSize: 22 * u, color: DIM, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: inner }}>
+              <span style={{ color: MINT }}>&gt; </span>{REQUEST}
             </div>
-          );
-        })}
+            <div style={{ display: 'grid', gap: (tall ? 30 : wide ? 12 : 16) * u, alignContent: 'start', paddingTop: tall ? 110 * u : 0 }}>
+              {steps.map((s, i) => {
+                const at = TOOLS_AT + i * TOOL_GAP;
+                if (frame < at) return null;
+                const t = sp(frame, fps, at);
+                return (
+                  <div key={i} style={{ opacity: Math.min(1, t * 1.4), transform: `translateX(${(1 - t) * 30 * u}px)`, fontFamily: mono, fontSize: callSize, lineHeight: 1.28, whiteSpace: 'nowrap' }}>
+                    <span style={{ color: MINT }}>⏺ {toolLine(s)}</span>
+                    <div style={{ color: '#a9c2bd', paddingLeft: callSize * 0.9, fontSize: callSize * (tall ? 0.82 : 0.86) }}>⎿ {reelResult(s)}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -790,7 +813,7 @@ const HOME: Scene[] = [
   footage([{ from: 1.0, to: 3.85 }], [
     { from: 0, to: 99, chapter: '02 / One click', caption: <>One click on {em('their')} homepage.</>, specL: 'usepylon.com · real recording', specR: 'Sift side panel' },
   ]),
-  split({ from: 4.3, to: 7.4 }, [[4.3, 700], [5.4, 700], [6.4, 860], [7.4, 860]], (box) => <FitText box={box} />,
+  split({ from: 4.75, to: 7.4 }, [[4.75, 700], [5.4, 700], [6.4, 860], [7.4, 860]], (box) => <FitText box={box} />,
     { chapter: '03 / Fit', specL: 'usepylon.com · real recording', specR: '3 of 4 met · 1 unsure' }),
   split({ from: 7.9, to: 10.2 }, [[7.9, 900], [8.9, 650], [9.5, 650], [10.2, 780]], (box) => <WhyText box={box} />,
     { chapter: '04 / Why now', specL: 'Timing 75 · hot', specR: 'From their site and hiring' }),

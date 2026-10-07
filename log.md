@@ -4,6 +4,15 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-08 — Reels, last pass: a readable terminal, no loading frame
+
+- **What:**
+  - Agents reel, terminal scene: the request fills the panel while it is typed, then folds to one dim line, and the five tool calls take the room at about 45 px (42 in 4:5), up from about 24, with shortened result lines (same facts, e.g. "Gorgias · fit 80 · timing 52").
+  - Home reel: the fit scene starts at 4.75 s in the recording instead of 4.3 s, so it cuts from "One click on their homepage" straight to the panel with content, not its loading placeholders.
+  - Re-exported `site/public/demo.mp4`, `demo-m.mp4`, `agents-demo.mp4` and the six Desktop `sift-reel-*` cuts. Posters unchanged (taken from the openings). The treg and older social videos are untouched.
+- **Why:** the terminal text was too small on a phone, and the home reel showed a nearly empty panel for about half a second.
+- **Verified:** stills of the terminal in 16:9, 4:5 and 1:1 before and after (a long line no longer clips in 4:5; the folded request line no longer collapses in 16:9); stills stepping the home cut; 1 fps contact sheets of the finals and a full-size frame from the 4:5 export; video type check; site build; smoke 37/37.
+
 ## 2026-10-08 — Reels, second pass: hooks with impact, the panel up close, a bigger answer
 
 - **What:**
