@@ -4,6 +4,12 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-08 — /agents session: the short version first, the full transcript folded
+
+- **What:** the "A real session" section now shows the request in one line, the tool calls as one line (`quote · get_icp · sift_company ×3 · 0 credits`), the agent's ranking (fit and timing per company) and one sentence on the top account. The full, unedited prompt, every tool call and the agent's whole answer sit under "Read the full transcript" (a `<details>`).
+- **Why:** the full transcript under the video was too much text; the video already plays the session.
+- **Verified:** site build; Playwright at 1440 and 390 px: no horizontal overflow, no page errors, the summary rows animate in, and opening the transcript shows all 5 tool calls.
+
 ## 2026-10-08 — Footer email card: opening mail is the main action
 
 - **What:** the Email card's link now opens the visitor's mail app with the subject "Sift" prefilled (`mailto:…?subject=Sift`, tooltip "Opens your email app"). The Copy button is now an outlined, muted secondary control instead of a solid cream button.

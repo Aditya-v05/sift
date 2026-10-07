@@ -93,6 +93,10 @@ function Md({ text }: { text: string }) {
 
 type Step = { tool: string; input: Record<string, unknown>; summary: string } | { say: string };
 
+// The session at a glance: the tool calls in order, and the agent's ranking (from its real answer).
+const CALLS = ['quote', 'get_icp', 'sift_company ×3'];
+const RANKING: [string, number, number][] = [['Gorgias', 80, 52], ['Help Scout', 78, 57], ['Kustomer', 83, 44]];
+
 function Session() {
   const steps = session.steps as Step[];
   return (
@@ -101,35 +105,60 @@ function Session() {
         <Eyebrow label="A real session" />
         <h2>Price it, run it, <em>explain it.</em></h2>
         <p>
-          Claude Code with only Sift's MCP server connected, asked to rank three accounts. Nothing below is edited
-          except for length. The three companies were already cached, so Sift spent nothing.
+          Claude Code with only Sift's MCP server connected, asked to rank three accounts. The three were already
+          cached, so Sift spent nothing.
         </p>
       </div>
       <div className="a-video" data-reveal>
         <video src="/agents-demo.mp4" poster="/agents-demo-poster.jpg" width={1280} height={720} muted loop playsInline autoPlay controls={false}
-          aria-label="Claude Code using Sift's MCP tools: it prices three accounts, looks them up for free from the cache, and ranks them with evidence" />
+          aria-label="A real Claude Code session with Sift's MCP tools: it prices three accounts at 0 credits, scores Gorgias, Help Scout and Kustomer for fit and timing, and ranks them with evidence" />
       </div>
       <div className="a-chat" data-reveal>
+        {/* The short version; the full, unedited transcript is one click away. */}
         <div className="a-msg user">
           <span className="a-who">You</span>
-          <p>{session.prompt}</p>
+          <p>Rank gorgias.com, kustomer.com and helpscout.com. Who first, why now, who to email? Price it first. No emails yet.</p>
         </div>
-        <div className="a-steps">
-          {steps.map((s, i) =>
-            'tool' in s ? (
-              <div className="a-step" key={i} style={nth(i)}>
-                <code className="a-tool">{s.tool}<span>({Object.entries(s.input).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(', ')})</span></code>
-                <span className="a-res">{s.summary}</span>
-              </div>
-            ) : (
-              <p className="a-say" key={i} style={nth(i)}>{s.say}</p>
-            ),
-          )}
+        <div className="a-calls" style={nth(1)}>
+          {CALLS.map((c, i) => <code key={c} style={nth(i)}>{c}</code>)}
+          <span>0 credits</span>
         </div>
-        <div className="a-msg agent" style={nth(steps.length + 1)}>
+        <div className="a-msg agent" style={nth(2)}>
           <span className="a-who">Agent</span>
-          <div className="a-answer"><Md text={session.answer} /></div>
+          <div>
+            <ol className="a-rank">
+              {RANKING.map(([name, fit, timing], i) => (
+                <li key={name} style={nth(i)}>
+                  <b>{name}</b><span>fit {fit}</span><span>timing {timing}</span>
+                </li>
+              ))}
+            </ol>
+            <p className="a-why"><b>Gorgias first:</b> 12 open roles, 8 posted in the last 30 days. Email Aleksandra P., Director of Support.</p>
+          </div>
         </div>
+        <details className="a-full">
+          <summary>Read the full transcript<span aria-hidden>+</span></summary>
+          <div className="a-msg user">
+            <span className="a-who">You</span>
+            <p>{session.prompt}</p>
+          </div>
+          <div className="a-steps">
+            {steps.map((s, i) =>
+              'tool' in s ? (
+                <div className="a-step" key={i} style={nth(i)}>
+                  <code className="a-tool">{s.tool}<span>({Object.entries(s.input).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(', ')})</span></code>
+                  <span className="a-res">{s.summary}</span>
+                </div>
+              ) : (
+                <p className="a-say" key={i} style={nth(i)}>{s.say}</p>
+              ),
+            )}
+          </div>
+          <div className="a-msg agent" style={nth(steps.length + 1)}>
+            <span className="a-who">Agent</span>
+            <div className="a-answer"><Md text={session.answer} /></div>
+          </div>
+        </details>
         <p className="a-meta">
           Recorded {session.recorded} · {session.client} · Sift spent {session.sift_spent_credits} credits
         </p>
