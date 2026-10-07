@@ -4,9 +4,9 @@
  *
  * Every function returns plain JSON that explains itself: scores carry their checks, signals their sources,
  * and every paid call reports what it cost. Money is counted the way Sift counts it: Apollo credits, which
- * through treg cost $0.026 each.
+ * through treg or Monid cost $0.026 each.
  */
-import { hasDataKey } from '../../src/lib/access';
+import { hasDataKey, isGateway, type Source } from '../../src/lib/access';
 import * as apollo from '../../src/lib/apollo';
 import { priority } from '../../src/lib/accounts';
 import { checkState } from '../../src/lib/mapping';
@@ -18,13 +18,13 @@ import * as store from '../../src/lib/storage';
 import type { Contact, Keys, LookupResult, ProfileAnswers, Rules } from '../../src/lib/types';
 import { readSiteNode } from './site-node';
 
-// ---------- setup: keys from the environment, budget, the treg cost ledger ----------
+// ---------- setup: keys from the environment, budget, the gateway cost ledger ----------
 
 export interface Env {
   [k: string]: string | undefined;
 }
 
-/** Monthly cap when the user sets none: 40 paid calls (40 Apollo credits, or $1.04 through treg). */
+/** Monthly cap when the user sets none: 40 paid calls (40 Apollo credits, or $1.04 through treg or Monid). */
 export const DEFAULT_BUDGET = 40;
 
 export class SiftError extends Error {
@@ -42,11 +42,15 @@ let ready: Promise<Keys | null> | null = null;
 /** Read keys and budget from the environment once per process. Keys stay in memory only. */
 export function init(env: Env = process.env): Promise<Keys | null> {
   ready ??= (async () => {
-    apollo.onTregCost((micro) => void store.recordUsd(micro));
+    apollo.onGatewayCost((micro) => void store.recordUsd(micro));
     const treg = env.TREG_KEY?.trim() ?? '';
+    const monid = env.MONID_KEY?.trim() ?? '';
     const apolloKey = env.APOLLO_KEY?.trim() ?? '';
-    const provider = env.SIFT_PROVIDER === 'treg' || env.SIFT_PROVIDER === 'apollo' ? env.SIFT_PROVIDER : treg && !apolloKey ? 'treg' : 'apollo';
-    const keys: Keys = { apollo: apolloKey, typesafe: env.TYPESAFE_KEY?.trim() ?? '', provider, treg };
+    // SIFT_PROVIDER picks when several keys are set; otherwise Apollo, then treg, then Monid, whichever is there.
+    const asked = env.SIFT_PROVIDER?.trim().toLowerCase();
+    const provider: Source = asked === 'apollo' || asked === 'treg' || asked === 'monid' ? asked
+      : apolloKey ? 'apollo' : treg ? 'treg' : monid ? 'monid' : 'apollo';
+    const keys: Keys = { apollo: apolloKey, typesafe: env.TYPESAFE_KEY?.trim() ?? '', provider, treg, monid };
     await store.setKeys(keys);
 
     const settings = await store.getSettings();
@@ -68,7 +72,7 @@ export function resetEngine() {
   ready = null;
 }
 
-/** SIFT_BUDGET (credits) or SIFT_BUDGET_USD (dollars through treg); "off" removes the cap. */
+/** SIFT_BUDGET (credits) or SIFT_BUDGET_USD (dollars through treg or Monid); "off" removes the cap. */
 function budgetFromEnv(env: Env): number | null | undefined {
   const usd = env.SIFT_BUDGET_USD?.trim();
   const credits = env.SIFT_BUDGET?.trim();
@@ -83,7 +87,7 @@ async function requireReady(): Promise<Keys> {
   if (!keys) {
     throw new SiftError(
       'missing_keys',
-      'Sift needs keys: set TYPESAFE_KEY (Jev, from typesafe.ai) and either APOLLO_KEY or TREG_KEY (from treg.to) in the environment.',
+      'Sift needs keys: set TYPESAFE_KEY (Jev, from typesafe.ai) and one of APOLLO_KEY, TREG_KEY (from treg.to) or MONID_KEY (from monid.ai) in the environment.',
     );
   }
   if (!(await store.getProfile())) {
@@ -92,7 +96,8 @@ async function requireReady(): Promise<Keys> {
   return keys;
 }
 
-const viaTreg = (keys: Keys | null | undefined) => keys?.provider === 'treg';
+/** Through a pay-per-call gateway (treg, Monid): money reads in dollars. */
+const viaTreg = (keys: Keys | null | undefined) => isGateway(keys?.provider);
 
 function cleanDomain(input: string): string {
   const d = normalizeDomainInput(input);
@@ -305,12 +310,13 @@ export async function budget() {
   const keys = await init();
   if (keys) await refreshBalance(true);
   const [settings, ledger, balance] = await Promise.all([store.getSettings(), store.getLedger(), store.getBalance()]);
-  const treg = viaTreg(keys ?? (await store.getKeys()));
+  const provider: Source = (keys ?? (await store.getKeys()))?.provider ?? 'apollo';
+  const treg = isGateway(provider);
   const bal = balance && balance.available
-    ? 'usd' in balance ? { treg_balance_usd: balance.usd } : { apollo_credits_left: balance.leftOver }
+    ? 'usd' in balance ? { [`${provider}_balance_usd`]: balance.usd } : { apollo_credits_left: balance.leftOver }
     : {};
   return {
-    provider: treg ? 'treg' : 'apollo',
+    provider,
     month: ledger.month,
     ...budgetJson(settings.monthlyBudget, totalSpent(ledger), treg),
     ...(treg ? { spent_usd_exact: Math.round((ledger.usdMicro ?? 0) / 1000) / 1000 } : {}),

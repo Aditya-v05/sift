@@ -31,12 +31,19 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
   - Discover shows a note through Monid instead of a failing search, and `searchOrganizations` refuses lookalikes before spending anything.
   - Host permission `https://api.monid.ai/*`. A 402 from Monid says the wallet is low.
 - **Verified:**
-  - `npm run compile`; 141 unit tests (10 new in `monid.test.ts`, with fetch mocked using the live response shapes);
+  - `npm run compile`; 143 unit tests (10 new in `monid.test.ts`, with fetch mocked using the live response shapes);
   - `monid.live.test.ts` passes against the real API (about $0.08; skipped without `MONID_KEY`);
   - `npm run build` (the manifest lists `api.monid.ai`) and `npm run site:build`;
   - `npm run smoke`, 40 checks: 3 new Monid checks for the key field, the wallet on the credit bar, and dollar prices.
   - Total Monid spend for testing: $0.234 of the $1 free credit.
-- **Not done:** the agent package (`sift-gtm`) lives in the public repo, not here, so `MONID_KEY` for agents comes when this merges. Monid's terms page is generic boilerplate; their integration docs describe bring-your-own-key use.
+- **Agents (`sift-gtm`):** `MONID_KEY` works like `TREG_KEY`.
+  - `SIFT_PROVIDER` accepts `monid`. Without it, Apollo is used first, then treg, then Monid.
+  - `budget` reports `monid_balance_usd`. Live: `sift-gtm budget` with only `MONID_KEY` read the real wallet ($0.766).
+  - 12 agent tests, one new for the provider choice.
+- **Note:** Monid's terms page is generic boilerplate; their integration docs describe bring-your-own-key use.
+
+---
+
 ## 2026-10-08 — Announcement bar: "Sift now runs on treg"
 
 - **What:** a mint bar over the nav on both pages ("New · No Apollo plan? Sift now runs on treg, at $0.026 a call. See costs →"). It folds away once the nav turns white on scroll, and closes with ×, remembered per message in localStorage (`ANNOUNCE.id`; a new id shows the new message to people who closed the old one). While it shows, the hero starts below it. The text, link and id live in one `ANNOUNCE` constant in `site/Landing.tsx`.

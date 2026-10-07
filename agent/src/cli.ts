@@ -25,11 +25,11 @@ Usage
 
 Keys (environment)
   TYPESAFE_KEY                    Jev, from typesafe.ai (judgments)
-  APOLLO_KEY  or  TREG_KEY        company and people data: your Apollo key, or treg.to (pay per call)
-  SIFT_PROVIDER=apollo|treg       which one, when both are set
+  APOLLO_KEY, TREG_KEY or MONID_KEY   company and people data: your Apollo key, or treg.to / monid.ai (pay per call)
+  SIFT_PROVIDER=apollo|treg|monid     which one, when several are set
   SIFT_BUDGET / SIFT_BUDGET_USD   monthly cap in credits / dollars (default 40 credits; "off" for none)
 
-Costs: a new company is 2 credits ($0.052 via treg), free for 7 days after; finding people is free;
+Costs: a new company is 2 credits ($0.052 via treg or Monid), free for 7 days after; finding people is free;
 an email is 1 credit ($0.026), only when found. Data lives in ~/.sift (SIFT_HOME); keys are never stored.
 `;
 

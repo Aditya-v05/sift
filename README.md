@@ -179,7 +179,7 @@ click icon → domain → Apollo company lookup
 
 Everything runs in the extension's background worker. See [`SPEC.md`](SPEC.md) for the full design and [`log.md`](log.md) for the change history.
 
-Tested with 141 Vitest unit tests and 40 Playwright browser checks, with [CI](https://github.com/Aditya-v05/sift/actions/workflows/ci.yml) on every push.
+Tested with 143 Vitest unit tests and 40 Playwright browser checks, with [CI](https://github.com/Aditya-v05/sift/actions/workflows/ci.yml) on every push.
 
 ## Develop
 
