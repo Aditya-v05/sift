@@ -6,5 +6,5 @@
     "noUncheckedIndexedAccess": true
   },
   // video/ is a separate Remotion project with its own tsconfig and dependencies (not installed in CI).
-  "exclude": ["node_modules", ".output", "video"]
+  "exclude": ["node_modules", ".output", "video", "agent"]
 }

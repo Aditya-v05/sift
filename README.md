@@ -46,6 +46,18 @@ Then open any company's website and click the Sift icon.
 
 > Updating: download the new release, replace the folder's contents, and press the reload icon on Sift's card in `chrome://extensions`. Your keys and saved accounts stay.
 
+## For AI agents and the terminal
+
+The same engine runs as an **MCP server** for agents and a **CLI** for people. It's the [`sift-gtm`](agent/) package:
+
+```sh
+npx sift-gtm mcp                                   # tools for Claude Desktop, Claude Code, Cursor…: sift_company, reveal_email, quote, budget…
+npx sift-gtm gorgias.com                           # one company in the terminal
+npx sift-gtm --from accounts.csv --out ranked.csv  # a whole list, ranked by priority
+```
+
+The monthly budget is enforced inside Sift (agents can't raise it), and looking a company up never reveals emails. See [agent/README.md](agent/README.md) and the agent playbook [agent/SKILL.md](agent/SKILL.md).
+
 ## What you need
 
 | | What it's for | Where to get it | Cost |

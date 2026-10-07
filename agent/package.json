@@ -1,0 +1,49 @@
+{
+  "name": "sift-gtm",
+  "version": "0.1.0",
+  "description": "Sift for AI agents and the terminal: ICP fit, why now and the right person to contact for any company domain. MCP server + CLI. Bring your own Apollo (or treg) and Jev keys.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "sift-gtm": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "SKILL.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Aditya-v05/sift.git",
+    "directory": "agent"
+  },
+  "homepage": "https://sift-through.vercel.app",
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "agent",
+    "sales",
+    "outbound",
+    "gtm",
+    "apollo",
+    "lead-qualification",
+    "cli"
+  ],
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "vitest run",
+    "compile": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "happy-dom": "^20.14.5",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}

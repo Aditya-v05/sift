@@ -4,6 +4,35 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-07 — sift-gtm: Sift for agents (MCP server + CLI), built
+
+> "lets start building this shall we"
+
+- **What:** a new package in `agent/` (npm name `sift-gtm`, not published yet), with:
+  - **MCP server** (`sift-gtm mcp`, stdio): tools `sift_company`, `list_contacts`, `reveal_email`, `quote`, `budget`, `get_icp` and `set_icp`, plus server instructions telling agents to work cheap-first.
+  - **CLI:** one company (pretty-printed, or `--json`); batch `--from list.csv --out ranked.csv`, ranked by priority, with `--dry-run`, a concurrency limit and `--reveal-top N --min-fit 70`; plus `reveal`, `icp` and `budget`.
+  - **`SKILL.md`:** the agent playbook (rules, three workflows, how to read results).
+- **How:**
+  - esbuild bundles the extension's `src/lib` unchanged, with `wxt/browser` aliased to a Node stand-in: `~/.sift/store.json` (atomic writes, owner-only permissions), keys in memory only.
+  - The website is read by running the same `scanSite` in a happy-dom page; sites that block plain fetches show as "website not read".
+  - The only change to shared code is an optional `site` hook on `runLookup`.
+- **Safety:**
+  - the monthly budget (default 40 credits; `SIFT_BUDGET` / `SIFT_BUDGET_USD` / `sift-gtm budget`) is enforced before any spend, and no MCP tool raises it;
+  - `max_credits` on paid tools;
+  - lookups never reveal emails;
+  - structured errors say what to do;
+  - keys come from the environment only.
+- **Verified:**
+  - 11 agent tests with Apollo and Jev faked: ICP and keys required, cache free, `max_credits` and budget refused before spending, quote, reveals charged once, treg dollar pricing, keys never on disk, and the full MCP flow through a real client;
+  - live with the real keys: gorgias.com 80% strong fit, timing 52, 30 contacts, 2 credits, the repeat free;
+  - the built binary over stdio from an MCP client;
+  - a batch of 3 companies (one cached, one duplicate) ranked into CSV for 4 credits;
+  - the packed tarball installed and run (4 files, 33 kB, no keys);
+  - extension unchanged: 133 tests, smoke 37, build and site build.
+- **CI:** now runs the agent tests and builds the CLI. Root `compile` type-checks `agent/` too.
+
+---
+
 ## 2026-10-07 — Plan: Sift for agents (AGENT_PLAN.md)
 
 > "agents and people both need to be satisfied but agents is the priority now"
