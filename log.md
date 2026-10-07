@@ -4,6 +4,12 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-08 — Monid live test, rerun three times
+
+- **What:** reran `src/lib/monid.live.test.ts` three times in a row (key check, wallet, enrich, people search, job postings, one people/match polled after a 202).
+- **Why:** the first live run earlier today failed once with no confirmed cause, before the fallback to the listed price for a run whose cost isn't filled in yet.
+- **Verified:** 3 of 3 runs passed (2 tests each). Each run recorded exactly three charges of $0.026 (enrich, jobs, match; people search free). The wallet went from $0.766 to $0.532, a drop of $0.234, which is 9 × $0.026: the ledger and the wallet agree to the cent.
+
 ## 2026-10-08 — Monid as a third data source (dev-sift)
 
 > "monid ... i think i have the ok since their integration docs allow it lets test - this is all in the dev-sift repo"
