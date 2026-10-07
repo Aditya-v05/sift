@@ -4,6 +4,21 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-07 — Plan: Sift for agents (AGENT_PLAN.md)
+
+> "agents and people both need to be satisfied but agents is the priority now"
+
+- **What:** a written plan for one package with two front doors: an MCP server for agents (the priority) and a CLI with batch CSV for people, plus a `SKILL.md` playbook. All three sit on a core extracted from `src/lib`, so the extension is unchanged.
+- **Contents:**
+  - the agent tools and their costs;
+  - design rules (budget enforced in the engine, reveals opt-in, `quote` before batches, outputs with their reasons);
+  - the build order and the four browser-dependent files to split;
+  - decisions and risks.
+- **Package name:** `sift` and `sift-mcp` are taken on npm; the plan proposes `sift-gtm` (free on 2026-10-07).
+- **Status:** nothing built yet.
+
+---
+
 ## 2026-10-07 — Fix: contact email on the website
 
 - **What:** the maker strip's email had a missing letter. It now reads `adityaspark05@gmail.com` (`EMAIL` in `site/Landing.tsx`, used for the address and the Email me button).
