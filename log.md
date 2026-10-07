@@ -4,6 +4,12 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-08 — Announcement bar: "Sift now runs on treg"
+
+- **What:** a mint bar over the nav on both pages ("New · No Apollo plan? Sift now runs on treg, at $0.026 a call. See costs →"). It folds away once the nav turns white on scroll, and closes with ×, remembered per message in localStorage (`ANNOUNCE.id`; a new id shows the new message to people who closed the old one). While it shows, the hero starts below it. The text, link and id live in one `ANNOUNCE` constant in `site/Landing.tsx`.
+- **Why:** treg support shipped in v0.3.x and the page only mentioned it in passing. Monid is not in the bar yet: it is only in dev-sift, so the bar would be false; add it to the text when Monid ships publicly.
+- **Verified:** typecheck, site build; Playwright at 1440 and 390 px on / and /agents: no horizontal overflow, no page errors, the bar is hidden after scrolling, and gone after closing and reloading. Screenshots checked at both widths.
+
 ## 2026-10-08 — Reels, last pass: a readable terminal, no loading frame
 
 - **What:**

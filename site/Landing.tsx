@@ -91,6 +91,45 @@ function spy(): string | null {
 }
 
 /** Shared with /agents: section links point at the home page (`/#…`), which scrolls in place when already there. */
+// The announcement over the nav. Change `id` with the message so a visitor who closed the old one sees the new one.
+const ANNOUNCE = {
+  id: 'treg-2026-10',
+  label: 'New',
+  text: 'No Apollo plan? Sift now runs on treg, at $0.026 a call.',
+  href: '/#costs',
+  cta: 'See costs',
+};
+const ANNOUNCE_KEY = 'sift-announce-closed';
+
+function Announce({ hidden }: { hidden: boolean }) {
+  const [closed, setClosed] = useState(() => {
+    try {
+      return localStorage.getItem(ANNOUNCE_KEY) === ANNOUNCE.id;
+    } catch {
+      return false;
+    }
+  });
+  if (closed) return null;
+  const close = () => {
+    setClosed(true);
+    try {
+      localStorage.setItem(ANNOUNCE_KEY, ANNOUNCE.id);
+    } catch {
+      /* private window: it just comes back next visit */
+    }
+  };
+  return (
+    <div className={`l-announce ${hidden ? 'away' : ''}`} role="region" aria-label="Announcement">
+      <a href={ANNOUNCE.href}>
+        <span className="l-announce-tag">{ANNOUNCE.label}</span>
+        <span className="l-announce-text">{ANNOUNCE.text}</span>
+        <span className="l-announce-cta">{ANNOUNCE.cta}<i aria-hidden>→</i></span>
+      </a>
+      <button type="button" aria-label="Close announcement" onClick={close}>×</button>
+    </div>
+  );
+}
+
 export function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState<string | null>(null);
@@ -122,6 +161,7 @@ export function Nav() {
   }, [active]);
   return (
     <header className={`l-nav ${scrolled ? 'scrolled' : ''}`}>
+      <Announce hidden={scrolled} />
       <div className="l-nav-in">
         <a className="l-brand" href="/#top">
           <img src={icon48} alt="" width="24" height="24" />
