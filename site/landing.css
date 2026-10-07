@@ -332,11 +332,79 @@ main p { line-height: 1.6; }
 }
 @media (max-width: 520px) { .a-cards { grid-template-columns: 1fr; } }
 
+/* ---------- micro-interactions (scroll and click only; all off under reduced motion) ---------- */
+.l-btn:active, .l-pill:active, .a-copy:active, .a-tabs button:active { transform: scale(0.97); }
+.l-btn, .l-pill { transition: transform 0.15s var(--ease-out), background 0.2s, box-shadow 0.2s; }
+
+/* Hero command: a blinking cursor and one soft glow on arrival. */
+.a-caret { display: inline-block; width: 0.55em; height: 1.05em; margin-left: 4px; vertical-align: -0.15em; background: var(--mint); animation: a-blink 1.05s steps(2, start) infinite; }
+@keyframes a-blink { to { visibility: hidden; } }
+.a-cmd { animation: l-rise 0.6s var(--ease-out) 0.35s both, a-glow 2.2s var(--ease-out) 1s 1; }
+@keyframes a-glow { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 35% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--mint) 14%, transparent), 0 0 40px -6px color-mix(in srgb, var(--mint) 45%, transparent); } }
+
+/* Copy: the label pops to "Copied ✓". */
+.a-copy { transition: transform 0.15s var(--ease-out), background 0.2s, color 0.2s; }
+.a-copy.done { background: var(--mint); color: #071d1a; animation: a-pop 0.35s var(--ease-out); }
+@keyframes a-pop { 40% { transform: scale(1.12); } }
+
+/* The session plays out when it scrolls in: each call lands, its dot pulses as if running, then its result draws in. */
+.a-chat.in .a-step, .a-chat.in .a-say, .a-chat.in .a-msg.agent { animation: l-rise 0.5s var(--ease-out) both; animation-delay: calc(0.25s + var(--i, 0) * 0.32s); }
+.a-chat:not(.in) .a-step, .a-chat:not(.in) .a-say, .a-chat:not(.in) .a-msg.agent { opacity: 0; }
+.a-tool { position: relative; padding-left: 16px; }
+.a-tool::before {
+  content: ''; position: absolute; left: 0; top: 0.45em; width: 7px; height: 7px; border-radius: 50%; background: var(--mint-deep);
+}
+.a-chat.in .a-tool::before { animation: a-run 0.5s var(--ease-move) 2 both; animation-delay: calc(0.25s + var(--i, 0) * 0.32s); }
+@keyframes a-run { 50% { transform: scale(0.55); opacity: 0.4; } }
+.a-res { margin-left: 16px; border-left: none; position: relative; }
+.a-res::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--mint-deep); transform-origin: top; }
+.a-chat.in .a-res::before { animation: a-draw 0.4s var(--ease-out) both; animation-delay: calc(0.55s + var(--i, 0) * 0.32s); }
+.a-chat.in .a-res { animation: l-fade 0.4s var(--ease-out) both; animation-delay: calc(0.6s + var(--i, 0) * 0.32s); }
+@keyframes a-draw { from { transform: scaleY(0); } }
+.a-step:hover .a-tool { color: var(--pine); }
+
+/* Tools: rows stagger in; hovering a row tints it and nudges the name. */
+.a-table.in .a-row { animation: l-rise 0.5s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 0.07s); }
+.a-row { transition: background 0.25s; border-radius: 6px; }
+.a-row code { display: inline-block; transition: transform 0.25s var(--ease-out); }
+.a-row:hover { background: color-mix(in srgb, var(--tint-mint) 60%, transparent); }
+.a-row:hover code { transform: translateX(4px); }
+
+/* Guardrails: each top rule sweeps in; cards lift a touch on hover. */
+.a-card { position: relative; border-top-color: var(--hair); transition: transform 0.3s var(--ease-out); }
+.a-card::before { content: ''; position: absolute; left: 0; right: 0; top: -2px; height: 2px; background: var(--pine); transform: scaleX(0); transform-origin: left; }
+.a-cards.in .a-card::before { animation: a-sweep 0.7s var(--ease-expo) both; animation-delay: calc(0.15s + var(--i, 0) * 0.12s); transform: scaleX(1); }
+.a-cards.in .a-card { animation: l-rise 0.5s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 0.12s); }
+@keyframes a-sweep { from { transform: scaleX(0); } }
+.a-card:hover { transform: translateY(-3px); }
+
+/* Setup tabs: one underline slides between tabs; the code crossfades. */
+.a-tabs { position: relative; }
+.a-tabs button { border-bottom: none; }
+.a-tabbar { position: absolute; left: 0; top: 0; height: 2px; background: var(--pine); transition: transform 0.35s var(--ease-expo), width 0.35s var(--ease-expo), opacity 0.2s; pointer-events: none; }
+.a-tabs button { transition: color 0.2s; }
+.a-tabs button:hover { color: var(--ink); }
+.a-swap { animation: a-swap 0.35s var(--ease-out); }
+@keyframes a-swap { from { opacity: 0; transform: translateY(6px); } }
+
+/* CSV rows land one by one. */
+.a-term.in .a-csv-row:not(.head) { animation: l-rise 0.45s var(--ease-out) both; animation-delay: calc(0.3s + var(--i, 0) * 0.12s); }
+.a-csv-row:not(.head) { transition: background 0.2s; }
+.a-csv-row:not(.head):hover { background: color-mix(in srgb, var(--tint-mint) 55%, transparent); }
+
+/* Home: the receipt prints line by line; FAQ answers ease open. */
+.l-receipt.in .l-receipt-line { animation: l-rise 0.5s var(--ease-out) both; animation-delay: calc(0.15s + var(--i, 0) * 0.12s); }
+.l-faq details[open] p { animation: l-rise 0.35s var(--ease-out); }
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   [data-reveal] { opacity: 1; transform: none; transition: none; }
   .l-btn, .l-ui, .l-tile, .l-cost { transition: none; }
   .l-hero *, .l-nav, .l-diagram *, .l-fx { animation: none !important; }
+  .a-chat *, .a-table *, .a-cards *, .a-term *, .a-swap, .a-copy, .l-receipt *, .l-faq *, .a-cmd { animation: none !important; transition: none !important; }
+  .a-chat:not(.in) .a-step, .a-chat:not(.in) .a-say, .a-chat:not(.in) .a-msg.agent { opacity: 1; }
+  .a-card::before { transform: scaleX(1); }
+  .a-caret { visibility: visible; }
 }
 
 /* ---------- narrow screens ---------- */

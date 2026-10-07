@@ -1,4 +1,7 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+
+/** Stagger order for a child of a revealed block (CSS reads --i). */
+const nth = (i: number) => ({ '--i': i }) as CSSProperties;
 import session from './agent-session.json';
 import { End, Eyebrow, Nav, useReveal } from './Landing';
 import { SlatWord } from './SlatWord';
@@ -31,10 +34,10 @@ function Copy({ text, label = 'Copy' }: { text: string; label?: string }) {
   const [done, setDone] = useState(false);
   return (
     <button
-      className="a-copy"
+      className={`a-copy ${done ? 'done' : ''}`}
       onClick={() => navigator.clipboard?.writeText(text).then(() => (setDone(true), setTimeout(() => setDone(false), 1400)))}
     >
-      {done ? 'Copied' : label}
+      {done ? 'Copied ✓' : label}
     </button>
   );
 }
@@ -54,7 +57,7 @@ function Hero() {
           engine, your own keys, and a budget the agent can't raise.
         </p>
         <div className="a-cmd">
-          <code>npx sift-gtm mcp</code>
+          <code>npx sift-gtm mcp<i className="a-caret" aria-hidden /></code>
           <Copy text="npx sift-gtm mcp" />
         </div>
         <div className="l-ctas">
@@ -113,16 +116,16 @@ function Session() {
         <div className="a-steps">
           {steps.map((s, i) =>
             'tool' in s ? (
-              <div className="a-step" key={i}>
+              <div className="a-step" key={i} style={nth(i)}>
                 <code className="a-tool">{s.tool}<span>({Object.entries(s.input).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(', ')})</span></code>
                 <span className="a-res">{s.summary}</span>
               </div>
             ) : (
-              <p className="a-say" key={i}>{s.say}</p>
+              <p className="a-say" key={i} style={nth(i)}>{s.say}</p>
             ),
           )}
         </div>
-        <div className="a-msg agent">
+        <div className="a-msg agent" style={nth(steps.length + 1)}>
           <span className="a-who">Agent</span>
           <div className="a-answer"><Md text={session.answer} /></div>
         </div>
@@ -155,7 +158,7 @@ function Tools() {
       </div>
       <div className="a-table" data-reveal>
         {TOOLS.map(([name, what, cost]) => (
-          <div className="a-row" key={name}>
+          <div className="a-row" key={name} style={nth(TOOLS.findIndex((t) => t[0] === name))}>
             <code>{name}</code>
             <p>{what}</p>
             <span>{cost}</span>
@@ -182,8 +185,8 @@ function Guardrails() {
         <h2>Built to be <em>left alone with.</em></h2>
       </div>
       <div className="a-cards" data-reveal>
-        {items.map(([t, d]) => (
-          <div className="a-card" key={t}>
+        {items.map(([t, d], i) => (
+          <div className="a-card" key={t} style={nth(i)}>
             <h3>{t}</h3>
             <p>{d}</p>
           </div>
@@ -286,6 +289,18 @@ env:      TYPESAFE_KEY   Jev, from typesafe.ai
 function Setup() {
   const [tab, setTab] = useState(SETUPS[0]!.id);
   const s = SETUPS.find((x) => x.id === tab)!;
+  // A single underline slides to the active tab (and to its row when the tabs wrap).
+  const tabs = useRef<HTMLDivElement>(null);
+  const [bar, setBar] = useState<CSSProperties>({ opacity: 0 });
+  useLayoutEffect(() => {
+    const place = () => {
+      const el = tabs.current?.querySelector<HTMLElement>('button.on');
+      if (el) setBar({ width: el.offsetWidth, transform: `translate(${el.offsetLeft}px, ${el.offsetTop + el.offsetHeight - 2}px)`, opacity: 1 });
+    };
+    place();
+    window.addEventListener('resize', place);
+    return () => window.removeEventListener('resize', place);
+  }, [tab]);
   return (
     <section id="setup" className="l-wrap a-setup">
       <div className="l-section-head" data-reveal>
@@ -297,13 +312,16 @@ function Setup() {
         </p>
       </div>
       <div className="a-code-wrap" data-reveal>
-        <div className="a-tabs" role="tablist">
+        <div className="a-tabs" role="tablist" ref={tabs}>
+          <span className="a-tabbar" style={bar} aria-hidden />
           {SETUPS.map((x) => (
             <button key={x.id} role="tab" aria-selected={tab === x.id} className={tab === x.id ? 'on' : ''} onClick={() => setTab(x.id)}>{x.label}</button>
           ))}
         </div>
-        <p className="a-where">{s.where}</p>
-        <pre className="a-code"><code>{s.code}</code><Copy text={s.code} /></pre>
+        <div className="a-swap" key={tab}>
+          <p className="a-where">{s.where}</p>
+          <pre className="a-code"><code>{s.code}</code><Copy text={s.code} /></pre>
+        </div>
         <p className="a-where">
           Agents that load skills can also use the playbook, <a href={SKILL}>SKILL.md</a>: when to price, when to reveal, and
           how to explain results. Package: <a href={NPM}>npm</a> · <a href={AGENT_DIR}>source</a>.
@@ -341,7 +359,7 @@ function People() {
         <div className="a-csv">
           <div className="a-csv-row head"><span>Company</span><span>Priority</span><span>Fit</span><span>Timing</span><span>Top signal</span><span>Best contact</span></div>
           {CSV.map((r) => (
-            <div className="a-csv-row" key={r[0]}>{r.map((c, i) => <span key={i}>{c}</span>)}</div>
+            <div className="a-csv-row" key={r[0]} style={nth(CSV.indexOf(r))}>{r.map((c, i) => <span key={i}>{c}</span>)}</div>
           ))}
         </div>
         <p className="a-where">A real run, 3 accounts for 4 Apollo credits. Add <code>--reveal-top 1 --min-fit 70</code> for emails at strong fits.</p>

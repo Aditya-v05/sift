@@ -4,6 +4,32 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-08 — Micro-interactions on both pages, and a full check
+
+> "can u verify and add micro reactions and animations wherever u can"
+
+- **Motion,** driven by scrolling and clicks only (no cursor-following), with all of it off under reduced motion:
+  - **/agents session:** plays out when it scrolls in. Each tool call lands in order, its mint dot pulses as if running, then its result line draws in and fades up; the agent's answer comes last.
+  - **Hero command:** a blinking cursor, and one soft mint glow on arrival.
+  - **Copy buttons:** pop to "Copied ✓".
+  - **Setup:** one underline slides between the tabs (it follows wrapped rows on phones), and the code crossfades.
+  - **Tools:** rows stagger in; a hovered row tints and its name nudges.
+  - **Guardrails:** each card's top rule sweeps in, and cards lift on hover.
+  - **CSV:** rows land one by one.
+  - **Home page:** the receipt prints line by line, and FAQ answers ease open.
+  - **Buttons:** press slightly on click.
+- **Verified** (Playwright at 1440 and 390 px, both pages, after scrolling through):
+  - every section revealed, every animated item fully visible at the end, no sideways scroll;
+  - the tab underline within 0.5 px of the active tab for Codex, VS Code and opencode;
+  - copy puts the exact config on the clipboard and shows "Copied ✓";
+  - the session video plays;
+  - reduced motion shows everything at once;
+  - every anchor exists and every link answers (GitHub 200; npm 403 to robots; `log.md` and LICENSE rechecked to 200 after a 429).
+  - The only console error is `/_vercel/insights/script.js` 404 locally, which exists on Vercel.
+  - Extension unchanged: 133 tests, 11 agent tests, build and smoke pass.
+
+---
+
 ## 2026-10-08 — /agents: setup for every common agent, not just Claude
 
 > "can we do this for multiple ai agents not just this?"

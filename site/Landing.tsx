@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useRef, useState, type ReactNode } from 'react';
+import React, { Suspense, lazy, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ContactPicker } from '@/components/ContactPicker';
 import { FitCard, ProfileCard, WhyNowCard } from '@/entrypoints/sidepanel/App';
 import type { LookupResult } from '@/lib/types';
@@ -315,7 +315,7 @@ function Costs() {
       <div className="l-receipt" data-reveal>
         <div className="l-receipt-top"><span>Apollo credits</span><span>per action</span></div>
         {lines.map((l) => (
-          <div key={l.what} className="l-receipt-line">
+          <div key={l.what} className="l-receipt-line" style={{ '--i': lines.indexOf(l) } as React.CSSProperties}>
             <div>
               <div className="l-receipt-what">{l.what}<i aria-hidden /></div>
               <p>{l.note}</p>
