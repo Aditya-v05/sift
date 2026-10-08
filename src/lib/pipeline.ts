@@ -363,7 +363,7 @@ export interface RevealOutcome {
  */
 export async function revealContacts(windowId: number | null, domain: string, personIds: string[]): Promise<RevealOutcome> {
   const keys = await store.getKeys();
-  if (!hasDataKey(keys)) throw new Error('Missing Apollo or treg key');
+  if (!hasDataKey(keys)) throw new Error('Missing Apollo, treg or Monid key');
   const reveals: Record<string, RevealPatch> = {};
   let found = 0;
   let failed = 0;

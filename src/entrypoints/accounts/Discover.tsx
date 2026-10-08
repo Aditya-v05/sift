@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { isGateway } from '@/lib/access';
 import { ago } from '@/components/format';
 import { priority } from '@/lib/accounts';
 import { DISCOVER_PAGE_SIZE, pickSeeds, searchKey, type Candidate, type DiscoverResult } from '@/lib/discover';
@@ -41,8 +42,8 @@ async function withBudget(run: (allow: boolean) => Promise<DiscoverOutcome | { s
   let res = await run(false);
   if (res.status === 'over_budget' && 'spent' in res) {
     const [keys, settingsRef] = await Promise.all([store.getKeys(), store.getSettings()]);
-    const viaTreg = keys?.provider === 'treg';
-    if (!confirm(viaTreg
+    const viaGateway = isGateway(keys?.provider);
+    if (!confirm(viaGateway
       ? `Monthly budget reached (${spentLabel(res.spent ?? 0, true)} of ${budgetLabel(settingsRef, true)}). This costs ${priceLabel(res.cost ?? 1, true)} more. Continue?`
       : `Monthly credit budget reached (${res.spent} of ${res.budget}). This costs ${res.cost} more. Continue?`)) return null;
     res = await run(true);
@@ -51,14 +52,18 @@ async function withBudget(run: (allow: boolean) => Promise<DiscoverOutcome | { s
 }
 
 export function DiscoverTab({ lookupCost }: { lookupCost: number }) {
-  const { viaTreg } = useCredits();
-  const one = priceLabel(1, viaTreg, true);
+  const { viaGateway, gateway } = useCredits();
+  const one = priceLabel(1, viaGateway, true);
   const state = useDiscoverState();
   const [busy, setBusy] = useState<'search' | 'more' | null>(null);
   const [error, setError] = useState<string | null>(null);
   if (!state) return null;
 
   const { profile, saved, meta, cache, discover } = state;
+  // Monid's Apollo search has no lookalike filter, so Discover needs another source.
+  if (gateway === 'monid') {
+    return <Note title="Discover isn't available through Monid" body="Finding similar companies uses Apollo's lookalike search, which Monid doesn't offer yet. Switch to treg or your Apollo key in Settings to use Discover; lookups and reveals work through Monid." />;
+  }
   if (!profile) return <Note title="Finish setup first" body="Describe what you sell in Settings. Discover uses your ICP rules as filters." />;
   const seeds = pickSeeds(saved, meta);
   if (!seeds.length) {
@@ -133,7 +138,7 @@ function Note({ title, body }: { title: string; body: string }) {
 }
 
 function CandidateRow({ candidate: c, result, saved, lookupCost }: { candidate: Candidate; result?: LookupResult; saved: boolean; lookupCost: number }) {
-  const { viaTreg } = useCredits();
+  const { viaGateway } = useCredits();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const facts = [
@@ -174,7 +179,7 @@ function CandidateRow({ candidate: c, result, saved, lookupCost }: { candidate: 
         {r ? (
           saved ? <span className="small muted">Saved</span> : <button className="small" onClick={() => store.saveAccount(result!)}>Save</button>
         ) : (
-          <button className="small" disabled={busy} onClick={lookUp}>{busy ? 'Looking up…' : `Look up (${priceLabel(lookupCost, viaTreg)})`}</button>
+          <button className="small" disabled={busy} onClick={lookUp}>{busy ? 'Looking up…' : `Look up (${priceLabel(lookupCost, viaGateway)})`}</button>
         )}
         <button className="ghost small" onClick={() => store.dismissCandidate(c.domain)}>Dismiss</button>
       </div>

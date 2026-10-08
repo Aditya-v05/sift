@@ -223,6 +223,24 @@ await opts.waitForTimeout(900);
 const refresh = await panel.locator('button', { hasText: 'Refresh (' }).innerText();
 check(refresh === 'Refresh ($0.052)', `buttons price in dollars through treg (${refresh})`);
 await panel.screenshot({ path: `${OUT}/panel-treg.png`, fullPage: true });
+
+// Monid as the data source: its own key field, its wallet on the credit bar, the same dollar prices.
+await opts.selectOption('#source', 'monid');
+await opts.waitForSelector('text=Monid API key', { timeout: 5000 }).catch(() => {});
+check(await opts.locator('text=Monid API key').count() === 1 && await opts.locator('text=treg API key').count() === 0, 'choosing Monid swaps in a Monid key field');
+await panel.evaluate(async () => {
+  const { keys } = await chrome.storage.local.get('keys');
+  await chrome.storage.local.set({
+    keys: { ...keys, provider: 'monid', monid: 'monid_live_x' },
+    balance: { available: true, usd: 0.92, checkedAt: Date.now(), gateway: 'monid' },
+  });
+});
+await panel.reload();
+await panel.waitForSelector('.credits');
+const monidBar = await panel.locator('.credits').innerText();
+check(monidBar.includes('$0.92') && monidBar.includes('left on Monid'), `credit bar shows the Monid wallet (${monidBar.replace(/\s+/g, ' ')})`);
+check(await panel.locator('button', { hasText: 'Refresh ($0.052)' }).count() === 1, 'buttons price in dollars through Monid');
+await panel.screenshot({ path: `${OUT}/panel-monid.png`, fullPage: true });
 await panel.evaluate(async () => {
   const { keys } = await chrome.storage.local.get('keys');
   await chrome.storage.local.set({ keys: { ...keys, provider: 'apollo' } });

@@ -63,7 +63,7 @@ async function fresh(env: Record<string, string> = {}) {
   const engine = await import('../src/engine');
   engine.resetEngine();
   await engine.init({ APOLLO_KEY: 'ak', TYPESAFE_KEY: 'tk', ...env });
-  return { engine, home };
+  return { engine, home, nb };
 }
 
 beforeEach(() => Object.assign(calls, { enrich: 0, jobs: 0, search: 0, reveal: 0 }));
@@ -78,7 +78,20 @@ describe('engine', () => {
     const { engine } = await fresh();
     engine.resetEngine();
     await engine.init({});
-    await expect(engine.siftCompany('acme.example')).rejects.toThrow(/TYPESAFE_KEY.*APOLLO_KEY or TREG_KEY/);
+    await expect(engine.siftCompany('acme.example')).rejects.toThrow(/TYPESAFE_KEY.*APOLLO_KEY, TREG_KEY .*or MONID_KEY/);
+  });
+
+  it('picks the data source from the keys it is given, or from SIFT_PROVIDER', async () => {
+    const { engine, nb } = await fresh();
+    const provider = async (env: Record<string, string>) => {
+      engine.resetEngine();
+      await engine.init({ TYPESAFE_KEY: 't', ...env });
+      return (await nb.browser.storage.local.get('keys')).keys;
+    };
+    expect(await provider({ MONID_KEY: 'monid_live_x' })).toMatchObject({ provider: 'monid', monid: 'monid_live_x' });
+    expect((await provider({ APOLLO_KEY: 'ak', MONID_KEY: 'monid_live_x' })).provider).toBe('apollo');
+    expect((await provider({ APOLLO_KEY: 'ak', MONID_KEY: 'monid_live_x', SIFT_PROVIDER: 'monid' })).provider).toBe('monid');
+    expect((await provider({ TREG_KEY: 'trg', MONID_KEY: 'monid_live_x' })).provider).toBe('treg');
   });
 
   it('qualifies a company, explains itself, and serves repeats from the cache for free', async () => {

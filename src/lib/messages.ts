@@ -1,12 +1,13 @@
 import { browser } from 'wxt/browser';
 import type { DiscoverOutcome, RevealOutcome } from './pipeline';
+import type { Source } from './access';
 import type { Keys, ViewState } from './types';
 
 export type Message =
   | { type: 'lookup'; windowId: number; domain: string; force?: boolean; allowOverBudget?: boolean; profileUrl?: string }
   | { type: 'siftTab'; windowId: number }
   | { type: 'refreshBalance' }
-  | { type: 'useSource'; provider: 'apollo' | 'treg' }
+  | { type: 'useSource'; provider: Source }
   | { type: 'discover'; more?: boolean; fresh?: boolean; allowOverBudget?: boolean }
   | { type: 'reveal'; windowId: number | null; domain: string; personIds: string[] }
   | { type: 'refreshAccount'; domain: string; allowOverBudget?: boolean }

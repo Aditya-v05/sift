@@ -4,16 +4,23 @@ import type { Company, Contact } from './types';
 const BASE = 'https://api.apollo.io/api/v1';
 
 /*
- * Sift reaches Apollo one of two ways: directly with the user's Apollo key, or through treg (treg.to) with
- * the user's treg key. treg's apollo.* endpoints pass Apollo's method, query and body through unchanged and
- * return Apollo's response verbatim, so everything after the request (mapping, ranking, caching) is shared.
- * Verified live on 2026-10-06: search (free), enrich, job postings, lookalike search and people/match.
+ * Sift reaches Apollo one of three ways: directly with the user's Apollo key, or through a pay-per-call
+ * gateway with that gateway's key.
+ * - treg (treg.to): its apollo.* endpoints pass Apollo's method, query and body through unchanged and return
+ *   Apollo's response verbatim. Verified live on 2026-10-06: search (free), enrich, job postings, lookalike
+ *   search and people/match.
+ * - Monid (monid.ai): one POST /v1/run per call, naming Apollo's path; Apollo's parameters go in
+ *   input.queryParams (arrays as `key[]`) and path parameters in input.pathParams. Apollo's response comes
+ *   back unchanged in `output`, with the charge in `billing`. Verified live on 2026-10-08: enrich, job
+ *   postings, search (free) and people/match (answers 202 and is polled). Lookalike search isn't offered.
+ * Either way everything after the request (mapping, ranking, caching) is shared.
  */
 import type { Access } from './access';
 export type { Access } from './access';
 
 const TREG = 'https://treg.to';
-/** treg's price for one Apollo credit (catalog, Oct 2026): every paid Apollo call costs $0.026. */
+const MONID = 'https://api.monid.ai';
+/** Price of one Apollo credit through a gateway (treg and Monid both, Oct 2026): every paid call costs $0.026. */
 export const TREG_USD_PER_CREDIT = 0.026;
 /** Per-call cap sent to treg: room for its $0.05 overflow relay on job postings, never more. */
 const TREG_MAX_COST = '0.06';
@@ -26,12 +33,21 @@ const TREG_ENDPOINT: Record<Op, string> = {
   match: 'apollo.people.enrich',
   people: 'apollo.people.search',
 };
+const MONID_ENDPOINT: Record<Op, string> = {
+  enrich: '/organizations/enrich',
+  jobs: '/organizations/{organization_id}/job_postings',
+  companies: '/mixed_companies/search',
+  match: '/people/match',
+  people: '/mixed_people/api_search',
+};
 
-/** Exact dollars treg charged (micro-USD, from X-Treg-Cost-Micro). The background records it in the ledger. */
+/** Exact dollars a gateway charged (micro-USD: treg's X-Treg-Cost-Micro, Monid's billing). The background records it in the ledger. */
 let costListener: (usdMicro: number) => void = () => {};
-export function onTregCost(fn: (usdMicro: number) => void): void {
+export function onGatewayCost(fn: (usdMicro: number) => void): void {
   costListener = fn;
 }
+/** The older name, from when treg was the only gateway. */
+export const onTregCost = onGatewayCost;
 
 function apolloHeaders(key: string): HeadersInit {
   return { 'X-Api-Key': key, 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' };
@@ -41,16 +57,68 @@ function tregHeaders(key: string): HeadersInit {
   return { 'X-Treg-Token': key, 'Content-Type': 'application/json', 'Cache-Control': 'no-cache', 'X-Treg-Route-Max-Cost': TREG_MAX_COST };
 }
 
-/** The same Apollo request, sent directly or through treg. `query` starts with '?' or is empty. */
+const monidHeaders = (key: string): HeadersInit => ({ Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' });
+
+/** The same Apollo request, sent directly, through treg, or as a Monid run. `query` starts with '?' or is empty. */
 export function route(access: Access, op: Op, apolloPath: string, query = ''): { url: string; headers: HeadersInit } {
+  if (access.via === 'monid') return { url: `${MONID}/v1/run`, headers: monidHeaders(access.key) };
   return access.via === 'treg'
     ? { url: `${TREG}/call/${TREG_ENDPOINT[op]}${query}`, headers: tregHeaders(access.key) }
     : { url: `${BASE}${apolloPath}${query}`, headers: apolloHeaders(access.key) };
 }
 
+/** A query-string value as Monid's schema wants it: numbers and booleans typed, everything else text. */
+const typed = (v: string): unknown => (/^\d+$/.test(v) ? Number(v) : v === 'true' ? true : v === 'false' ? false : v);
+
+/** The body of a Monid run for one Apollo request: query and JSON body merged into queryParams (arrays as `key[]`). */
+export function monidRun(op: Op, apolloPath: string, query = '', body?: string): { provider: 'apollo'; endpoint: string; input: Record<string, unknown> } {
+  const queryParams: Record<string, unknown> = {};
+  for (const [k, v] of new URLSearchParams(query)) queryParams[k] = typed(v);
+  for (const [k, v] of Object.entries(body ? (JSON.parse(body) as Record<string, unknown>) : {})) {
+    if (op === 'companies' && k === 'lookalike_organization_ids') {
+      throw new ApiError('monid', 400, 'Finding lookalikes isn\'t available through Monid yet. Switch to treg or your Apollo key in Settings to use Discover.');
+    }
+    queryParams[Array.isArray(v) ? `${k}[]` : k] = v;
+  }
+  const input: Record<string, unknown> = { queryParams };
+  if (op === 'jobs') {
+    input.pathParams = { organization_id: decodeURIComponent(apolloPath.split('/')[2] ?? '') };
+  }
+  return { provider: 'apollo', endpoint: MONID_ENDPOINT[op], input };
+}
+
+/** How long to wait for a Monid run that answered 202 (people/match does, even without phone numbers). */
+const MONID_POLL_MS = 1000;
+const MONID_POLL_TRIES = 30;
+
+/** Apollo's response out of a finished Monid run, recording the charge; errors as ApiError like any other call. */
+async function monidResult(key: string, first: any): Promise<unknown> {
+  let run = first;
+  for (let i = 0; (run?.status === 'RUNNING' || run?.status === 'PENDING') && i < MONID_POLL_TRIES; i++) {
+    await new Promise((r) => setTimeout(r, MONID_POLL_MS));
+    run = await request('monid', `${MONID}/v1/runs/${encodeURIComponent(run.runId)}`, { headers: monidHeaders(key) });
+  }
+  // A finished run reports its charge as billing.reportedCost (micro-USD); a polled one as cost (dollars). A run
+  // polled the moment it finishes can come back before its cost is filled in: then it's the listed price per billed call.
+  const micro = typeof run?.billing?.reportedCost?.value === 'number' ? run.billing.reportedCost.value
+    : typeof run?.cost?.value === 'number' ? Math.round(run.cost.value * 1e6)
+      : run?.status === 'COMPLETED' && run?.billedUnits > 0 && typeof run?.price?.amount?.value === 'number' ? Math.round(run.price.amount.value * 1e6) : 0;
+  if (micro > 0) costListener(micro);
+  const status = run?.status;
+  const providerStatus: number | undefined = run?.providerResponse?.httpStatus;
+  if (status === 'COMPLETED' && (!providerStatus || providerStatus < 400)) return run.output ?? {};
+  if (status === 'RUNNING' || status === 'PENDING') throw new ApiError('monid', null, 'Monid is still working on this call. Retry in a minute.');
+  throw new ApiError('monid', providerStatus ?? null, run?.providerResponse?.error ?? run?.reason ?? `Monid run ${String(status ?? 'failed').toLowerCase()}`);
+}
+
 async function send(access: Access, op: Op, apolloPath: string, query = '', init: RequestInit = {}): Promise<unknown> {
   const { url, headers } = route(access, op, apolloPath, query);
   if (access.via === 'apollo') return request('apollo', url, { ...init, headers });
+  if (access.via === 'monid') {
+    const run = monidRun(op, apolloPath, query, typeof init.body === 'string' ? init.body : undefined);
+    const first = await request('monid', url, { method: 'POST', headers, body: JSON.stringify(run) }, 30000);
+    return monidResult(access.key, first);
+  }
   return request('treg', url, { ...init, headers }, undefined, (h) => {
     const micro = Number(h.get('x-treg-cost-micro'));
     if (micro > 0) costListener(micro);
@@ -62,6 +130,7 @@ export type ApolloOrg = Record<string, any>;
 
 export async function checkKey(access: Access): Promise<boolean> {
   if (access.via === 'treg') return (await tregAccount(access.key)) !== null;
+  if (access.via === 'monid') return monidWhoami(access.key);
   // auth/health answers 200 either way; is_logged_in tells us if the key is valid.
   const body = (await request('apollo', 'https://api.apollo.io/v1/auth/health', { headers: apolloHeaders(access.key) })) as any;
   return body?.is_logged_in === true;
@@ -78,13 +147,29 @@ async function tregAccount(key: string): Promise<{ orgId: number } | null> {
   }
 }
 
+/** True when Monid knows the key (auth/whoami). Free. */
+async function monidWhoami(key: string): Promise<boolean> {
+  try {
+    const me = (await request('monid', `${MONID}/v1/auth/whoami`, { headers: monidHeaders(key) })) as any;
+    return !!me?.workspace;
+  } catch (err) {
+    if (err instanceof ApiError && err.invalidKey) return false;
+    throw err;
+  }
+}
+
 /**
  * Balance. Apollo: the team's credit usage (needs a master key; other keys get 403).
- * treg: the prepaid dollar balance, as { treg: { balance_usd } }. Both are read by parseBalance.
+ * treg: the prepaid dollar balance, as { treg: { balance_usd } }. Monid: the wallet, as { monid: { balance: { value } } }.
+ * All are read by parseBalance.
  */
 export async function getCreditUsage(access: Access): Promise<unknown> {
   if (access.via === 'apollo') {
     return request('apollo', `${BASE}/usage_stats/credit_usage_stats`, { method: 'POST', headers: apolloHeaders(access.key) });
+  }
+  if (access.via === 'monid') {
+    if (!(await monidWhoami(access.key))) return null;
+    return { monid: await request('monid', `${MONID}/v1/wallet/balance`, { headers: monidHeaders(access.key) }) };
   }
   const account = await tregAccount(access.key);
   if (!account) return null;
@@ -128,7 +213,7 @@ export interface JobPosting {
 
 export async function getJobPostings(access: Access, organizationId: string): Promise<JobPosting[]> {
   const id = encodeURIComponent(organizationId);
-  // treg takes Apollo's path parameter as organization_id in the query.
+  // treg takes Apollo's path parameter as organization_id in the query (Monid as a path parameter, see monidRun).
   const body = (await send(access, 'jobs', `/organizations/${id}/job_postings`,
     access.via === 'treg' ? `?organization_id=${id}&per_page=100` : '?per_page=100')) as any;
   const jobs: any[] = Array.isArray(body?.organization_job_postings) ? body.organization_job_postings : [];

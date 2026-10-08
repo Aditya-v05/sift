@@ -60,11 +60,11 @@ Run `sift_company(domain)`. Answer with the top two or three contacts (name, tit
 - `fit.verdict` is strong (≥ 70), partial (≥ 40) or weak. `fit.requirements` is the share of the user's requirements met; `fit.overall_judgment` is the model's holistic view.
 - `why_now.verdict` is hot (≥ 67), warm (≥ 34) or quiet. Each signal has a `relevance` (0–100) to what the user sells.
 - `contacts[].rank` is how likely the person owns the problem. `has_email: false` means Apollo has no email for them.
-- `cost` reports what each call actually spent: `credits`, `usd` (through treg), and whether it was `cached`.
+- `cost` reports what each call actually spent: `credits`, `usd` (through treg or Monid), and whether it was `cached`.
 
 ## Setup (for the user)
 
-Keys come from the environment and are never stored: `TYPESAFE_KEY` (Jev, from typesafe.ai) and `APOLLO_KEY` or `TREG_KEY` (treg.to, pay per call, no Apollo plan needed). Add the MCP server to a client:
+Keys come from the environment and are never stored: `TYPESAFE_KEY` (Jev, from typesafe.ai) and `APOLLO_KEY`, `TREG_KEY` (treg.to) or `MONID_KEY` (monid.ai); treg and Monid are pay per call, no Apollo plan needed. Add the MCP server to a client:
 
 ```json
 { "mcpServers": { "sift": { "command": "npx", "args": ["-y", "sift-gtm", "mcp"], "env": { "TYPESAFE_KEY": "…", "TREG_KEY": "…", "SIFT_BUDGET_USD": "5" } } } }

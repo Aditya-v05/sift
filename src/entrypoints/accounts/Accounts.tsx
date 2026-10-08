@@ -148,7 +148,7 @@ function tone(n: number | null | undefined, hot = 67, warm = 34) {
 }
 
 function AccountRowView({ row, cost }: { row: AccountRow; cost: number }) {
-  const { viaTreg } = useCredits();
+  const { viaGateway } = useCredits();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -238,7 +238,7 @@ function AccountRowView({ row, cost }: { row: AccountRow; cost: number }) {
 
         <span className="actions row">
           <button className="small" disabled={busy} onClick={() => refresh()} title={`Refresh costs ${cost} Apollo credits`}>
-            {busy ? 'Refreshing…' : `Refresh (${priceLabel(cost, viaTreg)})`}
+            {busy ? 'Refreshing…' : `Refresh (${priceLabel(cost, viaGateway)})`}
           </button>
           <button className="ghost small" onClick={toggleSaved}>{row.saved ? 'Remove' : 'Save'}</button>
         </span>

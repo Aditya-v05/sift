@@ -49,7 +49,7 @@ export function recordSpend(kind: SpendKind, n = 1): Promise<void> {
   return next;
 }
 
-/** treg's exact charge for a call, queued with the credit spends so none are lost. */
+/** A gateway's exact charge for a call (treg, Monid), queued with the credit spends so none are lost. */
 export function recordUsd(micro: number): Promise<void> {
   const next = spendQueue.then(async () => setLocal('credits', addUsd(await getLocal('credits'), micro)));
   spendQueue = next.catch(() => {});

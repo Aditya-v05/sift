@@ -68,7 +68,7 @@ export function createServer() {
     {
       title: 'Reveal emails',
       description:
-        'Reveal verified emails for people at a company looked up with sift_company. 1 credit per person Apollo finds ($0.026 through treg); people already revealed are free. Only reveal people you will contact.',
+        'Reveal verified emails for people at a company looked up with sift_company. 1 credit per person Apollo finds ($0.026 through treg or Monid); people already revealed are free. Only reveal people you will contact.',
       inputSchema: {
         domain: z.string(),
         person_ids: z.array(z.string()).min(1).max(10).describe('person_id values from sift_company or list_contacts'),
@@ -97,7 +97,7 @@ export function createServer() {
     'budget',
     {
       title: 'Budget and balance',
-      description: "This month's spend, the monthly limit, what's left, and the Apollo or treg balance where readable. Free. The limit is set by the user, not by agents.",
+      description: "This month's spend, the monthly limit, what's left, and the Apollo, treg or Monid balance where readable. Free. The limit is set by the user, not by agents.",
       inputSchema: {},
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

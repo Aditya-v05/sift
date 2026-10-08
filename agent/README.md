@@ -17,8 +17,8 @@ Set these in the environment. They're kept in memory and never written to disk.
 | Variable | What for | Where |
 |---|---|---|
 | `TYPESAFE_KEY` | Jev, which makes the fit, ranking and why-now judgments | [typesafe.ai](https://typesafe.ai) |
-| `APOLLO_KEY` *or* `TREG_KEY` | Company and people data: your Apollo key, or [treg](https://treg.to) (pay per call, no Apollo plan needed) | Apollo: Settings → Integrations → API; treg: treg.to |
-| `SIFT_PROVIDER` | `apollo` or `treg`, when both keys are set | optional |
+| `APOLLO_KEY`, `TREG_KEY` *or* `MONID_KEY` | Company and people data: your Apollo key, or [treg](https://treg.to) or [Monid](https://monid.ai) (pay per call, no Apollo plan needed) | Apollo: Settings → Integrations → API; treg: treg.to; Monid: app.monid.ai |
+| `SIFT_PROVIDER` | `apollo`, `treg` or `monid`, when several keys are set | optional |
 | `SIFT_BUDGET_USD` / `SIFT_BUDGET` | Monthly cap in dollars or credits (default 40 credits; `off` for no cap) | optional |
 
 ## For agents (MCP)
@@ -37,16 +37,30 @@ Add the server to your client's config:
 }
 ```
 
+It works in any MCP client. Quick setup for the common ones (verified with each tool's own `mcp add` where it has one):
+
+```sh
+claude mcp add sift -e TYPESAFE_KEY=… -e TREG_KEY=… -- npx -y sift-gtm mcp              # Claude Code
+codex mcp add sift --env TYPESAFE_KEY=… --env TREG_KEY=… -- npx -y sift-gtm mcp          # OpenAI Codex
+gemini mcp add -s user -e TYPESAFE_KEY=… -e TREG_KEY=… sift npx -y sift-gtm mcp          # Gemini CLI
+```
+
+- **Cursor** (`~/.cursor/mcp.json`), **Claude Desktop** (`claude_desktop_config.json`) and **Windsurf** (`~/.codeium/windsurf/mcp_config.json`) use the `mcpServers` JSON above.
+- **VS Code** (`.vscode/mcp.json`) uses `"servers": { "sift": { "type": "stdio", "command": "npx", "args": [...], "env": {...} } }`.
+- **opencode** (`opencode.json`) uses `"mcp": { "sift": { "type": "local", "command": ["npx", "-y", "sift-gtm", "mcp"], "environment": {...} } }`.
+
+There's a copy-paste version of each at [sift-through.vercel.app/agents](https://sift-through.vercel.app/agents#setup).
+
 | Tool | Returns | Cost |
 |---|---|---|
 | `sift_company` | Fit score with each requirement (met / near / unsure / not met), why-now signals with evidence, the best persona, and the top contacts (no emails) | 2 credits if new; free for 7 days |
 | `list_contacts` | All ranked contacts for a company already looked up | free |
 | `reveal_email` | Verified emails for chosen people | 1 credit per person found |
 | `quote` | What a batch would cost, and whether it fits the budget | free |
-| `budget` | Spend this month, the limit, the Apollo or treg balance | free |
+| `budget` | Spend this month, the limit, the Apollo, treg or Monid balance | free |
 | `get_icp` / `set_icp` | The ideal customer profile results are judged against | free |
 
-Through treg, a credit costs $0.026: about $0.05 for a new company and $0.026 per email.
+Through treg or Monid, a credit costs $0.026: about $0.05 for a new company and $0.026 per email.
 
 **Built for agents to use safely:**
 - **Budget:** the monthly budget is enforced inside Sift, and there's deliberately no tool to raise it.

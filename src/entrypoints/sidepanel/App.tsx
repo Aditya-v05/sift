@@ -40,7 +40,7 @@ export default function App() {
 
   const credits = useCredits();
   const cost = lookupCost(credits.settings);
-  const viaTreg = credits.viaTreg;
+  const viaGateway = credits.viaGateway;
   const openSettings = () => browser.runtime.openOptionsPage();
 
   const lookup: Lookup = (domain, force = false, allowOverBudget = false, profileUrl) => {
@@ -85,7 +85,7 @@ type Lookup = (domain: string, force?: boolean, allowOverBudget?: boolean, profi
 
 function Body({ view, windowId, lookup, cost }: { view: ViewState; windowId: number | null; lookup: Lookup; cost: number }) {
   const credits = useCredits();
-  const { viaTreg } = credits;
+  const { viaGateway } = credits;
   switch (view.status) {
     case 'idle':
       return (
@@ -135,7 +135,7 @@ function Body({ view, windowId, lookup, cost }: { view: ViewState; windowId: num
       return (
         <Empty
           title="Monthly credit budget reached"
-          body={viaTreg
+          body={viaGateway
             ? `Sift has spent ${spentLabel(view.spent, true)} of your ${budgetLabel(credits.settings, true)} budget this month. Looking up ${view.domain} costs ${priceLabel(view.cost, true)} more.`
             : `Sift has used ${view.spent} of your ${view.budget}-credit budget this month. Looking up ${view.domain} costs ${view.cost} more.`}
         >
@@ -176,7 +176,7 @@ function Empty({ title, body, children }: { title: string; body: string; childre
 }
 
 function DomainInput({ onSubmit, cost }: { onSubmit: (domain: string) => void; cost: number }) {
-  const { viaTreg } = useCredits();
+  const { viaGateway } = useCredits();
   const [value, setValue] = useState('');
   const domain = normalizeDomainInput(value);
   return (
@@ -188,7 +188,7 @@ function DomainInput({ onSubmit, cost }: { onSubmit: (domain: string) => void; c
       }}
     >
       <input placeholder="acme.com" value={value} onChange={(e) => setValue(e.target.value)} />
-      <button type="submit" disabled={!domain} title={`Uncached lookups cost ${priceLabel(cost, viaTreg, true)}`}>Look up ({priceLabel(cost, viaTreg)})</button>
+      <button type="submit" disabled={!domain} title={`Uncached lookups cost ${priceLabel(cost, viaGateway, true)}`}>Look up ({priceLabel(cost, viaGateway)})</button>
     </form>
   );
 }
@@ -206,7 +206,7 @@ interface ResultProps {
 }
 
 function ResultView({ domain, result, loadingStage, cached, windowId, lookup, cost }: ResultProps) {
-  const { viaTreg } = useCredits();
+  const { viaGateway } = useCredits();
   const loading = loadingStage !== undefined;
   if (!result) return <CompanySkeleton domain={domain} />;
   const { company, persona, contacts } = result;
@@ -256,7 +256,7 @@ function ResultView({ domain, result, loadingStage, cached, windowId, lookup, co
       {!loading && (
         <div className="row spread small muted">
           <span>{cached ? `Updated ${ago(result.fetchedAt)}` : 'Just updated'}</span>
-          <button className="link small" onClick={() => lookup(domain, true, false, result.profile?.url)}>Refresh ({priceLabel(cost, viaTreg, true)})</button>
+          <button className="link small" onClick={() => lookup(domain, true, false, result.profile?.url)}>Refresh ({priceLabel(cost, viaGateway, true)})</button>
         </div>
       )}
     </div>

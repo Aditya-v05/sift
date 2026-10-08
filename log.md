@@ -4,6 +4,251 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-08 — Hero subtitle phases Apollo, treg, Monid
+
+- **What:** the hero line now reads "…on your own **Apollo** and Jev keys", with the word cycling Apollo → treg → Monid every 2.2 s (`SourceWord`, sharing `useSourceCycle` with the privacy diagram). The words crossfade with a slight rise and blur while their slot eases to the new word's width, so the sentence closes up around each one. Screen readers get "Apollo, treg or Monid"; reduced motion stays on Apollo.
+- **Why:** matches the privacy diagram; the old "(or treg, or Monid)" aside was clunky.
+- **Verified:** compile, site build; Playwright at 1440 and 390 px over three cycles: the visible word fills its slot exactly (0 px gap each side), the lede's height never changes, no overflow or page errors; screenshots checked. Local branch `monid`, not pushed.
+
+## 2026-10-08 — Privacy diagram: the data node phases Apollo, treg, Monid
+
+- **What:** in the privacy band's diagram, the node that read "Apollo" now cycles Apollo → treg → Monid every 2.2 s with a blur crossfade (`DataSource` in `site/Landing.tsx`). Under reduced motion it stays on Apollo. The diagram's alt text names all three.
+- **Why:** the page offers three data sources; the diagram showed one.
+- **Verified:** compile, site build; Playwright sampled the label every 0.7 s (Apollo, treg, Monid in turn), no page errors; with reduced motion it stays "Apollo"; screenshot checked. Local branch `monid`, not pushed.
+
+## 2026-10-08 — Costs receipt: Apollo, treg or Monid
+
+- **What:** the receipt in Costs has a switch at the top: Apollo (credits, as before), treg or Monid (dollars at $0.026 a credit: $0.052 a new company, $0 to find people, $0.026 an email, $0.026 a LinkedIn lookup, Sift's fee $0). The notes follow the source ("free through treg too", "$0.026 for the company, $0.026 for its job postings"), and Monid adds that Discover isn't available through it yet. The prices swap with a short rise; Apollo keeps its count-up.
+- **Why:** the receipt showed only Apollo credits, though the page now offers treg and Monid.
+- **Verified:** compile, site build, smoke 40/40; Playwright at 1440 and 390 px: each source shows the right prices (Apollo 2 0 1 1; treg and Monid $0.052 $0 $0.026 $0.026), no overflow, no page errors; screenshots checked. Local branch `monid`, not pushed.
+
+## 2026-10-08 — v0.4.0: Monid in public Sift (local branch `monid`, not pushed)
+
+- **What:** brought the Monid work over from dev-sift (cherry-picked 697b52b, 6395b9b and the two test-log commits onto `agents-launch`). The extension and `sift-gtm` both take a Monid key. Version 0.4.0. Site copy names Monid wherever treg is offered:
+  - the announcement bar ("Sift now runs on treg and Monid", new id `gateways-2026-10` so it shows again to people who closed the treg one);
+  - the hero, costs, privacy lines, a new "What is Monid?" FAQ (including that Discover isn't available through it), the footer;
+  - /agents: the budget tool, the costs line, guardrails, the setup stepper, `MONID_KEY` in the generic MCP config and the keys paragraph.
+- **Why:** Monid passed the live test 3 of 3 and an end-to-end `sift-gtm` run, with the ledger matching the wallet to the cent. The user asked to bring it to public Sift but hold deployment until tomorrow, so this stays on a local branch: `agents-launch` deploys a preview and `main` deploys the site.
+- **Verified:** compile; 143 unit tests (6 live tests skipped without keys); 12 agent tests; extension build (manifest 0.4.0); agent build; site build; smoke 40/40; the bar measured at 1440 px (one line) and 390 px (two lines).
+- **Not done:** `sift-gtm` is still 0.1.0, and the staged 0.1.0 on npm was packed before Monid. Publish a new version from this branch rather than approving that one.
+
+## 2026-10-08 — Monid end to end: sift-gtm with Jev, a real lookup and a reveal
+
+- **What:** ran the built `sift-gtm` CLI with `SIFT_PROVIDER=monid`, a fresh `SIFT_HOME` and a real Jev key: set an ICP, looked up intercom.com (not cached), revealed one email, then looked it up again.
+- **Why:** the live test covers Sift's Apollo calls through Monid; this covers the whole product path, Jev's judgments included.
+- **Verified:** the lookup returned company facts, a fit score with every check, five why-now signals and 27 ranked people in 17 s, for $0.052 (enrich + jobs). The reveal (Monid answers 202, Sift polls) returned a verified email for $0.026. The repeat lookup was cached and free. Sift's ledger said $0.078; the Monid wallet went from $0.532 to $0.454 ($0.078) once it caught up (it lagged one call for about 20 s).
+
+## 2026-10-08 — Monid live test, rerun three times
+
+- **What:** reran `src/lib/monid.live.test.ts` three times in a row (key check, wallet, enrich, people search, job postings, one people/match polled after a 202).
+- **Why:** the first live run earlier today failed once with no confirmed cause, before the fallback to the listed price for a run whose cost isn't filled in yet.
+- **Verified:** 3 of 3 runs passed (2 tests each). Each run recorded exactly three charges of $0.026 (enrich, jobs, match; people search free). The wallet went from $0.766 to $0.532, a drop of $0.234, which is 9 × $0.026: the ledger and the wallet agree to the cent.
+
+## 2026-10-08 — Monid as a third data source (dev-sift)
+
+> "monid ... i think i have the ok since their integration docs allow it lets test - this is all in the dev-sift repo"
+
+- **What:** Settings has a third source in the dropdown, "Monid, pay per call (no Apollo plan needed)", next to your Apollo key and treg. Lookups, people search, job postings and email reveals all work through Monid. The credit bar shows the Monid wallet, and prices and the budget read in dollars.
+- **Why:** Monid (monid.ai) is a pay-per-call gateway like treg, with one wallet for many APIs. A live test showed its Apollo prices match treg's ($0.026 per paid call, people search free), so it's a real alternative for people without an Apollo plan.
+- **Live test (2026-10-08, usepylon.com):**
+
+  | Sift call | Monid endpoint | Input | Answer | Charged |
+  |---|---|---|---|---|
+  | Company | `/organizations/enrich` | `queryParams.domain` | 200, sync; Apollo's `{organization}` unchanged in `output` | $0.026 (`billing.reportedCost` 26000 micro-USD) |
+  | Job postings | `/organizations/{organization_id}/job_postings` | `pathParams.organization_id`, `queryParams.per_page` | 200, sync; Apollo's `{organization_job_postings, pagination}` | $0.026 per call (21 postings, `billedUnits` 21, one charge) |
+  | Find people | `/mixed_people/api_search` | `queryParams` with `organization_ids[]`, `person_titles[]` | 200, sync; Apollo's `{people, total_entries}` | free |
+  | Reveal email | `/people/match` | `queryParams.id`, `reveal_phone_number: false` | **202 RUNNING**, then COMPLETED on the first poll of `/v1/runs/:id`; Apollo's `{person}` | $0.026 (`cost.value` on the polled run) |
+  | Unknown domain | `/organizations/enrich` | | 200, `output: {}` | free |
+  | Lookalikes | `/mixed_companies/search` | `lookalike_organization_ids[]` | **400**: unrecognized key | none |
+
+  The wallet went from $1.000 to $0.922 after the three paid calls. It lags a call or two behind the runs, but every run's reported cost matched it. A bad key gets 401 from `/v1/auth/whoami`.
+- **How:**
+  - `access.ts` gains `Source`, `Gateway`, `GATEWAYS`, `isGateway` and `sourceKey`.
+  - In `apollo.ts`, `route()` sends Monid calls to `POST /v1/run`. `monidRun()` turns Apollo's query and JSON body into `input.queryParams` (arrays as `key[]`, numbers and booleans typed) and the job-postings org id into `pathParams`.
+  - `monidResult()` polls 202 runs (every 1 s, up to 30 s), returns `output`, and turns a failed run or an Apollo error status into an `ApiError('monid', …)`. It records the charge from `billing.reportedCost`, else `cost`, else the listed price per billed call (one live run finished before its cost was filled in).
+  - Key check: `/v1/auth/whoami`. Balance: `/v1/wallet/balance`, parsed as a dollar balance tagged `gateway: 'monid'`. `balanceIsFor()` keeps a treg balance from showing as Monid's.
+  - `onTregCost` is now `onGatewayCost` (the old name is kept), and `viaTreg` is `viaGateway` plus `gateway` in `useCredits`, so labels name the right gateway.
+  - Discover shows a note through Monid instead of a failing search, and `searchOrganizations` refuses lookalikes before spending anything.
+  - Host permission `https://api.monid.ai/*`. A 402 from Monid says the wallet is low.
+- **Verified:**
+  - `npm run compile`; 143 unit tests (10 new in `monid.test.ts`, with fetch mocked using the live response shapes);
+  - `monid.live.test.ts` passes against the real API (about $0.08; skipped without `MONID_KEY`);
+  - `npm run build` (the manifest lists `api.monid.ai`) and `npm run site:build`;
+  - `npm run smoke`, 40 checks: 3 new Monid checks for the key field, the wallet on the credit bar, and dollar prices.
+  - Total Monid spend for testing: $0.234 of the $1 free credit.
+- **Agents (`sift-gtm`):** `MONID_KEY` works like `TREG_KEY`.
+  - `SIFT_PROVIDER` accepts `monid`. Without it, Apollo is used first, then treg, then Monid.
+  - `budget` reports `monid_balance_usd`. Live: `sift-gtm budget` with only `MONID_KEY` read the real wallet ($0.766).
+  - 12 agent tests, one new for the provider choice.
+- **Note:** Monid's terms page is generic boilerplate; their integration docs describe bring-your-own-key use.
+
+---
+
+## 2026-10-08 — Announcement bar: "Sift now runs on treg"
+
+- **What:** a mint bar over the nav on both pages ("New · No Apollo plan? Sift now runs on treg, at $0.026 a call. See costs →"). It folds away once the nav turns white on scroll, and closes with ×, remembered per message in localStorage (`ANNOUNCE.id`; a new id shows the new message to people who closed the old one). While it shows, the hero starts below it. The text, link and id live in one `ANNOUNCE` constant in `site/Landing.tsx`.
+- **Why:** treg support shipped in v0.3.x and the page only mentioned it in passing. Monid is not in the bar yet: it is only in dev-sift, so the bar would be false; add it to the text when Monid ships publicly.
+- **Verified:** typecheck, site build; Playwright at 1440 and 390 px on / and /agents: no horizontal overflow, no page errors, the bar is hidden after scrolling, and gone after closing and reloading. Screenshots checked at both widths.
+
+## 2026-10-08 — Reels, last pass: a readable terminal, no loading frame
+
+- **What:**
+  - Agents reel, terminal scene: the request fills the panel while it is typed, then folds to one dim line, and the five tool calls take the room at about 45 px (42 in 4:5), up from about 24, with shortened result lines (same facts, e.g. "Gorgias · fit 80 · timing 52").
+  - Home reel: the fit scene starts at 4.75 s in the recording instead of 4.3 s, so it cuts from "One click on their homepage" straight to the panel with content, not its loading placeholders.
+  - Re-exported `site/public/demo.mp4`, `demo-m.mp4`, `agents-demo.mp4` and the six Desktop `sift-reel-*` cuts. Posters unchanged (taken from the openings). The treg and older social videos are untouched.
+- **Why:** the terminal text was too small on a phone, and the home reel showed a nearly empty panel for about half a second.
+- **Verified:** stills of the terminal in 16:9, 4:5 and 1:1 before and after (a long line no longer clips in 4:5; the folded request line no longer collapses in 16:9); stills stepping the home cut; 1 fps contact sheets of the finals and a full-size frame from the 4:5 export; video type check; site build; smoke 37/37.
+
+## 2026-10-08 — Reels, second pass: hooks with impact, the panel up close, a bigger answer
+
+- **What:**
+  - New openings for both reels (`video/src/Reel.tsx`), about 3.5 s, cut on a 120 BPM beat with big type from frame 1. Home: a full-bleed wall of about 200 account tiles under "200 accounts." sifts away while three fly forward as cards with real scores (Pylon 82/75, Gorgias 80/52, Help Scout 78/57): "3 worth an email.". Agents: "Which account first?" typed huge, the real tool calls in big mono, then "Gorgias. Hiring now." on mint.
+  - Home fit, why now and who: no more half-frame of the cropped Pylon site. A tight crop of the real panel sits beside (16:9) or under (4:5, 1:1) the key fact in big type: "82%" with the four checks ticking in, "Hiring now." with three signals, "Dan G." with the made-up email landing at the reveal.
+  - The answer list fills the frame (Fit 82%, Why now timing 75, Who Dan G. verified, Cost 3 credits); the agents list is bigger too.
+  - After the reveal the recording shows the contact's full surname; the reel now paints it back to "Dan G.".
+  - Site videos, posters and the six Desktop cuts (`sift-reel-{home,agents}-{16x9,4x5,1x1}.mp4`) re-exported.
+- **Why:** the user found the openings bland and the why/who part of the home video weak: small type, and half the frame was a cropped page with cut-off text.
+- **Verified:** type check of `video/`; stills of the hooks and of every split scene in 16:9, 4:5 and 1:1 looked at before rendering; 1 fps contact sheets of the finals; the Who scene stepped at 6 fps: only "Dan G." and `dan@usepylon.example` ever appear; ffprobe on exports (h264, yuv420p, tv range, BT.709; 60 fps social, 30 fps site); site build and smoke.
+
+## 2026-10-08 — Showreel videos: the site's demos re-cut as a motion-design reel around real footage
+
+- **What:** a new Remotion edit, `video/src/Reel.tsx`, with two reels:
+  - `home` (the extension, about 26 s) replaces `site/public/demo.mp4` (now 1600×900), `demo-m.mp4` (now 720×900) and their posters;
+  - `agents` (sift-gtm, about 22 s) replaces `agents-demo.mp4` and its poster.
+  - Each is also rendered for feeds at 16:9, 4:5 and 1:1 (60 fps), exported to the Desktop as `sift-reel-{home,agents}-{16x9,4x5,1x1}.mp4` with the LinkedIn/X recipe (yuv420p, tv range, BT.709, silent AAC, faststart, level 4.2).
+- **The look:**
+  - a HUD on every shot: corner labels, a timecode, a progress hairline, and a spec line with Sift's real numbers (fit 82%, timing 75, "quote · 3 companies · 0 credits", fit 80/78/83);
+  - spring-driven type in Archivo (variable weight and width) and hard-cut word beats ("FIT." "WHY NOW." "WHO." / "QUOTE." "SIFT." "RANK.");
+  - layered band wipes and a 3D tile grid that flips to show ICP fit;
+  - real footage in between: the usepylon.com recording through `Demo.tsx`'s camera and text patches, so the email is the made-up `dan@usepylon.example`, and the real agent session from `site/agent-session.json`.
+- **Why:** the user asked for videos in the style of a motion-design reel posted on X, to replace the site's videos and set the style for new ones. A Sift version keeps real product footage in it, so it shows the product working rather than motion alone.
+- **Verified:**
+  - type check of `video/`;
+  - looked at stills and contact sheets of every scene in all three shapes (legibility, nothing cut off or overflowing);
+  - checked the reveal window frame by frame at 6 fps: only `dan@usepylon.example` is visible, and the clips stay inside the checked ranges (1.0–3.85, 4.3–7.4, 7.9–14.0 s);
+  - ffprobe on the exports (h264 + aac, yuv420p, tv range, BT.709);
+  - site build and smoke.
+- **Kept:** the old compositions (`SiftDemo*`, `SiftSocial*`, `Treg*`, `Agent*`) still render; `Demo.tsx` and `AgentDemo.tsx` only gained exports.
+
+## 2026-10-08 — /agents session: the short version first, the full transcript folded
+
+- **What:** the "A real session" section now shows the request in one line, the tool calls as one line (`quote · get_icp · sift_company ×3 · 0 credits`), the agent's ranking (fit and timing per company) and one sentence on the top account. The full, unedited prompt, every tool call and the agent's whole answer sit under "Read the full transcript" (a `<details>`).
+- **Why:** the full transcript under the video was too much text; the video already plays the session.
+- **Verified:** site build; Playwright at 1440 and 390 px: no horizontal overflow, no page errors, the summary rows animate in, and opening the transcript shows all 5 tool calls.
+
+## 2026-10-08 — Footer email card: opening mail is the main action
+
+- **What:** the Email card's link now opens the visitor's mail app with the subject "Sift" prefilled (`mailto:…?subject=Sift`, tooltip "Opens your email app"). The Copy button is now an outlined, muted secondary control instead of a solid cream button.
+- **Why:** the solid Copy button drew the eye, so the card read as copy-only even though clicking it already opened mail.
+- **Verified:** site build; Playwright screenshot at 1440 px; the link's href is `mailto:adityaspark05@gmail.com?subject=Sift`; Copy still turns mint on success.
+
+## 2026-10-08 — Micro-interactions, round two: nav scrollspy, setup stepper, arrows, copy morph, focus
+
+> "https://www.microinteractionsui.com/ - for more micro reactions"
+
+Patterns from MicroInteractions UI, rebuilt in plain CSS and two small hooks (no Tailwind or Motion, no new dependencies). Everything is driven by scrolling, clicks or keyboard focus, and is off under reduced motion.
+- **Nav scrollspy:** one indicator slides to the link for the section you're reading (How it works, Costs on home), and fades out between sections. On /agents, Agents is marked as the current page. The links carry `aria-current`.
+- **Setup stepper (/agents):** Get two keys, Add Sift to your agent, Ask in plain words. The rule between steps fills as you scroll, and each dot lights when the line reaches it. It's lines only, and stacks vertically on phones. Under reduced motion it shows fully lit.
+- **Arrows:** Install Sift, the hero's "New: Sift for AI agents", and /agents' "Set it up" and "See a real session" have an arrow that slides out and back in on hover or focus.
+- **Copy buttons:** "Copy" slides up and out as "Copied ✓" slides in, in the same cell, so the button never changes size.
+- **Focus:** keyboard focus gets a ring that settles in, plus the same feedback as hover (buttons, nav, tabs, contact cards, footer links). Setup tabs now move with the arrow keys, Home and End.
+- **Verified:** Playwright at 1440 and 390 px, with and without reduced motion, on / and /agents (66 checks, scratchpad `micro-verify.mjs`):
+  - the indicator sits under the active link (within 0.2 px) at #answers and #costs, and no link is active at the top or in privacy;
+  - the stepper goes 0 → 1 → 2 → 3 lit while scrolling;
+  - ArrowRight moves the tab and focus, and the underline follows;
+  - both copy buttons put the right text on the clipboard without resizing;
+  - there is no horizontal overflow and there are no page errors.
+- **Also run:** compile, site build and smoke all pass.
+
+---
+
+## 2026-10-08 — Footer: contact cards instead of pill buttons
+
+> "these contact buttons can be made a bit good looking"
+
+- **What:** the maker strip's three pills (Portfolio, Email me, GitHub) and the separate email line are now three stacked cards. Each has an icon, a label, the real destination in mono (the portfolio domain, the address, @Aditya-v05) and an arrow. The portfolio card is lightly highlighted.
+- **Hover:** the border turns mint, the icon tilts, the arrow nudges.
+- **Copy:** the email card has a Copy button that pops to "Copied ✓".
+- **Phones:** the cards go full width with a smaller mono line so the whole address fits.
+- **Verified:** at 1440 and 390 px; copy puts `adityaspark05@gmail.com` on the clipboard; no overflow or page errors.
+
+---
+
+## 2026-10-08 — Micro-interactions on both pages, and a full check
+
+> "can u verify and add micro reactions and animations wherever u can"
+
+- **Motion,** driven by scrolling and clicks only (no cursor-following), with all of it off under reduced motion:
+  - **/agents session:** plays out when it scrolls in. Each tool call lands in order, its mint dot pulses as if running, then its result line draws in and fades up; the agent's answer comes last.
+  - **Hero command:** a blinking cursor, and one soft mint glow on arrival.
+  - **Copy buttons:** pop to "Copied ✓".
+  - **Setup:** one underline slides between the tabs (it follows wrapped rows on phones), and the code crossfades.
+  - **Tools:** rows stagger in; a hovered row tints and its name nudges.
+  - **Guardrails:** each card's top rule sweeps in, and cards lift on hover.
+  - **CSV:** rows land one by one.
+  - **Home page:** the receipt prints line by line, and FAQ answers ease open.
+  - **Buttons:** press slightly on click.
+- **Verified** (Playwright at 1440 and 390 px, both pages, after scrolling through):
+  - every section revealed, every animated item fully visible at the end, no sideways scroll;
+  - the tab underline within 0.5 px of the active tab for Codex, VS Code and opencode;
+  - copy puts the exact config on the clipboard and shows "Copied ✓";
+  - the session video plays;
+  - reduced motion shows everything at once;
+  - every anchor exists and every link answers (GitHub 200; npm 403 to robots; `log.md` and LICENSE rechecked to 200 after a 429).
+  - The only console error is `/_vercel/insights/script.js` 404 locally, which exists on Vercel.
+  - Extension unchanged: 133 tests, 11 agent tests, build and smoke pass.
+
+---
+
+## 2026-10-08 — /agents: setup for every common agent, not just Claude
+
+> "can we do this for multiple ai agents not just this?"
+
+- **Setup tabs:** Claude Code, Codex, Gemini CLI, Cursor, Claude Desktop, VS Code (Copilot agent mode), Windsurf, opencode, and "Any MCP client" (the stdio command and env vars). Each has its exact config or command and a copy button. The hero's fine print names them. `agent/README.md` gains the same setups.
+- **How the formats were checked:**
+  - **Claude Code, Codex and Gemini CLI:** I ran each tool's own `mcp add` in a throwaway config and used the config it wrote. Codex: `[mcp_servers.sift]` TOML, and `codex mcp list` shows it enabled. Gemini: `mcpServers` in `~/.gemini/settings.json`.
+  - **opencode:** connected live ("✓ sift connected") with `"mcp": {"sift": {"type": "local", "command": [...], "environment": {...}}}`.
+  - **Cursor, Claude Desktop, VS Code and Windsurf** aren't installed here; they use their documented formats.
+- **Real sessions in other agents:** not possible yet without logins.
+  - opencode's free models refuse headless runs ("OpenCode's free tier can only be used from within OpenCode");
+  - Codex reports "Not logged in";
+  - Gemini CLI isn't installed and needs a Google sign-in.
+
+---
+
+## 2026-10-08 — Launch prep for sift-gtm: a real agent session, the /agents page, and a video (branch `agents-launch`)
+
+> "before we publish we need to make sure there is a video for posting and also i need a website tab or something talking about sift for agents"
+
+- **A real agent session:** `claude -p` (Claude Code 2.1) with only Sift's MCP server connected was asked to rank gorgias.com, kustomer.com and helpscout.com. It:
+  - priced first (`quote`: 3 cached, 0 credits) and read the ICP;
+  - ran `sift_company` three times with `max_credits: 0`;
+  - answered with a ranking and evidence ("12 open roles, 8 posted in the last 30 days"), naming the top contact without revealing any email, and flagging its own caveats.
+
+  Sift spent 0 credits; the Claude run cost about $0.10. The transcript is saved as `site/agent-session.json` (no emails in it).
+- **The /agents page** (`site/agents.html`, `site/Agents.tsx`; Vite now builds two pages, and `vercel.json` sets `cleanUrls` so it serves at `/agents`):
+  - a hero with an "MCP" slat wall, `npx sift-gtm mcp` with a copy button, and links to setup and the session;
+  - the video and the real session (request, tool calls with results, the agent's answer);
+  - the tools with their costs; four guardrails;
+  - setup tabs (Claude Desktop / Cursor JSON, a Claude Code one-liner) plus SKILL.md;
+  - "for people too": the real 3-company CSV run.
+
+  The nav, footer, eyebrow and reveal are shared with the home page; section links became `/#…`. The nav gains "Agents", the footer "For agents (MCP)", and the home hero's fine print "New: Sift for AI agents (MCP) →". It has its own `og-agents.png`.
+- **The video** (`video/src/AgentDemo.tsx`, compositions `AgentLandscape` / `AgentPortrait` / `AgentSquare`, 18.9 s):
+  1. hook card: "Give your agent Sift.";
+  2. the request typed in;
+  3. the five real tool calls with their results ("It prices first. Cached, so $0.");
+  4. the answer, folded to the ranking and the Gorgias line ("It answers with evidence, not vibes.");
+  5. end card: `npx sift-gtm mcp`.
+
+  It's exported for X and LinkedIn as `~/Desktop/sift-agents-{16x9,4x5,1x1}.mp4`, with thumbnails; a 1280-px web cut is on the page.
+- **Verified:**
+  - /agents at 1440 and 390 px: no overflow or page errors, video playing;
+  - compile, 133 tests, 11 agent tests and the site build pass.
+- **Still pending:** releasing 0.1.0 from npm's staged packages (the user's step), so `npx sift-gtm` works.
+
+---
+
 ## 2026-10-07 — sift-gtm: Sift for agents (MCP server + CLI), built
 
 > "lets start building this shall we"

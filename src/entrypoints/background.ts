@@ -1,7 +1,7 @@
 import { browser } from 'wxt/browser';
 import { defineBackground } from 'wxt/utils/define-background';
 import * as apollo from '@/lib/apollo';
-import { accessFor, hasDataKey } from '@/lib/access';
+import { GATEWAYS, accessFor, hasDataKey, isGateway, type Source } from '@/lib/access';
 import { toLookupError, describeError } from '@/lib/errors';
 import * as jev from '@/lib/jev';
 import type { KeyTest, Message, SourceSwitch } from '@/lib/messages';
@@ -10,8 +10,8 @@ import { domainFromUrl, linkedinProfile } from '@/lib/resolver';
 import { getKeys, recordUsd, setKeys, setView, setViewTab } from '@/lib/storage';
 
 export default defineBackground(() => {
-  // Through treg, every paid Apollo call reports its exact price; keep the month's dollars next to the credits.
-  apollo.onTregCost((micro) => recordUsd(micro));
+  // Through a gateway (treg, Monid), every paid Apollo call reports its exact price; keep the month's dollars next to the credits.
+  apollo.onGatewayCost((micro) => recordUsd(micro));
 
   browser.runtime.onInstalled.addListener(({ reason }) => {
     if (reason === 'install') browser.runtime.openOptionsPage();
@@ -64,7 +64,7 @@ export default defineBackground(() => {
         return true;
       case 'testKeys':
         Promise.all([
-          test(() => apollo.checkKey(accessFor(msg.keys)), msg.keys.provider === 'treg' ? 'treg key not recognized' : 'Apollo key not recognized'),
+          test(() => apollo.checkKey(accessFor(msg.keys)), `${keyName(msg.keys.provider)} key not recognized`),
           test(() => jev.checkKey(msg.keys.typesafe), 'TypeSafe key not recognized'),
         ]).then(([a, t]) => {
           sendResponse({ apollo: a, typesafe: t });
@@ -86,16 +86,19 @@ function siftTab(tab: { windowId: number; id?: number; url?: string }) {
 }
 
 /** Switch the data source, but only to a saved key that still connects. */
-async function useSource(provider: 'apollo' | 'treg'): Promise<SourceSwitch> {
+async function useSource(provider: Source): Promise<SourceSwitch> {
   const keys = await getKeys();
   const next = { apollo: '', typesafe: '', ...keys, provider };
-  if (!hasDataKey(next)) return { ok: false, reason: 'no_key', message: `Add your ${provider === 'treg' ? 'treg' : 'Apollo'} key first.` };
-  const t = await test(() => apollo.checkKey(accessFor(next)), `${provider === 'treg' ? 'treg' : 'Apollo'} key not recognized`);
+  if (!hasDataKey(next)) return { ok: false, reason: 'no_key', message: `Add your ${keyName(provider)} key first.` };
+  const t = await test(() => apollo.checkKey(accessFor(next)), `${keyName(provider)} key not recognized`);
   if (!t.ok) return { ok: false, reason: 'failed', message: t.message };
   await setKeys(next);
   await refreshBalance(true);
   return { ok: true };
 }
+
+/** 'Apollo', 'treg' or 'Monid': whose key it is. */
+const keyName = (s: Source | undefined) => (isGateway(s) ? GATEWAYS[s].name : 'Apollo');
 
 async function test(fn: () => Promise<boolean>, failMessage: string): Promise<KeyTest> {
   try {
