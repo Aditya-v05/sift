@@ -255,6 +255,13 @@ main p { line-height: 1.6; }
 .l-diagram .node.you circle { fill: var(--mint); stroke: var(--mint); }
 .l-diagram .node.you text { fill: var(--pine); }
 .l-diagram text { font: 600 12.5px 'Schibsted Grotesk Variable', sans-serif; text-anchor: middle; fill: #eef6f3; }
+/* The hero's data source word: Apollo, treg, Monid in one grid cell, crossfading while the cell eases to the word's width. */
+.l-cycle { display: inline-grid; grid-template-columns: 100%; justify-items: center; vertical-align: bottom; white-space: nowrap; transition: width 0.45s var(--ease-out); }
+.l-cycle > span { grid-area: 1 / 1; color: #cfe9e1; opacity: 0; filter: blur(3px); transform: translateY(0.25em); transition: opacity 0.45s var(--ease-out), filter 0.45s var(--ease-out), transform 0.45s var(--ease-out); }
+.l-cycle > span.on { opacity: 1; filter: blur(0); transform: none; }
+.l-cycle > span { width: max-content; }
+.l-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .l-cycle, .l-cycle > span { transition: none; } }
 /* The data node phases Apollo, treg, Monid. */
 .l-diagram .node .src { animation: l-src 2.2s var(--ease-out) both; }
 @keyframes l-src { 0% { opacity: 0; filter: blur(3px); } 18% { opacity: 1; filter: blur(0); } 82% { opacity: 1; filter: blur(0); } 100% { opacity: 0; filter: blur(3px); } }

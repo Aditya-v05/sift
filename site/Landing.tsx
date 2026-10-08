@@ -218,8 +218,8 @@ function Hero() {
           Sift through companies.<br /><em>Talk to the right ones.</em>
         </h1>
         <p className="l-lede">
-          Open any company's site and Sift tells you if it fits, why now, and who to reach. One click, on your own Apollo
-          (or treg, or Monid) and Jev keys.
+          Open any company's site and Sift tells you if it fits, why now, and who to reach. One click, on your own{' '}
+          <SourceWord /> and Jev keys.
         </p>
         <div className="l-ctas">
           <a className="l-btn cream" href={INSTALL}>Install Sift <Arrow /></a>
@@ -435,13 +435,40 @@ function Costs() {
 
 /** The data node in the privacy diagram: Apollo, then treg, then Monid, crossfading (still Apollo under reduced motion). */
 const DATA_SOURCES = ['Apollo', 'treg', 'Monid'];
-function DataSource() {
+function useSourceCycle() {
   const [i, setI] = useState(0);
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const t = setInterval(() => setI((n) => (n + 1) % DATA_SOURCES.length), 2200);
     return () => clearInterval(t);
   }, []);
+  return i;
+}
+
+/** The hero's data source, phasing Apollo, treg, Monid in place: the slot eases to each word's width, so the line closes up. */
+function SourceWord() {
+  const i = useSourceCycle();
+  const box = useRef<HTMLSpanElement>(null);
+  const [width, setWidth] = useState<number>();
+  useLayoutEffect(() => {
+    const measure = () => setWidth((box.current?.children[i] as HTMLElement | undefined)?.offsetWidth);
+    measure();
+    document.fonts?.ready.then(measure);
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [i]);
+  return (
+    <>
+      <span className="l-cycle" ref={box} style={width ? { width } : undefined} aria-hidden>
+        {DATA_SOURCES.map((w, n) => <span key={w} className={n === i ? 'on' : ''}>{w}</span>)}
+      </span>
+      <span className="l-sr">Apollo, treg or Monid</span>
+    </>
+  );
+}
+
+function DataSource() {
+  const i = useSourceCycle();
   return <text key={i} className="src" x="366" y="75">{DATA_SOURCES[i]}</text>;
 }
 

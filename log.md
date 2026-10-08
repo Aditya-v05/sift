@@ -4,6 +4,12 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-08 — Hero subtitle phases Apollo, treg, Monid
+
+- **What:** the hero line now reads "…on your own **Apollo** and Jev keys", with the word cycling Apollo → treg → Monid every 2.2 s (`SourceWord`, sharing `useSourceCycle` with the privacy diagram). The words crossfade with a slight rise and blur while their slot eases to the new word's width, so the sentence closes up around each one. Screen readers get "Apollo, treg or Monid"; reduced motion stays on Apollo.
+- **Why:** matches the privacy diagram; the old "(or treg, or Monid)" aside was clunky.
+- **Verified:** compile, site build; Playwright at 1440 and 390 px over three cycles: the visible word fills its slot exactly (0 px gap each side), the lede's height never changes, no overflow or page errors; screenshots checked. Local branch `monid`, not pushed.
+
 ## 2026-10-08 — Privacy diagram: the data node phases Apollo, treg, Monid
 
 - **What:** in the privacy band's diagram, the node that read "Apollo" now cycles Apollo → treg → Monid every 2.2 s with a blur crossfade (`DataSource` in `site/Landing.tsx`). Under reduced motion it stays on Apollo. The diagram's alt text names all three.
