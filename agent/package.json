@@ -1,6 +1,6 @@
 {
   "name": "sift-gtm",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Sift for AI agents and the terminal: ICP fit, why now and the right person to contact for any company domain. MCP server + CLI. Bring your own Apollo (or treg) and Jev keys.",
   "license": "MIT",
   "type": "module",

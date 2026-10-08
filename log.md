@@ -4,6 +4,12 @@ Newest first. Each entry covers what changed, why, and how it was verified. Desi
 
 ---
 
+## 2026-10-08 — sift-gtm 0.1.1
+
+- **What:** bumped `sift-gtm` to 0.1.1 (`agent/package.json`, `agent/src/version.ts`, the lockfile) so it can be published with Monid support.
+- **Why:** 0.1.0 on npm was packed before Monid, so `npx sift-gtm` didn't know `MONID_KEY`.
+- **Verified:** agent build; `sift-gtm --version` prints 0.1.1; the bundle contains `MONID_KEY`; 12 agent tests pass; `npm pack --dry-run`: 5 files (dist/cli.js, README.md, SKILL.md, LICENSE, package.json), 34.9 kB; no keys in the packed files.
+
 ## 2026-10-08 — Hero subtitle phases Apollo, treg, Monid
 
 - **What:** the hero line now reads "…on your own **Apollo** and Jev keys", with the word cycling Apollo → treg → Monid every 2.2 s (`SourceWord`, sharing `useSourceCycle` with the privacy diagram). The words crossfade with a slight rise and blur while their slot eases to the new word's width, so the sentence closes up around each one. Screen readers get "Apollo, treg or Monid"; reduced motion stays on Apollo.
